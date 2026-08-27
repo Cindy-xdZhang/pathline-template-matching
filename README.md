@@ -2,7 +2,7 @@
 
 本项目研究：能否把不同邻居距离、积分步长和积分长度得到的 pathline primitive，编码为无可训练参数的 FMT 特征，并通过有标签特征库中的精确最近邻，在未见流场中识别涡区域。FMT 沿用原项目名称；原项目文档存在不同历史全称，本项目不另造展开名称。
 
-当前仓库完成的是可复现的项目起点，不包含模式匹配性能结论。首个已预注册、但尚未完整冻结的基线是：
+当前仓库已实现并冻结首个 cache-backed development 基线及其 Ibex runner、统计表和三联图，但尚未把 development 结果冒充 formal confirmation。基线是：
 
 ```text
 3D velocity field
@@ -30,12 +30,15 @@
 ```bash
 python -m unittest discover -s tests -p test_all.py -v
 python scripts/smoke_test_template_library.py
+python scripts/smoke_test_development_pipeline.py
 ```
 
 Ibex 数据检查：
 
 ```bash
 bash ibex/validate.sh
+# 正式 development job 只从已提交 commit 使用：
+sbatch ibex/mainexp_template_matching_1.1_development.sh
 ```
 
 首次 Ibex clone 验证已确认 10/10 旧 cache 的全部 100 个 slice 通过，5/10 原始 NetCDF 能实际读取小窗口；cache 可用与 raw 可重新积分仍分别报告。

@@ -92,7 +92,7 @@ scale_evaluation:
 
 full_freeze_blockers:
   - sealed confirmation family manifest and first-read hashes are absent
-  - builder and leave-one-family-out evaluator are absent
+  - formal raw-field builder and sealed-confirmation evaluator/gate are absent
   - confidence-interval decision rule requires an explicit user decision
 
 metrics:

@@ -87,3 +87,27 @@ positive iff IVD(seed, seed_time) >= percentile95(IVD volume)
 失败、取消、超时、无效、负结果和反例不得删除。旧结论被修订时，必须并列记录“旧结论、当前结论、改变原因、旧结论错误在哪里”。
 
 所有 Ibex scheduler 进程必须在提交后立即登记到 `docs/ibex_run_registry.md`。不能以最终成功 job 覆盖失败 job。
+
+## 10. `mainExp_TemplateMatching_1.1` development-only 部署边界
+
+`mainExp_TemplateMatching_1.1` 可以先运行 cache-backed development phase，但这不等于完整主实验或 formal confirmation。该阶段只允许读取已经暴露的旧 Task5 cache，运行协议以 `config/mainExp_TemplateMatching_1.1_development.yaml` 为准：
+
+- 旧 development ordinals `0–3` 同时提供非留出 family 的 library 和留出 family 的 seen-scale query；
+- 旧 development ordinals `4–5` 只允许 `Verify_...` 使用，禁止进入 mainExp 主指标；
+- 旧历史 confirmation ordinals `0–3` 只作为 exposed-development unseen-scale query，不能称 sealed confirmation；
+- 主指标标签固定读取 cache `reference`，不得重算或替换；三联图允许从 raw field 重建 IVD-p95，只用于 fail-closed 一致性审计和等值面绘制，审计结果绝不替换主指标标签；
+- 七个 physical family 做 leave-one-family-out；library 可按冻结规则平衡，query 必须使用全部 valid primitive 并保持自然类别比例；
+- 四臂固定为 constant library prior、672D centered Raw、library-only Raw-PCA 161D、independent FMT 161D；后三个 retrieval arms 使用 exhaustive Euclidean 1NN，prior 是常数分数而不是 1NN；
+- bootstrap 固定 seed `25068`、5000次，在每个 physical family 内以 source timeslice 为成对重采样单位；95% 区间固定为 percentile interval，NumPy percentile method 为 `linear`；
+- 主表 physical-family macro 固定为“每个 family 内 source-timeslice metric 宏平均，再跨7个 family 宏平均”，以保证 paired bootstrap 与主表估计量完全一致；pooled-query family 指标另报但不冒充该置信区间的点估计；
+- 用户尚未冻结置信区间通过规则，因此本阶段只能输出 `descriptive_only_pending_user_ci_decision`，不得宣告主命题通过或失败。
+
+Development 表格必须将 seen-scale 与 unseen-scale 分开，保留所有 flow、family、tuple 和反例。三联图不是汇总证据，也不得按性能挑选：每个数据集在 seen/unseen 两种 regime 都固定 source ordinal `2` 并覆盖全部 scale tuple。三栏固定为：
+
+1. IVD-p95 reference 与 cached center pathlines；raw field 可访问时叠加 whole-loaded-volume IVD-p95 isosurface，否则明确标记 seed-reference fallback；
+2. FMT exact-1NN vortex/non-vortex class assignment，不得称为 KMeans 或 clustering；
+3. FMT TP/FP/FN/TN，TN 可以淡化。
+
+每图固定显示240条中心线，使用 seed `15068` 的 deterministic stratified maximin 选择；三栏必须共享相同 seed、camera 和 physical bounds。Raw-PCA 必须进入表格，可另做独立比较图，但不进入用户指定三联图。
+
+该 development phase 不得访问任何 sealed confirmation 路径。若 development 结果促使 descriptor、library、normalization、distance、score、threshold、resampling 或数据拆分发生改变，必须创建新的 `mainExp_...` 版本后才能建立 formal confirmation manifest。

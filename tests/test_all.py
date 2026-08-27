@@ -21,6 +21,18 @@ from test_data_access import (
     test_cache_validator_detects_damage_after_first_slice,
     test_cache_validator_rejects_consistent_but_noncanonical_config_hash,
 )
+from test_development_core import (
+    test_balanced_library_is_stratum_balanced_reproducible_and_leak_free,
+    test_binary_metrics_are_tie_aware_and_match_hand_computation,
+    test_deterministic_full_svd_pca_is_library_only_and_sign_frozen,
+    test_exhaustive_matcher_matches_direct_all_pair_distances_and_chunks,
+    test_fold_completion_hashes_reject_corrupted_artifact,
+    test_high_dimensional_matcher_has_exact_self_distance_and_duplicate_tie,
+    test_bootstrap_point_estimate_equals_reported_family_timeslice_macro_delta,
+    test_completed_report_is_immutable,
+    test_timeslice_coverage_rejects_missing_cartesian_key,
+    test_frozen_development_config_rejects_sealed_confirmation_access,
+)
 from test_integration import (
     test_multiscale_zero_flow_returns_frozen_7x32_contract_and_physical_scale,
     test_rk4_constant_velocity_matches_analytic_cross_primitive,
@@ -51,6 +63,13 @@ from test_scales import (
     test_scale_table_rejects_insufficient_integration_steps,
     test_scale_table_rejects_duplicate_numeric_tuple,
 )
+from test_visualization import (
+    test_confusion_masks_are_mutually_exclusive_and_exhaustive,
+    test_scene_validation_rejects_invalid_shapes_and_mismatched_seed_copies,
+    test_triptych_uses_positive_reference_seeds_when_ivd_points_are_absent,
+    test_triptych_renders_audited_ivd_isosurface_without_fallback,
+    test_triptych_writes_png_counts_and_identical_camera_metadata,
+)
 
 
 TESTS = (
@@ -59,6 +78,16 @@ TESTS = (
     test_descriptor_metadata_and_width_are_frozen,
     test_frozen_descriptor_rejects_wrong_tensor_contract,
     test_default_numeric_recipe_matches_legacy_task5_cache_encoder,
+    test_binary_metrics_are_tie_aware_and_match_hand_computation,
+    test_exhaustive_matcher_matches_direct_all_pair_distances_and_chunks,
+    test_fold_completion_hashes_reject_corrupted_artifact,
+    test_high_dimensional_matcher_has_exact_self_distance_and_duplicate_tie,
+    test_bootstrap_point_estimate_equals_reported_family_timeslice_macro_delta,
+    test_completed_report_is_immutable,
+    test_timeslice_coverage_rejects_missing_cartesian_key,
+    test_deterministic_full_svd_pca_is_library_only_and_sign_frozen,
+    test_balanced_library_is_stratum_balanced_reproducible_and_leak_free,
+    test_frozen_development_config_rejects_sealed_confirmation_access,
     test_cache_validator_checks_every_slice_and_full_contract,
     test_cache_validator_detects_damage_after_first_slice,
     test_cache_validator_rejects_consistent_but_noncanonical_config_hash,
@@ -82,6 +111,11 @@ TESTS = (
     test_frozen_scale_sets_are_valid_and_disjoint,
     test_scale_table_rejects_insufficient_integration_steps,
     test_scale_table_rejects_duplicate_numeric_tuple,
+    test_triptych_writes_png_counts_and_identical_camera_metadata,
+    test_triptych_uses_positive_reference_seeds_when_ivd_points_are_absent,
+    test_triptych_renders_audited_ivd_isosurface_without_fallback,
+    test_scene_validation_rejects_invalid_shapes_and_mismatched_seed_copies,
+    test_confusion_masks_are_mutually_exclusive_and_exhaustive,
 )
 
 

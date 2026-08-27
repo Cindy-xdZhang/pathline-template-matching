@@ -5,7 +5,7 @@
 - FMT 本地仓库：`C:\Users\xingdi\sources\FMT`
 - 最终审计时本地 HEAD：`3e5ac058af5a1bb155846542bb2035dfd300a020`
 - 最终审计时 `origin/main`：`7fc17c42949160010c0bdaf19a00abecbafabd86`
-- 审计期间 FMT HEAD 从 `1f486c39fcedef5f384f3060b30ae28047385bba` 前进到上述 commit；下表源文件内容 hash 在最终复核时稳定、tracked 且相对最终 HEAD clean。
+- 核心迁移审计期间 FMT HEAD 从 `1f486c39fcedef5f384f3060b30ae28047385bba` 前进到上述 commit；下表核心源文件内容 hash 在该次最终复核时稳定、tracked 且 clean。三联图参考发生在后续工作树 HEAD `4ba009ccd9cb604019aeb830591e6c54e2c7742a`，两份视觉源文件当时均未跟踪；其 hash 和“无来源提交”状态在表中单独标明，不能与核心基线 HEAD 混写。
 - FMT 工作树另有用户改动；本项目未修改、清理或提交它们。
 
 ## 代码映射
@@ -21,15 +21,21 @@
 | `FLowUtils/ScalarField3d.py` | `cae0e07cd9071a6173a7dbeec2eddfb73823c8752435fa9df1cb13f46a969622` | `5cba739502313ca33d1d8374d9de0487c892ae98` | `ivd.py` | 只抽取 signed curl 与 whole-loaded-volume IVD；不带 Lambda-2、marching cubes 和绘图 |
 | `config/mainExp_Task5_3D_1.1.yaml` | `620a67fca986ddfc1d427158994c3cb85e7d04eab50aaa23c9d1db9807b3b735` | `a01d0576e7edff3ff5e949f06baa8e39eec749f6` | `config/mainExp_TemplateMatching_1.1.yaml` | 复制 18/6/9 个尺度 tuple；重新定义 retrieval 角色 |
 | `Build_Task5_Multiscale_Cache.py` | `a6824df66840871d15df187c7da4bf00758a46847a391b571b8270fb541d45f3` | `a01d0576e7edff3ff5e949f06baa8e39eec749f6` | provenance/data validator 参考 | 该源在编码处硬编码 `neighbor_weight=1, neighbor_scale=1`；新 wrapper 与其一致，正式 builder 尚未实现 |
+| `Visualize_Task1_3D_Horizontal.py` | `776527b2d25649cda290104f2100cff639a6e30ba57bfb300f46be5d3d311602` | 无；2026-08-27 审计时为 FMT 未跟踪文件，FMT 工作树 HEAD `4ba009ccd9cb604019aeb830591e6c54e2c7742a` 只提供上下文、不是其来源提交 | `visualization.py` | 重写横向 21×5 三栏、共享正交相机；不复制旧预测/K-Means/cache 路径 |
+| `Visualize_Task1_3D_PaperCandidates.py` | `5953b41166c626659fba73b25968bbad04186917686d1190c5da306a227c3410` | 无；2026-08-27 审计时为 FMT 未跟踪文件，FMT 工作树 HEAD 同上仅提供上下文 | `visualization.py`, `development_report.py` | 重写语义配色、IVD/pathline、binary assignment、TP/FP/FN/TN 层；当前 prediction 来自 exact 1NN，IVD-p95 mesh 由本项目 loader/IVD 与 scikit-image Marching Cubes 重建 |
 
 本项目新写的 `encoder.py`、`library.py`、`data_access.py`、dataset registry 和文档不在 FMT 中存在，不能标成逐字复制。只有 `fmt_descriptor.py` 是逐字复制文件。
+
+`config/mainExp_TemplateMatching_1.1_development.yaml` 及其 development-only retrieval、统计和三联图协议也是本项目新定义，不存在于 FMT。该配置只消费旧 Task5 cache 中已有的 `raw_features`、`fmt_features`、`reference`、`seeds`、`scale_id` 和 metadata；它不把历史 cache 重新解释为 sealed confirmation，也不声称重新积分了 Ibex 上缺失的 raw fields。
+
+本项目的 `development_data.py`、`development_library.py`、`development_experiment.py`、`development_report.py`、`matcher.py`、`metrics.py`、`pca.py` 和 `visualization.py` 均为新写代码，不是 FMT 文件逐字复制。上表最后两行记录的是视觉语义、固定相机和配色的参考来源；两个源文件没有 Git commit，不能用 FMT HEAD 冒充来源版本。当前尚无 `mainExp_TemplateMatching_1.1` development 性能结果。
 
 ## 明确排除的实现
 
 - `FMT_Utils/FMT_encoder.py`：含 Batch Normalization affine/running statistics；启用 temporal Discrete Fourier Transform 时还有 `torch.nn.Parameter`，不符合严格无可训练参数要求。
 - `FMT_Utils/DCT_FMT_encoder.py`：只使用二维 `(x,y)`，不进入三维主路线。
 - `Task5FeatureRecipes_3D.py` 的 44D kinematic recipe：用当前 batch 的平均涡量，同一 query 会随 batch 组成改变。
-- FMT 的 2D/PyCUDA/绘图/marching-cubes 代码：与首版检索核心无关，未迁移。
+- FMT 的 2D、PyCUDA、旧 K-Means/prediction pipeline、hard-coded raw/cache 路径和 marching-cubes 代码：未迁移。只重写了上表明确记录的三栏视觉语义、相机和配色。
 
 ## FMT 结论的允许引用范围
 

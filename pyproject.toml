@@ -9,10 +9,13 @@ description = "Training-free FMT descriptors and template-library retrieval for 
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+  "matplotlib>=3.10,<4",
   "netCDF4>=1.7,<2",
   "numba>=0.61,<1",
-  "numpy>=1.26,<3",
+  "numpy>=1.26,<2.3",
   "PyYAML>=6,<7",
+  "scikit-image>=0.25,<1",
+  "tifffile>=2022.8.12,<2025",
   "torch>=2.6,<3",
 ]
 

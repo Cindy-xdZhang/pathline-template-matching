@@ -1,6 +1,6 @@
 # mainExp_TemplateMatching_1.1：3D FMT 特征库最近邻基线
 
-状态：**基线方法参数已预注册；完整主实验尚未冻结，尚无性能结果**。配置为 `config/mainExp_TemplateMatching_1.1.yaml`。
+状态：**基线方法参数已预注册；cache-backed development 协议已冻结但尚未运行；formal confirmation 仍被禁止，尚无性能结果**。基础方法配置为 `config/mainExp_TemplateMatching_1.1.yaml`，development 运行配置为 `config/mainExp_TemplateMatching_1.1_development.yaml`。
 
 ## 研究问题
 
@@ -41,20 +41,48 @@ Raw-PCA 控制维数效应；若没有它，最多只能写“161D FMT 优于当
 
 主要指标为 Average Precision 和 F1；另报 Area Under the Receiver Operating Characteristic Curve、precision、recall、balanced accuracy。必须分开报告 seen-scale 与 unseen-scale 的逐 flow、dataset macro、physical-family macro、逐 tuple，并以 source timeslice 为配对 bootstrap 单位给出 95% confidence interval。
 
-只有 development 与 sealed confirmation 的 family-macro F1、Average Precision 都高于两项 Raw 对照，才能描述点估计改善。是否还要求 paired 95% confidence interval 的差值下界大于 0，尚待用户在首个性能 job 前决定；决定前结果只能作描述性报告。任一 flow 或 scale 反例必须列出。
+本 development 运行把 `dataset macro` 固定为10个逐-flow pooled-query 指标的算术平均；`physical-family macro` 固定为先在每个 family 内对 source-timeslice 指标做宏平均、再对7个 family 做宏平均。成对 bootstrap 重采样同一个 source-timeslice block，因此其点估计和置信区间与主表的 physical-family macro 是同一个估计量；另在 `per_family.csv` 保留 pooled-query family 指标，二者不得混写。
+
+只有 development 与 sealed confirmation 的 family-macro F1、Average Precision 都高于两项 Raw 对照，才能描述点估计改善。是否还要求 paired 95% confidence interval 的差值下界大于 0，尚待用户在首次 sealed-confirmation performance job 前决定；决定前 development 结果只能作描述性报告。任一 flow 或 scale 反例必须列出。
 
 结论不得推广到连续任意尺度、不同重采样、2D primitive、六邻居独立距离或不同标签。
 
-## 完整冻结前缺口
+## Cache-backed development 运行冻结
 
-已完成：精简 3D RK4 integrator、7-line 构造、rounded-index 重采样及解析流测试。
+本版本的 development phase 只读取已暴露旧 Task5 cache，不从 raw field 重算 primitive，也不重算或替换主指标标签。三联图可从 raw field 重建 IVD-p95，但只用于 fail-closed 一致性审计和等值面绘制：
+
+- 旧 development ordinals `0–3`：非留出 family 建库，留出 family 作 seen-scale query；
+- 旧 development ordinals `4–5`：禁止进入主指标；
+- 旧 historical confirmation ordinals `0–3`：只作 exposed-development unseen-scale query；
+- 主指标标签来源固定为 cache `reference`；raw IVD 审计不替换该标签；
+- 七个 physical family leave-one-out；四臂固定为 constant prior、Raw672 exhaustive 1NN、library-only Raw-PCA161 exhaustive 1NN、FMT161 exhaustive 1NN；
+- bootstrap 固定 seed `25068`、5000次，按 physical family 分层，并以 source timeslice 成对重采样；95% 区间使用 percentile interval，NumPy percentile method 固定为 `linear`；
+- 结果状态固定为 `descriptive_only_pending_user_ci_decision`；
+- sealed confirmation access 固定为 `forbidden`；
+- 输出根目录固定为 `outputs/mainExp_TemplateMatching_1.1_development`。
+
+Development job 只允许在 legacy-cache validator/input manifest、development leave-one-family-out evaluator、Raw-PCA、审计计数、bootstrap 和绘图流程实现并测试后提交。Seed-time IVD 插值不是本 cache-backed phase 的前置条件，因为主指标标签不重算；它仍是 raw-field 重新建库和 formal confirmation 的前置条件。
+
+## Development 表格与三联图
+
+机器结果必须至少输出 input manifest、audit counts、逐 query/timeslice/flow/family/scale 表、bootstrap difference 和主表；seen-scale 与 unseen-scale 必须分开。当前没有任何结果文件或数值。
+
+每个数据集分别生成 seen-scale 与 unseen-scale 图，固定 source ordinal `2` 并覆盖全部 scale tuple，不按任何指标选图。三栏固定为：
+
+1. IVD-p95 reference + cached center pathlines；raw field 可访问时叠加 whole-loaded-volume IVD-p95 isosurface，否则明确写 `seed-reference fallback`；
+2. FMT exact-1NN vortex/non-vortex class assignment，禁止写 KMeans；
+3. FMT TP/FP/FN/TN，TN 可淡化。
+
+每张图使用 deterministic stratified maximin、seed `15068` 选择240条中心线，三栏共享相同 seed IDs、camera 和 physical bounds。Raw-PCA 必须进入表格，可另做独立比较图，但不进入该三联图。
+
+## Formal confirmation 前缺口
+
+已完成：精简 3D RK4 integrator、7-line 构造、rounded-index 重采样及解析流测试；development 部署协议已经冻结但尚未执行。
 
 仍必须完成并单独验证：
 
-1. seed-time IVD 插值、正式 library builder、cache schema 和 manifest；
-2. leave-one-family-out evaluator、Raw-PCA 与 timeslice bootstrap；
-3. `scale × class` assigned/valid/selected/invalid 审计；
-4. sealed confirmation family 清单与 first-read gate；
-5. 用户决定置信区间结论规则。
+1. seed-time IVD 插值与面向新 raw field 的正式端到端 builder；
+2. sealed confirmation family 清单、文件 hash、冻结 commit、manifest 与 first-read gate；
+3. 用户在首次 sealed performance job 前决定置信区间结论规则。
 
-这些缺口完成前，config 状态不得改为 full frozen，也不得提交性能主实验。
+这些缺口完成前，config 状态不得改为 full frozen，也不得提交 formal confirmation job。Cache-backed development job 完成后仍只能登记为 development evidence，不能把整个 `mainExp_TemplateMatching_1.1` 标成已完成。

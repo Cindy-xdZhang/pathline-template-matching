@@ -23,7 +23,7 @@ source /home/zhanx0o/anaconda3/etc/profile.d/conda.sh
 conda activate deepvortex
 ```
 
-只读审计实测：Python `3.12.9`、NumPy `1.26.4`、PyTorch `2.6.0+cu118`、netCDF4 `1.7.2`、Numba `0.61.2`、PyYAML `6.0.2`。登录节点 `torch.cuda.is_available() == False` 正常；GPU 必须在 Slurm 分配节点内验证。
+只读审计实测：Python `3.12.9`、NumPy `1.26.4`、PyTorch `2.6.0+cu118`、netCDF4 `1.7.2`、Numba `0.61.2`、PyYAML `6.0.2`。为生成 IVD-p95 Marching Cubes 等值面，2026-08-27 在同一 `deepvortex` 环境安装并固定 `scikit-image 0.25.2`、`tifffile 2024.9.20`、`imageio 2.37.4`、`lazy-loader 0.5`。首次 pip 解析曾临时选择不兼容的 NumPy `2.4.6`；部署当次已恢复 NumPy `1.26.4` 并把 `tifffile` 固定到兼容版本，最终 `pip check` 返回 `No broken requirements found`。项目依赖同时限制 NumPy `<2.3` 和 tifffile `<2025`，防止再次解析到该冲突。登录节点 `torch.cuda.is_available() == False` 正常；GPU 必须在 Slurm 分配节点内验证。
 
 Slurm 为 `25.05.7`；`gpu4` 和 `debug` partitions 存在，`cuda/11.8` module 可用。任何 GPU 实验仍须在 job 内记录 `hostname` 和 `nvidia-smi`，不能由本清单推断实际设备。
 

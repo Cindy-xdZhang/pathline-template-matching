@@ -71,7 +71,7 @@ flowchart LR
   I --> J["标签 + 最近模板 metadata + distance margin"]
 ```
 
-已预注册的方法参数位于 [config/mainExp_TemplateMatching_1.1.yaml](../config/mainExp_TemplateMatching_1.1.yaml)。完整主实验尚未冻结，因为 sealed confirmation manifest、builder、evaluator 与置信区间结论规则仍缺失。
+基础方法参数位于 [config/mainExp_TemplateMatching_1.1.yaml](../config/mainExp_TemplateMatching_1.1.yaml)；已暴露旧 Task5 cache 的 development 运行协议位于 [config/mainExp_TemplateMatching_1.1_development.yaml](../config/mainExp_TemplateMatching_1.1_development.yaml)。Development evaluator、统计汇总和三联图已经实现；完整主实验仍未冻结，因为新的 sealed confirmation manifest、raw-field builder 和置信区间结论规则仍缺失。
 
 - 模板库在每个 `flow × source time × scale tuple` 取 `m=min(512,n_positive,n_negative)` 个正类和负类；任一类为空则失败并登记。
 - 标准化的均值和标准差只从 library feature 拟合；query 不得更新它们。
@@ -111,13 +111,15 @@ flowchart LR
 - whole-loaded-volume IVD；
 - 精简后的三维 RK4、7-line primitive 构造和 rounded-index `7×32×4=(x,y,z,t)` 重采样；FMT view 为前三通道 `7×32×3`，并通过常速度解析解与零速度多尺度测试；
 - library-only standardization、精确 1NN、class-distance margin、无 pickle 保存；
+- cache-backed 七个 physical family leave-one-out evaluator、四方法对照、逐 query/timeslice/flow/family/scale 表、成对 bootstrap、反例表和哈希链；
+- 每个 flow 的 seen/unseen-scale 三联图：IVD-p95+pathlines、FMT template class assignment、TP/FP/FN/TN；
 - Ibex 原始数据与旧 Task5 cache 的区分验证脚本。
 
-尚未实现，因此不能宣称已完成主实验：
+尚未实现，因此即使 cache-backed development job 完成，也不能宣称已完成 formal confirmation 或整个主实验：
 
-- 从 registry 批量建库的正式 builder；
-- seed-time IVD 插值与 cache manifest；
-- leave-one-family-out evaluator 和统计汇总；
+- 面向新 raw flow 的正式 primitive/cache builder；
+- seed-time IVD 插值；
+- sealed confirmation manifest、first-read gate 和 evaluator gate；
 - 新 flow family 的 sealed confirmation 数据。
 
 这些应按 [experiment_log.md](experiment_log.md) 中的版本顺序实施，不能直接在旧 confirmation 上调参。
