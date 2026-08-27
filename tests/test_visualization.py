@@ -4,6 +4,7 @@ from pathlib import Path
 import struct
 import tempfile
 
+from matplotlib import image as mpl_image
 import numpy as np
 
 from pathline_template_matching.visualization import (
@@ -70,6 +71,9 @@ def test_triptych_writes_png_counts_and_identical_camera_metadata():
         assert path == output
         assert path.exists()
         assert _png_dimensions(path) == (21 * 24, 5 * 24)
+        pixels = mpl_image.imread(path)
+        assert np.all(pixels[0, :, :3] >= 0.99)
+        assert metadata["layout"]["top_margin_fraction"] == 0.08
         assert metadata["panel_order"][1] == "FMT exact-1NN class assignment"
         assert metadata["prediction_semantics"] == (
             "precomputed FMT exact-1NN binary assignment"

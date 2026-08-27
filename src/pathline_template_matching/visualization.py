@@ -28,7 +28,8 @@ DEFAULT_VIEW = (22.0, -58.0)
 IVD_PERCENTILE = 95.0
 OUTER_MARGIN = 0.001
 PANEL_GAP = 0.0
-VERTICAL_MARGIN = 0.01
+BOTTOM_MARGIN = 0.01
+TOP_MARGIN = 0.08
 PANEL_ZOOM = 1.12
 
 COLORS = {
@@ -229,11 +230,11 @@ def confusion_masks(reference: object, prediction: object) -> dict[str, np.ndarr
 def _new_horizontal_figure():
     figure = plt.figure(figsize=FIGURE_SIZE_INCHES, facecolor="white")
     panel_width = (1.0 - 2.0 * OUTER_MARGIN - 2.0 * PANEL_GAP) / 3.0
-    panel_height = 1.0 - 2.0 * VERTICAL_MARGIN
+    panel_height = 1.0 - BOTTOM_MARGIN - TOP_MARGIN
     axes = []
     for panel_index in range(3):
         left = OUTER_MARGIN + panel_index * (panel_width + PANEL_GAP)
-        rectangle = (left, VERTICAL_MARGIN, panel_width, panel_height)
+        rectangle = (left, BOTTOM_MARGIN, panel_width, panel_height)
         axes.append(figure.add_axes(rectangle, projection="3d"))
     return figure, axes
 
@@ -493,7 +494,7 @@ def render_template_matching_triptych(
 
         figure.text(
             0.5,
-            0.995,
+            0.98,
             f"{validated.title} | {validated.regime} | source ordinal "
             f"{validated.source_ordinal} | development-only exposed cache",
             ha="center",
@@ -538,6 +539,13 @@ def render_template_matching_triptych(
         "image": str(path),
         "figure_size_inches": list(FIGURE_SIZE_INCHES),
         "dpi": dpi,
+        "layout": {
+            "outer_margin_fraction": OUTER_MARGIN,
+            "panel_gap_fraction": PANEL_GAP,
+            "bottom_margin_fraction": BOTTOM_MARGIN,
+            "top_margin_fraction": TOP_MARGIN,
+            "header_y_fraction": 0.98,
+        },
         "panel_order": list(PANEL_TITLES),
         "prediction_semantics": "precomputed FMT exact-1NN binary assignment",
         "visual_encoding": {
