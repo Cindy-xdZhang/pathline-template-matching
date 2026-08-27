@@ -1,6 +1,8 @@
 # mainExp_TemplateMatching_1.1：3D FMT 特征库最近邻基线
 
-状态：**基线方法参数已预注册；cache-backed development 协议已冻结但尚未运行；formal confirmation 仍被禁止，尚无性能结果**。基础方法配置为 `config/mainExp_TemplateMatching_1.1.yaml`，development 运行配置为 `config/mainExp_TemplateMatching_1.1_development.yaml`。
+状态：**cache-backed development 已在任何性能指标产生前 fail closed；formal confirmation 仍被禁止，尚无性能结果**。基础方法配置为 `config/mainExp_TemplateMatching_1.1.yaml`，development 运行配置为 `config/mainExp_TemplateMatching_1.1_development.yaml`。
+
+2026-08-27 的 Ibex job `50930751`（commit `ccc34bae4d9e683ab01b742aac6b817feb64c1ae`）在首折建库发现 `channel/ordinal0/lib_o025_d0125_n48` 只有 228 个 negative、0 个 positive。1.1 冻结规则要求任一空类 stratum 失败，因此作业在指标计算前以 exit `1:0` 结束；该结果只证明 1.1 的建库规则不能直接用于现有 cache，不提供任何方法性能结论。1.1 不得原地修改，后续处理必须使用新版本并保留本失败记录。
 
 ## 研究问题
 
