@@ -71,12 +71,12 @@ flowchart LR
   I --> J["标签 + 最近模板 metadata + distance margin"]
 ```
 
-基础方法参数位于 [config/mainExp_TemplateMatching_1.1.yaml](../config/mainExp_TemplateMatching_1.1.yaml)；已暴露旧 Task5 cache 的 development 运行协议位于 [config/mainExp_TemplateMatching_1.1_development.yaml](../config/mainExp_TemplateMatching_1.1_development.yaml)。Development evaluator、统计汇总和三联图已经实现；完整主实验仍未冻结，因为新的 sealed confirmation manifest、raw-field builder 和置信区间结论规则仍缺失。
+基础 descriptor/scale 参数位于 [config/mainExp_TemplateMatching_1.1.yaml](../config/mainExp_TemplateMatching_1.1.yaml)。1.1 development 因一个 library stratum 缺正类而在指标前 fail closed；记录见 [1.1 文档](mainExp_TemplateMatching_1.1.md)。当前 cache-backed 协议是 [mainExp_TemplateMatching_1.2](mainExp_TemplateMatching_1.2.md)：空类 stratum 两类模板都跳过并审计，其余方法不变。Development evaluator、统计汇总和三联图已经实现；完整主实验仍未冻结，因为新的 sealed confirmation manifest、raw-field builder 和置信区间结论规则仍缺失。
 
-- 模板库在每个 `flow × source time × scale tuple` 取 `m=min(512,n_positive,n_negative)` 个正类和负类；任一类为空则失败并登记。
+- 模板库在每个 `flow × source time × scale tuple` 取 `m=min(512,n_positive,n_negative)` 个正类和负类。1.1 的规则是任一类为空则失败；当前 1.2 规则是两类都选择0个模板并登记，query、Raw-PCA 拟合候选和 constant prior 候选不因此删除。
 - 标准化的均值和标准差只从 library feature 拟合；query 不得更新它们。
 - 匹配器是精确欧氏一最近邻。二分类连续分数为 `最近负类距离 − 最近正类距离`；分数大于零等价于最近模板属于正类。
-- 1.1 不启用 unknown/reject threshold。拒识属于后续独立版本。
+- 1.1/1.2 不启用 unknown/reject threshold。拒识属于后续独立版本。
 - 主对照包含 672 维 centered Raw、只在 library 拟合的 161 维 Raw-PCA、161 维 FMT，以及只用未平衡 library 候选标签比例的常数 prior。所有检索对照使用各自 library-only preprocessing 和相同 exact one-nearest-neighbor。
 
 ## 5. 数据拆分与证据等级

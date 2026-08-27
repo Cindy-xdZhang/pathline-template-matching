@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run or finalize mainExp_TemplateMatching_1.1 development evidence."""
+"""Run or finalize the current cache-backed template-matching development evidence."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from pathline_template_matching.development_experiment import run_all_folds
 from pathline_template_matching.development_report import finalize_development_run
 
 
-DEFAULT_CONFIG = ROOT / "config/mainExp_TemplateMatching_1.1_development.yaml"
+DEFAULT_CONFIG = ROOT / "config/mainExp_TemplateMatching_1.2_development.yaml"
 
 
 def main() -> None:

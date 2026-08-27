@@ -53,7 +53,11 @@ def canonical_json_sha256(value: Any) -> str:
 def load_development_config(path: str | Path) -> dict[str, Any]:
     config_path = Path(path)
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    if config.get("experiment") != "mainExp_TemplateMatching_1.1":
+    experiment = config.get("experiment")
+    if experiment not in {
+        "mainExp_TemplateMatching_1.1",
+        "mainExp_TemplateMatching_1.2",
+    }:
         raise ValueError("development config has an unexpected experiment ID")
     if config.get("phase") != "development_cache_backed":
         raise ValueError("only the frozen cache-backed development phase is supported")
@@ -80,6 +84,15 @@ def load_development_config(path: str | Path) -> dict[str, Any]:
         "main_metric_access"
     ) != "forbidden":
         raise ValueError("descriptor-selection-only ordinals are not sealed from main metrics")
+    expected_empty_action = (
+        "fail_and_report_stratum"
+        if experiment == "mainExp_TemplateMatching_1.1"
+        else "skip_both_classes_and_audit"
+    )
+    if config.get("library", {}).get("empty_class_action") != expected_empty_action:
+        raise ValueError(
+            f"{experiment} requires empty_class_action={expected_empty_action}"
+        )
     return config
 
 

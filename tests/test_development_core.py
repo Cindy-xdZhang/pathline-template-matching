@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 import tempfile
 
@@ -319,7 +320,44 @@ def test_balanced_library_is_stratum_balanced_reproducible_and_leak_free():
     assert np.array_equal(first.raw_features, second.raw_features)
     assert first.rows == second.rows
     assert all(row["physical_family"] != "held_family" for row in first.rows)
-    assert len(first.audit_rows) == 8
+    # One aggregate plus two class rows per slice×scale stratum.
+    assert len(first.audit_rows) == 12
+
+
+def test_empty_class_library_stratum_policy_is_versioned_and_audited():
+    record = _cache_slice("flow_a", 0)
+    reference = record.reference.copy()
+    reference[record.scale_id == 0] = False
+    empty = replace(record, reference=reference)
+    try:
+        build_balanced_library(
+            [empty],
+            held_out_family="held_family",
+            maximum_per_class_per_stratum=3,
+            random_seed=15068,
+            empty_class_action="fail_and_report_stratum",
+        )
+    except RuntimeError as error:
+        assert "empty class" in str(error)
+    else:
+        raise AssertionError("1.1 empty-class failure policy did not fail closed")
+    library = build_balanced_library(
+        [empty],
+        held_out_family="held_family",
+        maximum_per_class_per_stratum=3,
+        random_seed=15068,
+        empty_class_action="skip_both_classes_and_audit",
+    )
+    assert library.skipped_stratum_count == 1
+    assert library.skipped_candidate_count == 8
+    assert len(library.labels) == 6
+    assert int(library.labels.sum()) == 3
+    skipped = [
+        row for row in library.audit_rows if row["stratum_status"] == "skipped_empty_class"
+    ]
+    assert len(skipped) == 3
+    assert {row["class_label"] for row in skipped} == {"all", 0, 1}
+    assert sum(int(row["selected_count"]) for row in skipped if row["class_label"] != "all") == 0
 
 
 def test_frozen_development_config_rejects_sealed_confirmation_access():
@@ -328,3 +366,8 @@ def test_frozen_development_config_rejects_sealed_confirmation_access():
     assert config["evidence_scope"]["sealed_confirmation_access"] == "forbidden"
     assert config["split"]["descriptor_selection_only"]["main_metric_access"] == "forbidden"
     assert len(config["physical_families"]) == 7
+    revised = load_development_config(
+        ROOT / "config" / "mainExp_TemplateMatching_1.2_development.yaml"
+    )
+    assert revised["experiment"] == "mainExp_TemplateMatching_1.2"
+    assert revised["library"]["empty_class_action"] == "skip_both_classes_and_audit"

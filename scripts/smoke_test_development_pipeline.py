@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 from pathlib import Path
 import sys
@@ -33,10 +34,13 @@ def _cache(
     scale_set: str,
     config_sha256: str,
     seed: int,
+    empty_first_scale: bool = False,
 ) -> None:
     rng = np.random.default_rng(seed)
     scale_id = np.repeat(np.arange(len(scales), dtype=np.int16), 4)
     reference = np.tile(np.asarray([False, False, False, True]), len(scales))
+    if empty_first_scale:
+        reference[:4] = False
     count = len(reference)
     seeds = rng.uniform(-1.0, 1.0, size=(count, 3)).astype(np.float32)
     raw = rng.normal(size=(count, 672)).astype(np.float32)
@@ -88,7 +92,7 @@ def _cache(
 
 def run() -> None:
     development = yaml.safe_load(
-        (ROOT / "config/mainExp_TemplateMatching_1.1_development.yaml").read_text(
+        (ROOT / "config/mainExp_TemplateMatching_1.2_development.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -129,6 +133,7 @@ def run() -> None:
                         scale_set="train" if ordinal < 4 else "validation",
                         config_sha256=config_digest,
                         seed=counter,
+                        empty_first_scale=(dataset == "channel" and ordinal == 0),
                     )
                     counter += 1
                 for ordinal in range(4):
@@ -212,6 +217,18 @@ def run() -> None:
                 fold_manifest["pca"]["sample_count"]
                 > fold_manifest["balanced_library_count"]
             )
+            expected_skipped = 0 if family == "channel" else 1
+            assert fold_manifest["skipped_library_stratum_count"] == expected_skipped
+            assert fold_manifest["skipped_library_candidate_count"] == 4 * expected_skipped
+            with (run_dir / "folds" / family / "audit_counts.csv").open(
+                encoding="utf-8", newline=""
+            ) as source:
+                audit = list(csv.DictReader(source))
+            skipped_rows = [
+                row for row in audit if row.get("stratum_status") == "skipped_empty_class"
+            ]
+            assert len(skipped_rows) == 3 * expected_skipped
+            assert sum(int(row["selected_count"]) for row in skipped_rows) == 0
         result = finalize_development_run(
             development_path,
             run_dir,
@@ -222,9 +239,16 @@ def run() -> None:
         assert result["fold_count"] == 7
         assert result["triptych_count"] == 20
         assert len(result["folds"]) == 7
+        for fold in result["folds"]:
+            expected_skipped = 0 if fold["held_out_family"] == "channel" else 1
+            assert fold["skipped_library_stratum_count"] == expected_skipped
+            assert fold["skipped_library_candidate_count"] == 4 * expected_skipped
         assert len(result["visualization_artifacts"]) == 20
         assert (run_dir / "main_table.csv").is_file()
         assert (run_dir / "figures/visualization_manifest.json").is_file()
+        report = (run_dir / "development_report.md").read_text(encoding="utf-8")
+        assert "## Library construction audit" in report
+        assert "| channel |" in report
         try:
             finalize_development_run(
                 development_path,

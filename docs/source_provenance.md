@@ -26,9 +26,9 @@
 
 本项目新写的 `encoder.py`、`library.py`、`data_access.py`、dataset registry 和文档不在 FMT 中存在，不能标成逐字复制。只有 `fmt_descriptor.py` 是逐字复制文件。
 
-`config/mainExp_TemplateMatching_1.1_development.yaml` 及其 development-only retrieval、统计和三联图协议也是本项目新定义，不存在于 FMT。该配置只消费旧 Task5 cache 中已有的 `raw_features`、`fmt_features`、`reference`、`seeds`、`scale_id` 和 metadata；它不把历史 cache 重新解释为 sealed confirmation，也不声称重新积分了 Ibex 上缺失的 raw fields。
+`config/mainExp_TemplateMatching_1.1_development.yaml` 及其 1.2 空类-stratum 修订、development-only retrieval、统计和三联图协议都是本项目新定义，不存在于 FMT。它们只消费旧 Task5 cache 中已有的 `raw_features`、`fmt_features`、`reference`、`seeds`、`scale_id` 和 metadata；不把历史 cache 重新解释为 sealed confirmation，也不声称重新积分了 Ibex 上缺失的 raw fields。
 
-本项目的 `development_data.py`、`development_library.py`、`development_experiment.py`、`development_report.py`、`matcher.py`、`metrics.py`、`pca.py` 和 `visualization.py` 均为新写代码，不是 FMT 文件逐字复制。上表最后两行记录的是视觉语义、固定相机和配色的参考来源；两个源文件没有 Git commit，不能用 FMT HEAD 冒充来源版本。当前尚无 `mainExp_TemplateMatching_1.1` development 性能结果。
+本项目的 `development_data.py`、`development_library.py`、`development_experiment.py`、`development_report.py`、`matcher.py`、`metrics.py`、`pca.py` 和 `visualization.py` 均为新写代码，不是 FMT 文件逐字复制。上表最后两行记录的是视觉语义、固定相机和配色的参考来源；两个源文件没有 Git commit，不能用 FMT HEAD 冒充来源版本。1.1 在指标前失败；当前尚无 1.1/1.2 development 性能结果。
 
 ## 明确排除的实现
 

@@ -69,7 +69,7 @@ positive iff IVD(seed, seed_time) >= percentile95(IVD volume)
 4. 二分类 score 固定为 `d(nearest negative) − d(nearest positive)`；score 大于 0 判正类，完全等距的 0 固定判负类。
 5. top-k、distance weighting、feature block weighting 和 reject threshold 都属于需要 development-only 验证的新版本。
 6. 每条命中必须返回最近模板的 dataset、family、source time、seed、scale tuple、label 和距离，支持错误分析。
-7. 每格抽样数固定为 `m=min(512,n_positive,n_negative)`；任一类别为空则该格失败并登记，不能静默跳过。候选先按 source ordinal 和 seed index 稳定排序，再用冻结 seed 抽样。
+7. 每格抽样数固定为 `m=min(512,n_positive,n_negative)`；候选先按 source ordinal 和 seed index 稳定排序，再用冻结 seed 抽样。1.1 在任一类别为空时失败并登记；当前 1.2 必须按第11节将两类都选择0个模板并完整审计，不能只保留非空类或静默丢失证据。
 8. Library 和 query 必须携带由完整 encoder 参数计算的 descriptor ID；ID 不同即拒绝比较。
 
 ## 8. 指标与统计
@@ -111,3 +111,7 @@ Development 表格必须将 seen-scale 与 unseen-scale 分开，保留所有 fl
 每图固定显示240条中心线，使用 seed `15068` 的 deterministic stratified maximin 选择；三栏必须共享相同 seed、camera 和 physical bounds。Raw-PCA 必须进入表格，可另做独立比较图，但不进入用户指定三联图。
 
 该 development phase 不得访问任何 sealed confirmation 路径。若 development 结果促使 descriptor、library、normalization、distance、score、threshold、resampling 或数据拆分发生改变，必须创建新的 `mainExp_...` 版本后才能建立 formal confirmation manifest。
+
+## 11. `mainExp_TemplateMatching_1.2` 对 1.1 失败的冻结修订
+
+1.1 job `50930751` 在产生任何性能指标前发现一个 library stratum 缺 positive 并按协议失败。1.1 证据和配置保持不变。1.2 只把空类处理改为：若 `m=min(cap,n_negative,n_positive)=0`，该 `flow×source-time×scale` stratum 两类都选择0个模板，并在 audit/manifest 保留候选数、空类和跳过原因；不得只选择非空类。Query 仍保留全部 valid primitive。Raw-PCA 的无监督拟合和 constant prior 仍使用所有非留出 library-source rows，包括被跳过 stratum；三个 1NN arm 的 scaler 只使用实际平衡模板。其余拆分、方法、指标、bootstrap、三联图和 sealed-confirmation 禁令完全继承 1.1。

@@ -534,6 +534,7 @@ def evaluate_fold(
         held_out_family=held_out_family,
         maximum_per_class_per_stratum=maximum,
         random_seed=int(library_config["sampling_random_seed"]),
+        empty_class_action=str(library_config["empty_class_action"]),
     )
     eligible_pca_fit_features = np.ascontiguousarray(
         np.concatenate([record.raw_features for record in library_records]),
@@ -728,6 +729,8 @@ def evaluate_fold(
         "eligible_library_candidate_count": library.eligible_candidate_count,
         "eligible_library_positive_count": library.eligible_positive_count,
         "eligible_library_prior_positive_fraction": library.prior_positive_fraction,
+        "skipped_library_stratum_count": library.skipped_stratum_count,
+        "skipped_library_candidate_count": library.skipped_candidate_count,
         "balanced_library_count": len(library.labels),
         "balanced_library_positive_count": int(library.labels.sum()),
         "library_raw_sha256": _array_sha256(library.raw_features),

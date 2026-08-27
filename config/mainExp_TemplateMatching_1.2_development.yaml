@@ -1,0 +1,182 @@
+experiment: mainExp_TemplateMatching_1.2
+phase: development_cache_backed
+status: development_protocol_frozen_after_1.1_empty_stratum_failure_not_run
+base_config: config/mainExp_TemplateMatching_1.1.yaml
+inherited_unchanged_from: mainExp_TemplateMatching_1.1
+revision_reason: skip both classes in an empty-class library stratum instead of aborting the whole fold
+dataset_registry: config/datasets.yaml
+output_root: outputs/mainExp_TemplateMatching_1.2_development
+
+evidence_scope:
+  level: exposed_development_only
+  performance_results_exist: false
+  conclusion_mode: descriptive_only_pending_user_ci_decision
+  sealed_confirmation_access: forbidden
+  allowed_input: legacy_task5_cache_only
+
+label:
+  source: legacy_task5_cache.reference
+  name: whole_loaded_volume_ivd_p95
+  metric_label_recomputation_or_replacement: forbidden_in_this_phase
+  visualization_only_raw_ivd_audit: allowed_fail_closed_without_metric_label_replacement
+
+physical_families:
+  half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+  tangaroa: [tangaroa]
+  delta_wing: [deltaWing_resampled, deltaWing_LBM]
+  f22_raptor: [f22raptor]
+  channel: [channel]
+  boeing_747: [boeing747]
+  smoke_buoyancy: [smokeBuoyancy]
+
+split:
+  method: leave_one_physical_family_out
+  fold_count: 7
+  library_and_seen_scale_query:
+    legacy_cache_phase: development
+    source_ordinals: [0, 1, 2, 3]
+    scale_set: library
+    library_families: all_except_held_out_family
+    query_family: held_out_family
+  descriptor_selection_only:
+    legacy_cache_phase: development
+    source_ordinals: [4, 5]
+    main_metric_access: forbidden
+    allowed_use: Verify_versions_only
+  unseen_scale_query:
+    legacy_cache_phase: confirmation
+    historical_directory_name_only: true
+    evidence_scope: exposed_development_only
+    source_ordinals: [0, 1, 2, 3]
+    scale_set: unseen_scale_evaluation
+    library_source: library_and_seen_scale_query
+    query_family: held_out_family
+  leakage_guards:
+    - held_out physical family cannot contribute library rows
+    - development ordinals 4 and 5 cannot enter main metrics
+    - historical confirmation cache cannot be called sealed confirmation
+    - query rows cannot fit PCA, normalization, distance, threshold, or sampling
+
+library:
+  sampling: balanced_within_each_nonempty_flow_time_scale_stratum
+  maximum_templates_per_class_per_stratum: 512
+  selected_per_class_formula: min(512, available_positive, available_negative)
+  empty_class_action: skip_both_classes_and_audit
+  skipped_stratum_template_count: 0
+  skipped_stratum_still_contributes_to_unsupervised_pca_fit: true
+  skipped_stratum_still_contributes_to_constant_prior: true
+  candidate_order: stable_source_ordinal_then_seed_index
+  sampling_random_seed: 15068
+
+query_population:
+  selection: all_valid_primitives_in_held_out_family_and_evaluation_scale_set
+  label_balancing: disabled
+  downsampling: disabled
+  empty_class_strata: retained_in_query
+  required_audit: assigned_valid_invalid_natural_class_counts_and_skipped_library_strata
+
+methods:
+  - id: eligible_library_candidate_prior_constant_score
+    role: baseline
+    population: all_nonheld_library_source_rows_including_skipped_strata
+  - id: raw_centered_7x32x3_exact_1nn
+    feature_width: 672
+    preprocessing_fit_scope: selected_balanced_library_templates_only
+  - id: raw_centered_library_only_pca_161d_exact_1nn
+    feature_width: 161
+    pca_fit_scope: library_only_per_fold
+    pca_fit_population: all_nonheld_pre_balance_library_source_rows_including_skipped_strata
+    pca_solver: deterministic_full_svd
+    matcher_preprocessing_fit_scope: selected_balanced_library_templates_only
+  - id: fmt_independent_3d_161d_sha256_25fce29499c9089e_exact_1nn
+    feature_width: 161
+    descriptor_input: legacy_task5_cache.fmt_features
+    preprocessing_fit_scope: selected_balanced_library_templates_only
+
+matcher:
+  type: exact_one_nearest_neighbor
+  metric: euclidean
+  binary_score: distance_to_nearest_negative_minus_distance_to_nearest_positive
+  positive_rule: score_greater_than_zero
+  tie_rule: non_vortex
+  reject_rule: disabled
+
+execution:
+  matcher_arithmetic: float32
+  cuda_tensorfloat32: disabled
+  torch_deterministic_algorithms: enabled
+  cublas_workspace_config: ':4096:8'
+  query_chunk_size: 1024
+  library_chunk_size: 8192
+  preferred_device: cuda
+  fallback_device: cpu
+
+metrics:
+  primary: [average_precision, f1]
+  secondary: [auroc, precision, recall, balanced_accuracy]
+  aggregation: [per_timeslice, per_flow, dataset_macro, physical_family_macro, per_scale_tuple]
+  dataset_macro_definition: mean_of_per_flow_pooled_query_metrics
+  physical_family_macro_definition: mean_across_families_of_within_family_source_timeslice_macro_metrics
+  report_seen_and_unseen_scale_separately: true
+
+bootstrap:
+  seed: 25068
+  replicates: 5000
+  paired_unit: source_timeslice
+  paired_across_methods: true
+  stratify_by: physical_family
+  interval: percentile_95
+  numpy_percentile_method: linear
+  conclusion_mode: descriptive_only_pending_user_ci_decision
+
+required_outputs:
+  - input_manifest.json
+  - audit_counts.csv
+  - per_query.csv
+  - per_timeslice.csv
+  - per_flow.csv
+  - per_family.csv
+  - per_scale_tuple.csv
+  - bootstrap_differences.csv
+  - main_table.csv
+  - main_table.md
+  - counterexamples.csv
+  - development_report.md
+  - figures/visualization_manifest.json
+  - figures/method_comparison.png
+  - figures/fmt_minus_raw_pca_by_flow.png
+  - result_manifest.json
+
+visualization:
+  evidence_scope_label: development_only_exposed_legacy_task5_cache
+  datasets: all
+  regimes: [seen_scale, unseen_scale]
+  source_ordinal: 2
+  scale_tuples: all
+  metric_based_selection: forbidden
+  panels:
+    - id: reference_and_context
+      title: IVD-p95 reference + cached center pathlines
+      cached_center_pathlines: required
+      raw_field_overlay:
+        when_accessible: whole_loaded_volume_ivd_p95_isosurface
+        when_unavailable: clearly_mark_seed_reference_fallback
+    - id: fmt_class_assignment
+      title: FMT exact-1NN vortex/non-vortex class assignment
+      forbidden_terms: [KMeans, cluster]
+    - id: fmt_error_categories
+      title: FMT TP/FP/FN/TN
+      true_negative_style: de_emphasized
+  display_center_pathlines:
+    count: 240
+    selection: deterministic_stratified_maximin
+    seed: 15068
+    strata: [scale_tuple, reference_class]
+  shared_render_contract:
+    identical_seed_ids_across_panels: true
+    identical_camera_across_panels: true
+    identical_physical_bounds_across_panels: true
+  raw_pca:
+    include_in_triptych: false
+    required_in_tables: true
+    allowed_output: independent_comparison_figure

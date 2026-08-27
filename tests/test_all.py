@@ -30,6 +30,7 @@ from test_development_core import (
     test_high_dimensional_matcher_has_exact_self_distance_and_duplicate_tie,
     test_bootstrap_point_estimate_equals_reported_family_timeslice_macro_delta,
     test_completed_report_is_immutable,
+    test_empty_class_library_stratum_policy_is_versioned_and_audited,
     test_timeslice_coverage_rejects_missing_cartesian_key,
     test_frozen_development_config_rejects_sealed_confirmation_access,
 )
@@ -84,6 +85,7 @@ TESTS = (
     test_high_dimensional_matcher_has_exact_self_distance_and_duplicate_tie,
     test_bootstrap_point_estimate_equals_reported_family_timeslice_macro_delta,
     test_completed_report_is_immutable,
+    test_empty_class_library_stratum_policy_is_versioned_and_audited,
     test_timeslice_coverage_rejects_missing_cartesian_key,
     test_deterministic_full_svd_pca_is_library_only_and_sign_frozen,
     test_balanced_library_is_stratum_balanced_reproducible_and_leak_free,

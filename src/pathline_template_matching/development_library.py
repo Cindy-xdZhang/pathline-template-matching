@@ -23,6 +23,8 @@ class DevelopmentLibrary:
     eligible_candidate_count: int
     eligible_positive_count: int
     prior_positive_fraction: float
+    skipped_stratum_count: int
+    skipped_candidate_count: int
 
 
 def stable_selection_seed(base_seed: int, *identity: object) -> int:
@@ -51,12 +53,18 @@ def build_balanced_library(
     held_out_family: str,
     maximum_per_class_per_stratum: int,
     random_seed: int,
+    empty_class_action: str = "fail_and_report_stratum",
 ) -> DevelopmentLibrary:
     """Balance every flow×source-time×scale stratum independently."""
 
     maximum = int(maximum_per_class_per_stratum)
     if maximum < 1:
         raise ValueError("maximum templates per class per stratum must be positive")
+    if empty_class_action not in {
+        "fail_and_report_stratum",
+        "skip_both_classes_and_audit",
+    }:
+        raise ValueError(f"unsupported empty-class action {empty_class_action!r}")
     ordered = sorted(
         records,
         key=lambda item: (item.dataset, item.ordinal, str(item.path)),
@@ -75,6 +83,8 @@ def build_balanced_library(
     audit_rows: list[dict[str, Any]] = []
     eligible_count = 0
     eligible_positive = 0
+    skipped_strata = 0
+    skipped_candidates = 0
     for record in ordered:
         eligible_count += len(record.reference)
         eligible_positive += int(record.reference.sum())
@@ -96,11 +106,42 @@ def build_balanced_library(
                 len(class_candidates[1]),
             )
             if selected_count < 1:
-                raise RuntimeError(
-                    f"empty class in library stratum {record.dataset}/ordinal"
-                    f"{record.ordinal}/{scale_name}: negative={len(class_candidates[0])}, "
-                    f"positive={len(class_candidates[1])}"
-                )
+                if empty_class_action == "fail_and_report_stratum":
+                    raise RuntimeError(
+                        f"empty class in library stratum {record.dataset}/ordinal"
+                        f"{record.ordinal}/{scale_name}: negative={len(class_candidates[0])}, "
+                        f"positive={len(class_candidates[1])}"
+                    )
+                skipped_strata += 1
+                skipped_candidates += len(class_candidates[0]) + len(class_candidates[1])
+            stratum_status = (
+                "skipped_empty_class" if selected_count < 1 else "selected_balanced"
+            )
+            audit_rows.append(
+                {
+                    "population": "library",
+                    "held_out_family": held_out_family,
+                    "dataset": record.dataset,
+                    "physical_family": record.physical_family,
+                    "legacy_phase": record.legacy_phase,
+                    "source_ordinal": record.ordinal,
+                    "source_start_index": int(record.metadata["source_start_index"]),
+                    "source_time": float(record.metadata["source_time"]),
+                    "scale_id": int(scale_index),
+                    "scale_name": scale_name,
+                    "class_label": "all",
+                    "assigned_count": int(assigned_counts[scale_index]),
+                    "valid_count": int(valid_counts[scale_index]),
+                    "invalid_count": int(
+                        assigned_counts[scale_index] - valid_counts[scale_index]
+                    ),
+                    "candidate_count": int(scale_mask.sum()),
+                    "selected_count": int(2 * selected_count),
+                    "selection_seed": "",
+                    "stratum_status": stratum_status,
+                    "empty_class_action": empty_class_action,
+                }
+            )
             for class_id in (0, 1):
                 seed = stable_selection_seed(
                     random_seed,
@@ -112,9 +153,10 @@ def build_balanced_library(
                 selected = _sample_sorted(
                     class_candidates[class_id], selected_count, seed=seed
                 )
-                raw_blocks.append(record.raw_features[selected])
-                fmt_blocks.append(record.fmt_features[selected])
-                label_blocks.append(record.reference[selected])
+                if len(selected):
+                    raw_blocks.append(record.raw_features[selected])
+                    fmt_blocks.append(record.fmt_features[selected])
+                    label_blocks.append(record.reference[selected])
                 for local_index in selected:
                     metadata_rows.append(
                         {
@@ -148,16 +190,18 @@ def build_balanced_library(
                         "scale_id": int(scale_index),
                         "scale_name": scale_name,
                         "class_label": int(class_id),
-                        "assigned_count": int(assigned_counts[scale_index]),
-                        "valid_count": int(valid_counts[scale_index]),
-                        "invalid_count": int(
-                            assigned_counts[scale_index] - valid_counts[scale_index]
-                        ),
+                        "assigned_count": "",
+                        "valid_count": "",
+                        "invalid_count": "",
                         "candidate_count": len(class_candidates[class_id]),
                         "selected_count": int(selected_count),
                         "selection_seed": int(seed),
+                        "stratum_status": stratum_status,
+                        "empty_class_action": empty_class_action,
                     }
                 )
+    if not raw_blocks:
+        raise RuntimeError("every library stratum was skipped; no templates remain")
     raw = np.ascontiguousarray(np.concatenate(raw_blocks), dtype=np.float32)
     fmt = np.ascontiguousarray(np.concatenate(fmt_blocks), dtype=np.float32)
     labels = np.concatenate(label_blocks).astype(bool, copy=False)
@@ -174,6 +218,8 @@ def build_balanced_library(
         eligible_candidate_count=int(eligible_count),
         eligible_positive_count=int(eligible_positive),
         prior_positive_fraction=float(eligible_positive / eligible_count),
+        skipped_stratum_count=int(skipped_strata),
+        skipped_candidate_count=int(skipped_candidates),
     )
 
 

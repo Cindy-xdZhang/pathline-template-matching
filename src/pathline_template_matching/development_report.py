@@ -981,6 +981,7 @@ def _write_report_markdown(
     counterexamples: list[dict[str, Any]],
     input_manifest: dict[str, Any],
     figure_manifest: list[dict[str, Any]],
+    fold_evidence: list[dict[str, Any]],
 ) -> None:
     bootstrap_lines = [
         "| Regime | Metric | Comparator | FMT−Comparator | 95% CI |",
@@ -991,8 +992,19 @@ def _write_report_markdown(
             f"| {row['regime']} | {row['metric']} | {METHOD_LABELS[row['comparator']]} | "
             f"{row['point_estimate']:+.4f} | [{row['ci95_lower']:+.4f}, {row['ci95_upper']:+.4f}] |"
         )
+    library_lines = [
+        "| Held-out family | Eligible candidates | Balanced templates | Skipped empty-class strata | Candidates in skipped strata | Pre-balance positive prior |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for row in fold_evidence:
+        library_lines.append(
+            f"| {row['held_out_family']} | {row['eligible_library_candidate_count']:,} | "
+            f"{row['balanced_library_count']:,} | {row['skipped_library_stratum_count']:,} | "
+            f"{row['skipped_library_candidate_count']:,} | "
+            f"{row['eligible_library_prior_positive_fraction']:.6f} |"
+        )
     raw_count = sum(not item["fallback"]["used"] for item in figure_manifest)
-    text = f"""# mainExp_TemplateMatching_1.1 cache-backed development report
+    text = f"""# {input_manifest['experiment']} cache-backed development report
 
 状态：`DEVELOPMENT_COMPLETED_CONFIRMATION_NOT_RUN`。这些数值只来自已经暴露的旧 FMT Task5 cache；历史目录名 `confirmation` 在本项目中只是 unseen-scale development evidence，不是 sealed confirmation。
 
@@ -1002,6 +1014,12 @@ Development config SHA-256：`{input_manifest['development_config_sha256']}`
 
 Input manifest SHA-256：`{input_manifest['manifest_content_sha256']}`
 Cache：{input_manifest['cache_file_count']} files，{input_manifest['cache_total_samples']:,} primitives。
+
+## Library construction audit
+
+{chr(10).join(library_lines)}
+
+`mainExp_TemplateMatching_1.2` 对每个 library flow×source-time×scale stratum 独立平衡。若某一类别为空，则两类都选0个 template，并保留该 stratum 的候选数；pre-balance prior 和 Raw-PCA 拟合仍使用全部合格 library candidates。表中的 skip 不会删除 query。
 
 ## Main table
 
@@ -1090,6 +1108,7 @@ def finalize_development_run(
             input_manifest_sha256=str(input_manifest["manifest_content_sha256"]),
         )
         manifest_path = fold_dir / "fold_manifest.json"
+        fold_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         fold_evidence.append(
             {
                 "held_out_family": fold_dir.name,
@@ -1101,6 +1120,21 @@ def finalize_development_run(
                 "success_path": str((fold_dir / "_SUCCESS.json").resolve()),
                 "success_file_sha256": sha256_file(fold_dir / "_SUCCESS.json"),
                 "output_file_count": int(success["output_file_count"]),
+                "eligible_library_candidate_count": int(
+                    fold_manifest["eligible_library_candidate_count"]
+                ),
+                "balanced_library_count": int(
+                    fold_manifest["balanced_library_count"]
+                ),
+                "skipped_library_stratum_count": int(
+                    fold_manifest["skipped_library_stratum_count"]
+                ),
+                "skipped_library_candidate_count": int(
+                    fold_manifest["skipped_library_candidate_count"]
+                ),
+                "eligible_library_prior_positive_fraction": float(
+                    fold_manifest["eligible_library_prior_positive_fraction"]
+                ),
             }
         )
     for filename in (
@@ -1173,6 +1207,7 @@ def finalize_development_run(
         counterexamples=counterexamples,
         input_manifest=input_manifest,
         figure_manifest=triptychs,
+        fold_evidence=fold_evidence,
     )
     required_output_audit = []
     for relative in config["required_outputs"]:

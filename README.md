@@ -19,7 +19,7 @@
 
 - [项目总览](docs/project_overview.md)
 - [唯一研究协议](docs/research_tasks_and_protocol.md)
-- [首个主实验预注册](docs/mainExp_TemplateMatching_1.1.md)
+- [1.1 失败记录](docs/mainExp_TemplateMatching_1.1.md)与[当前 1.2 development 协议](docs/mainExp_TemplateMatching_1.2.md)
 - [实验版本表](docs/experiment_log.md)
 - [Ibex 运行表](docs/ibex_run_registry.md)
 - [FMT 代码迁移来源](docs/source_provenance.md)
@@ -38,9 +38,9 @@ Ibex 数据检查：
 ```bash
 bash ibex/validate.sh
 # 正式 development job 只从已提交 commit 使用：
-sbatch ibex/mainexp_template_matching_1.1_development.sh
+sbatch ibex/mainexp_template_matching_1.2_development.sh
 ```
 
 首次 Ibex clone 验证已确认 10/10 旧 cache 的全部 100 个 slice 通过，5/10 原始 NetCDF 能实际读取小窗口；cache 可用与 raw 可重新积分仍分别报告。
 
-重要边界：FMT Task5 证明的是可变尺度监督分类，不是模板最近邻；旧 Task5 的主 268 维配方还包含依赖同批样本均值的 44 维特征，不能直接用于任意单 primitive 查询。因此 `mainExp_TemplateMatching_1.1` 预注册逐 primitive 独立的 161 维 FMT 描述符。详情见项目总览。
+重要边界：FMT Task5 证明的是可变尺度监督分类，不是模板最近邻；旧 Task5 的主 268 维配方还包含依赖同批样本均值的 44 维特征，不能直接用于任意单 primitive 查询。因此 1.1/1.2 都固定使用逐 primitive 独立的 161 维 FMT 描述符。详情见项目总览。
