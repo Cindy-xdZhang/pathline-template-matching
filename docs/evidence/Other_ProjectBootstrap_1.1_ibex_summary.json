@@ -1,0 +1,52 @@
+{
+  "validation_id": "deploy_2026-08-27_1",
+  "timestamp": "2026-08-27T15:31:24+03:00",
+  "host": "login510-27",
+  "environment": "deepvortex",
+  "repository": "/home/zhanx0o/pathline-template-matching",
+  "code_commit": "f202095c1572c668716a407d987fb0882add3ab6",
+  "command": "bash ibex/validate.sh",
+  "unit_tests": {
+    "passed": 28,
+    "failed": 0
+  },
+  "library_smoke": {
+    "passed": true,
+    "descriptor_id": "fmt_independent_3d_161d_sha256_25fce29499c9089e",
+    "feature_width": 161
+  },
+  "raw_data": {
+    "registry_count": 10,
+    "accessible_count": 5,
+    "accessible": [
+      "cylinder3d",
+      "halfcylinderRe640",
+      "tangaroa",
+      "deltaWing_resampled",
+      "smokeBuoyancy"
+    ],
+    "unavailable": [
+      "halfcylinderRe6400",
+      "deltaWing_LBM",
+      "f22raptor",
+      "channel",
+      "boeing747"
+    ],
+    "sample_contract": "two frames, max spatial dimension 8, finite physical-coordinate NetCDF window"
+  },
+  "legacy_task5_cache": {
+    "dataset_count": 10,
+    "accessible_count": 10,
+    "checked_slices": 100,
+    "valid_slices": 100,
+    "development_slices": 60,
+    "historical_confirmation_slices": 40,
+    "evidence_scope": "exposed_development_only",
+    "canonical_config_sha256": "e9eae4d2cc0a76ba768aed9a61cbbd430790109593cd4214cfaea93b76f56b4b"
+  },
+  "full_report": {
+    "path": "/home/zhanx0o/pathline-template-matching/outputs/Other_ProjectBootstrap_1.1/ibex_data_access.json",
+    "sha256": "609bd188229c3c7a40db2d8ea1648c517a7bd3a0ced5bccec4a0c207b714a84d"
+  },
+  "performance_claim": null
+}

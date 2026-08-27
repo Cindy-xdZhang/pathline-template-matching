@@ -44,13 +44,13 @@ Slurm 为 `25.05.7`；`gpu4` 和 `debug` partitions 存在，`cuda/11.8` module 
 | `channel` | 未找到 `channel.vtk` | — |
 | `boeing747` | 未找到原始文件 | — |
 
-使用 FMT loader 对 Re160 的时间索引 31 读取 2 帧、空间最大维度 8，已得到 shape `[2,7,8,8,3]`、finite `true`。`ibex/validate.sh` 会用本项目 loader 读取 5 个可用 NetCDF 的小窗口，并检查 mask、NaN/Inf、轴顺序、物理坐标单调性和等间距。
+使用 FMT loader 对 Re160 的时间索引 31 读取 2 帧、空间最大维度 8，已得到 shape `[2,7,8,8,3]`、finite `true`。2026-08-27 的首次 clone 验证又用本项目 loader 实际读取 5 个可用 NetCDF 的小窗口；mask、NaN/Inf、轴顺序、物理坐标单调性和等间距检查全部通过。
 
 本机交叉检查也使用相同 loader 实际读取了 2 帧、空间最大维度 8：8 个 NetCDF 通过；`f22raptor` 因 time coordinate 为 masked/non-finite 被拒绝；`channel.vtk` 因本项目尚无 VTK loader 被拒绝。文件存在不等于可正确重新积分。
 
 ## 旧 Task5 派生缓存
 
-只读目录审计显示 10 个数据集各有 development 6 个 `.npz`、confirmation 4 个 `.npz`，合计 60+40。根目录为：
+首次 clone 验证确认 10 个数据集各有 development 6 个 `.npz`、confirmation 4 个 `.npz`，合计 60+40；全部 100 片通过完整内容检查。根目录为：
 
 ```text
 /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/development_cache
@@ -63,6 +63,8 @@ Slurm 为 `25.05.7`；`gpu4` 和 `debug` partitions 存在，`cuda/11.8` module 
 2. 旧 confirmation 已被 FMT 项目查看，在本项目中不能称为 sealed confirmation。
 
 项目 validator 会打开全部 100 个 slice，逐个检查 672D Raw、161D FMT、二值标签、seed、scale ID、finite、dataset/phase/ordinal、旧实验 ID，并要求每片 config SHA-256 严格等于 registry 冻结的 canonical digest `e9eae4d2cc0a76ba768aed9a61cbbd430790109593cd4214cfaea93b76f56b4b`；不能用“彼此一致”或每个目录第一片替代 canonical 验证。Ibex 完整验证结果写入 `outputs/Other_ProjectBootstrap_1.1/ibex_data_access.json`，并登记到 `docs/ibex_run_registry.md`。
+
+首次验证的 code commit 为 `f202095c1572c668716a407d987fb0882add3ab6`；报告 SHA-256 为 `609bd188229c3c7a40db2d8ea1648c517a7bd3a0ced5bccec4a0c207b714a84d`。远端仓库位置固定为 `/home/zhanx0o/pathline-template-matching`。
 
 机器相关路径只写在 [config/datasets.yaml](../config/datasets.yaml)，实验 config 不重复硬编码。
 

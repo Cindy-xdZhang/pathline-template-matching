@@ -38,6 +38,6 @@ Ibex 数据检查：
 bash ibex/validate.sh
 ```
 
-该检查要求 10/10 旧 cache 全部逐 slice 通过；原始场按实际状态单独报告，当前 Ibex 预期为 5/10 可重新读取，不会把 cache 可用误写成 raw 可用。
+首次 Ibex clone 验证已确认 10/10 旧 cache 的全部 100 个 slice 通过，5/10 原始 NetCDF 能实际读取小窗口；cache 可用与 raw 可重新积分仍分别报告。
 
 重要边界：FMT Task5 证明的是可变尺度监督分类，不是模板最近邻；旧 Task5 的主 268 维配方还包含依赖同批样本均值的 44 维特征，不能直接用于任意单 primitive 查询。因此 `mainExp_TemplateMatching_1.1` 预注册逐 primitive 独立的 161 维 FMT 描述符。详情见项目总览。

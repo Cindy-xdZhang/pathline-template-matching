@@ -16,4 +16,4 @@
 
 | 验证 ID | 时间 | 主机/环境 | Git commit | 命令 | 结果 | 证据文件 |
 |---|---|---|---|---|---|---|
-| `deploy_2026-08-27_1` | 待完成 | `glogin.ibex.kaust.edu.sa`; `deepvortex` | 待首次 push 后填写 | clone、tests、data registry validation | 待完成 | 待填写 |
+| `deploy_2026-08-27_1` | 2026-08-27 15:31 +03:00 | `login510-27` via `glogin.ibex.kaust.edu.sa`; `deepvortex` | `f202095c1572c668716a407d987fb0882add3ab6` | clone；`bash ibex/validate.sh` | `COMPLETED`：28/28 tests；library smoke；raw 5/10；cache 10/10、100/100 slices；canonical config digest 一致。只支持部署/数据访问，不支持模式匹配性能结论 | `docs/evidence/Other_ProjectBootstrap_1.1_ibex_summary.json`；远端 full report `/home/zhanx0o/pathline-template-matching/outputs/Other_ProjectBootstrap_1.1/ibex_data_access.json`; SHA-256 `609bd188229c3c7a40db2d8ea1648c517a7bd3a0ced5bccec4a0c207b714a84d` |
