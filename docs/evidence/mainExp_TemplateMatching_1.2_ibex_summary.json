@@ -1,0 +1,161 @@
+{
+  "experiment": "mainExp_TemplateMatching_1.2",
+  "status": "development_completed_confirmation_not_run",
+  "evidence_scope": "development_only_exposed_legacy_task5_cache",
+  "performance_results_exist": true,
+  "formal_confirmation_run": false,
+  "ibex_job": {
+    "job_id": "50932239",
+    "submitted_local": "2026-08-27T17:37:17+03:00",
+    "started_local": "2026-08-27T18:04:42+03:00",
+    "ended_local": "2026-08-27T18:17:29+03:00",
+    "slurm_state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "00:12:47",
+    "node": "gpu510-32",
+    "gpu": "Tesla V100-PCIE-32GB",
+    "cpu_count": 16,
+    "requested_memory_gib": 64,
+    "batch_max_rss_kib": 19743764,
+    "stdout_sha256": "1f3ab86bdbb60cb55f65e07504d331d60fd374ea2880096a5704aad4d94eed5e",
+    "stderr_sha256": "c221841e6f9ec70609f4635b598046df006ab91fef8fa86ef9adc134e9a3fc13"
+  },
+  "provenance": {
+    "numerical_git_commit": "700d392b590f46a68f8ef6e973524ee0a7886c62",
+    "development_config_sha256": "1af4bd91bcc9621570a91748c8c4bbc9493a76d17feed55ea03188742607f72f",
+    "input_manifest_content_sha256": "3a05640211341eb4b8ac4c4dedbe5851bb3aa1303bf84c6b48561f45deb9cb1f",
+    "result_manifest_content_sha256": "9ae7de1790682aacb25d46284d76d3bbadfccbfe6040f57dcdf4c2f7364df906",
+    "result_manifest_file_sha256": "217cdaf7e1551bab588788fba6e1f2e24f41c5bba0e20f52e3f3dcbcb5bce3d0",
+    "run_state_file_sha256": "84b91bc72c54e2d43b5815bfd9fc717d603197071e97d5627686864d626955ab",
+    "remote_run_directory": "/home/zhanx0o/pathline-template-matching/outputs/mainExp_TemplateMatching_1.2_development/runs/slurm_50932239_700d392b590f"
+  },
+  "source_manifest_caveat": {
+    "source_result_manifest_evidence_scope_performance_results_exist": false,
+    "field_origin": "frozen_pre_run_config_copied_to_result_manifest",
+    "field_is_stale_after_completion": true,
+    "authoritative_completion_fields": [
+      "result_manifest.status",
+      "run_state.status",
+      "run_state.required_output_audit"
+    ],
+    "immutable_source_artifacts_were_not_rewritten": true
+  },
+  "source_artifacts": {
+    "main_table": {"relative_path": "main_table.csv", "sha256": "d39900e46ae727195129efb689393e4f683896398c4104ea63bc3df0b0e6fefc"},
+    "bootstrap_differences": {"relative_path": "bootstrap_differences.csv", "sha256": "2ce65d0d56a7013561caa236f2cc00392bd6f57d8bae831391b869eb478da750"},
+    "counterexamples": {"relative_path": "counterexamples.csv", "sha256": "79b96710d693c5b51cc9f15d7d6ea0b291fe4788a74cfbc54d3b0f50b546f12e"},
+    "development_report": {"relative_path": "development_report.md", "sha256": "554d2af36099c88bea2e0d63f113b56964f0db7524fd76659ef9205abf61c7de"},
+    "original_visualization_manifest": {"relative_path": "figures/visualization_manifest.json", "sha256": "24b73ef105086e3b147a65339b719591daccd7de68b627032e4c8af05550b80a"}
+  },
+  "runtime_gate": {
+    "unit_tests_passed": 44,
+    "unit_tests_failed": 0,
+    "cuda_matcher_gate_passed": true,
+    "tf32_enabled": false,
+    "float32_matmul_precision": "highest",
+    "deterministic_algorithms": true,
+    "torch": "2.6.0+cu118",
+    "numpy": "1.26.4",
+    "matplotlib": "3.10.0",
+    "netcdf4": "1.7.2",
+    "scikit_image": "0.25.2"
+  },
+  "input": {
+    "cache_file_count": 100,
+    "primitive_count": 390140,
+    "physical_family_fold_count": 7,
+    "dataset_count": 10,
+    "regimes": [
+      "seen_scale",
+      "unseen_scale"
+    ]
+  },
+  "methods": [
+    "eligible_library_candidate_prior_constant_score",
+    "raw_centered_7x32x3_exact_1nn",
+    "raw_centered_library_only_pca_161d_exact_1nn",
+    "fmt_independent_3d_161d_sha256_25fce29499c9089e_exact_1nn"
+  ],
+  "library_fold_audit": [
+    {"held_out_family": "half_cylinder", "eligible_candidates": 110844, "balanced_templates": 11906, "skipped_empty_class_strata": 1, "candidates_in_skipped_strata": 228, "pre_balance_positive_prior": 0.05370610948720725},
+    {"held_out_family": "tangaroa", "eligible_candidates": 141624, "balanced_templates": 16492, "skipped_empty_class_strata": 1, "candidates_in_skipped_strata": 228, "pre_balance_positive_prior": 0.05822459470146303},
+    {"held_out_family": "delta_wing", "eligible_candidates": 124555, "balanced_templates": 15404, "skipped_empty_class_strata": 1, "candidates_in_skipped_strata": 228, "pre_balance_positive_prior": 0.061836136646461405},
+    {"held_out_family": "f22_raptor", "eligible_candidates": 144098, "balanced_templates": 16304, "skipped_empty_class_strata": 1, "candidates_in_skipped_strata": 228, "pre_balance_positive_prior": 0.056572610306874486},
+    {"held_out_family": "channel", "eligible_candidates": 140939, "balanced_templates": 17530, "skipped_empty_class_strata": 0, "candidates_in_skipped_strata": 0, "pre_balance_positive_prior": 0.06219002547201272},
+    {"held_out_family": "boeing_747", "eligible_candidates": 140939, "balanced_templates": 16214, "skipped_empty_class_strata": 1, "candidates_in_skipped_strata": 228, "pre_balance_positive_prior": 0.05752133901900822},
+    {"held_out_family": "smoke_buoyancy", "eligible_candidates": 140939, "balanced_templates": 16430, "skipped_empty_class_strata": 1, "candidates_in_skipped_strata": 228, "pre_balance_positive_prior": 0.05828762798089954}
+  ],
+  "reported_metric_rounding_decimals": 4,
+  "physical_family_macro": {
+    "seen_scale": {
+      "library_prior": {"average_precision": 0.0579, "f1": 0.0, "auroc": 0.5, "precision": 0.0, "recall": 0.0, "balanced_accuracy": 0.5},
+      "raw_672d": {"average_precision": 0.2045, "f1": 0.1791, "auroc": 0.6270, "precision": 0.1080, "recall": 0.8644, "balanced_accuracy": 0.5969},
+      "raw_pca_161d": {"average_precision": 0.3037, "f1": 0.2233, "auroc": 0.7074, "precision": 0.2316, "recall": 0.7969, "balanced_accuracy": 0.6342},
+      "fmt_161d": {"average_precision": 0.3563, "f1": 0.3039, "auroc": 0.7619, "precision": 0.2297, "recall": 0.7340, "balanced_accuracy": 0.6980}
+    },
+    "unseen_scale": {
+      "library_prior": {"average_precision": 0.0581, "f1": 0.0, "auroc": 0.5, "precision": 0.0, "recall": 0.0, "balanced_accuracy": 0.5},
+      "raw_672d": {"average_precision": 0.1897, "f1": 0.1723, "auroc": 0.5928, "precision": 0.1104, "recall": 0.8413, "balanced_accuracy": 0.5680},
+      "raw_pca_161d": {"average_precision": 0.3649, "f1": 0.3059, "auroc": 0.7257, "precision": 0.2934, "recall": 0.7555, "balanced_accuracy": 0.6797},
+      "fmt_161d": {"average_precision": 0.2923, "f1": 0.2349, "auroc": 0.7534, "precision": 0.1554, "recall": 0.7905, "balanced_accuracy": 0.6650}
+    }
+  },
+  "paired_source_timeslice_bootstrap": {
+    "replicates": 5000,
+    "bootstrap_seed": 25068,
+    "paired_unit": "source_timeslice",
+    "interval": "percentile_95_numpy_linear",
+    "stratified_by": "physical_family",
+    "differences_are": "fmt_minus_comparator",
+    "rows": [
+      {"regime": "seen_scale", "metric": "average_precision", "comparator": "raw_672d", "point": 0.1518, "lower": 0.1363, "upper": 0.1666},
+      {"regime": "seen_scale", "metric": "average_precision", "comparator": "raw_pca_161d", "point": 0.0527, "lower": 0.0359, "upper": 0.0691},
+      {"regime": "seen_scale", "metric": "f1", "comparator": "raw_672d", "point": 0.1248, "lower": 0.1135, "upper": 0.1359},
+      {"regime": "seen_scale", "metric": "f1", "comparator": "raw_pca_161d", "point": 0.0806, "lower": 0.0700, "upper": 0.0911},
+      {"regime": "unseen_scale", "metric": "average_precision", "comparator": "raw_672d", "point": 0.1026, "lower": 0.0940, "upper": 0.1111},
+      {"regime": "unseen_scale", "metric": "average_precision", "comparator": "raw_pca_161d", "point": -0.0726, "lower": -0.0833, "upper": -0.0622},
+      {"regime": "unseen_scale", "metric": "f1", "comparator": "raw_672d", "point": 0.0626, "lower": 0.0591, "upper": 0.0659},
+      {"regime": "unseen_scale", "metric": "f1", "comparator": "raw_pca_161d", "point": -0.0711, "lower": -0.0760, "upper": -0.0660}
+    ],
+    "conclusion_mode": "descriptive_only_pending_user_ci_decision"
+  },
+  "counterexamples": {
+    "preserved_row_count": 480,
+    "worst_unseen_scale_ap_vs_raw_pca": {
+      "dataset": "cylinder3d",
+      "scale": "eval_o125_d015_n40",
+      "fmt_average_precision": 0.0552,
+      "raw_pca_average_precision": 0.7070,
+      "difference": -0.6518
+    }
+  },
+  "visualization": {
+    "original_figure_count": 20,
+    "fixed_selection": "10 datasets x 2 regimes, source ordinal 2",
+    "raw_ivd_isosurface_count": 10,
+    "explicit_positive_seed_fallback_count": 10,
+    "panel_order": [
+      "IVD p95 isosurface plus center pathlines",
+      "FMT exact-1NN binary template assignment",
+      "TP FP FN TN against IVD p95"
+    ],
+    "layout_rerender": {
+      "artifact_id": "Other_MainExp12FigureLayout_1.1",
+      "renderer_git_commit": "cfe2afcf01133a3a7034db05175710e8f9dd70fe",
+      "metric_recomputation": false,
+      "figure_count": 20,
+      "width_pixels": 7560,
+      "height_pixels": 1800,
+      "maximum_nonwhite_pixels_in_first_row": 0,
+      "counts_camera_bounds_and_scene_hashes_equal_original": true,
+      "manifest_content_sha256": "63961fd290b05ed714b8761a8b22c98741a2450e4459969bbda44a0beeeed93b",
+      "manifest_file_sha256": "8fd85b9612d025bcfe51362853748878cdedaab21507534b31adb0161b93b1c5"
+    }
+  },
+  "conclusion": {
+    "observed_development_differences": "FMT-minus-Raw AP and F1 point estimates are positive in both regimes; FMT-minus-Raw-PCA AP and F1 point estimates are positive for seen scale and negative for unseen scale, with the reported percentile intervals not crossing zero.",
+    "claim_not_observed": "FMT 161D has higher unseen-scale AP and F1 than Raw-PCA 161D.",
+    "decision": "No main-hypothesis pass or fail decision because the user has not frozen the confidence-interval decision rule.",
+    "scope_warning": "This is mixed development evidence, not sealed formal confirmation."
+  }
+}

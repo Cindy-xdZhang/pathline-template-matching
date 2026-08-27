@@ -2,7 +2,7 @@
 
 本项目研究：能否把不同邻居距离、积分步长和积分长度得到的 pathline primitive，编码为无可训练参数的 FMT 特征，并通过有标签特征库中的精确最近邻，在未见流场中识别涡区域。FMT 沿用原项目名称；原项目文档存在不同历史全称，本项目不另造展开名称。
 
-当前仓库已实现并冻结首个 cache-backed development 基线及其 Ibex runner、统计表和三联图，但尚未把 development 结果冒充 formal confirmation。基线是：
+当前仓库已完成首个 cache-backed development 主实验 `mainExp_TemplateMatching_1.2`。Ibex job `50932239` 在 commit `700d392b590f46a68f8ef6e973524ee0a7886c62` 上完成 7 个 physical-family leave-one-out folds、四方法对照、5000 次配对 source-timeslice bootstrap 和 20 张固定样本三联图；formal confirmation 未运行。基线是：
 
 ```text
 3D velocity field
@@ -42,5 +42,7 @@ sbatch ibex/mainexp_template_matching_1.2_development.sh
 ```
 
 首次 Ibex clone 验证已确认 10/10 旧 cache 的全部 100 个 slice 通过，5/10 原始 NetCDF 能实际读取小窗口；cache 可用与 raw 可重新积分仍分别报告。
+
+Development run 的观察结果是混合的：在 physical-family macro 上，FMT 161D 相对 Raw-PCA 161D 的已见尺度 AP/F1 为 `+0.0527/+0.0806`，95% bootstrap 区间均为正；未见尺度则为 `-0.0726/-0.0711`，区间均为负。FMT 在两个尺度 regime 的 AP/F1 点估计都高于 672D Raw，但用户尚未冻结置信区间通过规则，因此本阶段不宣告主命题通过或失败。完整表、反例和证据哈希见 [1.2 实验文档](docs/mainExp_TemplateMatching_1.2.md)与[结构化证据](docs/evidence/mainExp_TemplateMatching_1.2_ibex_summary.json)。
 
 重要边界：FMT Task5 证明的是可变尺度监督分类，不是模板最近邻；旧 Task5 的主 268 维配方还包含依赖同批样本均值的 44 维特征，不能直接用于任意单 primitive 查询。因此 1.1/1.2 都固定使用逐 primitive 独立的 161 维 FMT 描述符。详情见项目总览。

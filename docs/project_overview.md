@@ -71,7 +71,7 @@ flowchart LR
   I --> J["标签 + 最近模板 metadata + distance margin"]
 ```
 
-基础 descriptor/scale 参数位于 [config/mainExp_TemplateMatching_1.1.yaml](../config/mainExp_TemplateMatching_1.1.yaml)。1.1 development 因一个 library stratum 缺正类而在指标前 fail closed；记录见 [1.1 文档](mainExp_TemplateMatching_1.1.md)。当前 cache-backed 协议是 [mainExp_TemplateMatching_1.2](mainExp_TemplateMatching_1.2.md)：空类 stratum 两类模板都跳过并审计，其余方法不变。Development evaluator、统计汇总和三联图已经实现；完整主实验仍未冻结，因为新的 sealed confirmation manifest、raw-field builder 和置信区间结论规则仍缺失。
+基础 descriptor/scale 参数位于 [config/mainExp_TemplateMatching_1.1.yaml](../config/mainExp_TemplateMatching_1.1.yaml)。1.1 development 因一个 library stratum 缺正类而在指标前 fail closed；记录见 [1.1 文档](mainExp_TemplateMatching_1.1.md)。当前 cache-backed 版本是已完成的 [mainExp_TemplateMatching_1.2](mainExp_TemplateMatching_1.2.md)：空类 stratum 两类模板都跳过并审计，其余方法不变。Ibex job `50932239` 已完成 evaluator、统计汇总和 20 张三联图；formal confirmation 仍未冻结，因为新的 sealed confirmation manifest、raw-field builder 和置信区间结论规则仍缺失。
 
 - 模板库在每个 `flow × source time × scale tuple` 取 `m=min(512,n_positive,n_negative)` 个正类和负类。1.1 的规则是任一类为空则失败；当前 1.2 规则是两类都选择0个模板并登记，query、Raw-PCA 拟合候选和 constant prior 候选不因此删除。
 - 标准化的均值和标准差只从 library feature 拟合；query 不得更新它们。
@@ -101,6 +101,8 @@ flowchart LR
 
 所有结果都要给出：逐 flow、dataset macro、physical-family macro、逐尺度 tuple，以及按 source timeslice 配对 bootstrap 的 95% confidence interval（置信区间）。不能只报告 primitive-level 随机 bootstrap，因为同一时间片内样本相关。
 
+`mainExp_TemplateMatching_1.2` 的 development run 给出了明确但混合的观察：FMT 161D 相对 Raw 672D 在 seen/unseen-scale 的 AP/F1 点估计都更高；相对同维 Raw-PCA 161D，seen-scale AP/F1 为 `+0.0527/+0.0806`，unseen-scale 为 `−0.0726/−0.0711`，5000 次配对 source-timeslice bootstrap 的95%区间分别全正和全负。用户尚未冻结置信区间通过规则，因此这些数值只描述暴露过的旧 Task5 cache，不宣告主命题通过或失败；formal confirmation 未运行。
+
 ## 7. 当前代码边界
 
 已经迁移并测试：
@@ -115,7 +117,7 @@ flowchart LR
 - 每个 flow 的 seen/unseen-scale 三联图：IVD-p95+pathlines、FMT template class assignment、TP/FP/FN/TN；
 - Ibex 原始数据与旧 Task5 cache 的区分验证脚本。
 
-尚未实现，因此即使 cache-backed development job 完成，也不能宣称已完成 formal confirmation 或整个主实验：
+尚未实现，因此本次 cache-backed development 完成后仍不能宣称已完成 formal confirmation 或整个研究目标：
 
 - 面向新 raw flow 的正式 primitive/cache builder；
 - seed-time IVD 插值；
