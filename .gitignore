@@ -8,6 +8,7 @@ build/
 dist/
 outputs/
 slurm_logs/
+dcgm/
 *.npz
 *.nc
 *.vtk
