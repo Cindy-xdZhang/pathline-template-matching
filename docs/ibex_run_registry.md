@@ -10,7 +10,7 @@
 
 | Ibex job ID | 实验版本 | 提交/开始/结束 | 状态与结果 | 支持、反对的结论 | 设备 | Git commit / config | 日志与输出 |
 |---|---|---|---|---|---|---|---|
-| — | — | — | 尚未提交本项目 Slurm job | — | — | — | — |
+| `50930724` | `mainExp_TemplateMatching_1.1` cache-backed development | 提交 2026-08-27 17:15:27 +03:00；开始/结束待更新 | `QUEUED` | 待运行；只允许产生 exposed-development 描述性证据，不是 sealed confirmation | 待调度；请求 1×A100 或 V100、16 CPU、64 GB | commit `ccc34bae4d9e683ab01b742aac6b817feb64c1ae`；`config/mainExp_TemplateMatching_1.1_development.yaml` SHA-256 `477e949f730b1e987cdff6d01f97c0e14743d8766d5a5e626de105328155b93f` | stdout `slurm_logs/PTMdev11.50930724.out`；stderr `slurm_logs/PTMdev11.50930724.err`；output `outputs/mainExp_TemplateMatching_1.1_development/runs/slurm_50930724_ccc34bae4d9e` |
 
 ## 非 Scheduler 部署验证
 
