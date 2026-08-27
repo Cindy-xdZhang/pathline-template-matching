@@ -12,6 +12,7 @@
 |---|---|---|---|---|---|---|---|
 | `50930724` | `mainExp_TemplateMatching_1.1` cache-backed development | 提交 2026-08-27 17:15:27 +03:00；开始/结束待更新 | `QUEUED` | 待运行；只允许产生 exposed-development 描述性证据，不是 sealed confirmation | 待调度；请求 1×A100 或 V100、16 CPU、64 GB | commit `ccc34bae4d9e683ab01b742aac6b817feb64c1ae`；`config/mainExp_TemplateMatching_1.1_development.yaml` SHA-256 `477e949f730b1e987cdff6d01f97c0e14743d8766d5a5e626de105328155b93f` | stdout `slurm_logs/PTMdev11.50930724.out`；stderr `slurm_logs/PTMdev11.50930724.err`；output `outputs/mainExp_TemplateMatching_1.1_development/runs/slurm_50930724_ccc34bae4d9e` |
 | `50930751` | `mainExp_TemplateMatching_1.1` cache-backed development（debug 2h 替代投递） | 提交 2026-08-27 17:17:22 +03:00；开始/结束待更新 | `QUEUED` | 与 `50930724` 同一冻结计算；因后者预计 2026-08-30 才开始而投递短队列副本。只允许 exposed-development 描述性证据 | `debug`；待调度；请求 1×A100 或 V100、16 CPU、64 GB | commit/config 与 `50930724` 完全相同 | stdout `slurm_logs/PTMdev11.50930751.out`；stderr `slurm_logs/PTMdev11.50930751.err`；output `outputs/mainExp_TemplateMatching_1.1_development/runs/slurm_50930751_ccc34bae4d9e` |
+| `50931410` | `mainExp_TemplateMatching_1.1` cache-backed development（debug P6000 替代投递） | 提交 2026-08-27 17:18:13 +03:00；开始/结束待更新 | `QUEUED` | 与前两项同一冻结计算；使用空闲 P6000 尝试立即运行，作业内先执行 CUDA 一致性 gate | `debug`；请求 1×P6000、16 CPU、64 GB、2 h | commit/config 与 `50930724` 完全相同 | stdout `slurm_logs/PTMdev11.50931410.out`；stderr `slurm_logs/PTMdev11.50931410.err`；output `outputs/mainExp_TemplateMatching_1.1_development/runs/slurm_50931410_ccc34bae4d9e` |
 
 ## 非 Scheduler 部署验证
 
