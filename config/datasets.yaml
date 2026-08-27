@@ -1,0 +1,147 @@
+schema_version: 1
+
+legacy_task5_cache_contract:
+  experiment: mainExp_Task5_3D_1.1
+  config_sha256: e9eae4d2cc0a76ba768aed9a61cbbd430790109593cd4214cfaea93b76f56b4b
+  fmt_descriptor_id: fmt_independent_3d_161d_sha256_25fce29499c9089e
+  raw_feature_width: 672
+  fmt_feature_width: 161
+
+# Raw fields and derived FMT caches are deliberately separate. A cache makes a
+# dataset usable for bootstrap retrieval, but it does not mean the raw field can
+# be re-integrated on that machine.
+datasets:
+  - id: cylinder3d
+    physical_family: half_cylinder
+    kind: netcdf
+    raw_paths:
+      local:
+        - "C:/Users/xingdi/OneDrive - KAUST/WorkingInProcess/FLowVisAssets/flowData3D/halfcylinderRe160Resampled.nc"
+      ibex:
+        - /home/zhanx0o/DeepVortex/FLowDataFolder/halfcylinderRe160Resampled.nc
+    legacy_task5_cache:
+      evidence_scope: exposed_development_only
+      ibex:
+        development: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/development_cache/cylinder3d
+        confirmation: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/confirmation_cache/cylinder3d
+
+  - id: halfcylinderRe640
+    physical_family: half_cylinder
+    kind: netcdf
+    raw_paths:
+      local:
+        - "C:/Users/xingdi/OneDrive - KAUST/WorkingInProcess/FLowVisAssets/flowData3D/halfcylinderRe640resampled.nc"
+      ibex:
+        - /home/zhanx0o/DeepVortex/FLowDataFolder/halfcylinderRe640resampled.nc
+    legacy_task5_cache:
+      evidence_scope: exposed_development_only
+      ibex:
+        development: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/development_cache/halfcylinderRe640
+        confirmation: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/confirmation_cache/halfcylinderRe640
+
+  - id: halfcylinderRe6400
+    physical_family: half_cylinder
+    kind: netcdf
+    raw_paths:
+      local:
+        - "C:/Users/xingdi/OneDrive - KAUST/WorkingInProcess/FLowVisAssets/flowData3D/halfcylinderRe6400.nc"
+      ibex: []
+    legacy_task5_cache:
+      evidence_scope: exposed_development_only
+      ibex:
+        development: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/development_cache/halfcylinderRe6400
+        confirmation: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/confirmation_cache/halfcylinderRe6400
+
+  - id: tangaroa
+    physical_family: tangaroa
+    kind: netcdf
+    raw_paths:
+      local:
+        - "C:/Users/xingdi/OneDrive - KAUST/WorkingInProcess/FLowVisAssets/flowData3D/tangaroa.nc"
+      ibex:
+        - /home/zhanx0o/DeepVortex/FLowDataFolder/tangaroa.nc
+    legacy_task5_cache:
+      evidence_scope: exposed_development_only
+      ibex:
+        development: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/development_cache/tangaroa
+        confirmation: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/confirmation_cache/tangaroa
+
+  - id: deltaWing_resampled
+    physical_family: delta_wing
+    kind: netcdf
+    raw_paths:
+      local:
+        - "C:/Users/xingdi/OneDrive - KAUST/WorkingInProcess/FLowVisAssets/flowData3D/deltaWing_mag0_3reesampled.nc"
+      ibex:
+        - /home/zhanx0o/DeepVortex/FLowDataFolder/deltaWing_mag0_3reesampled.nc
+    legacy_task5_cache:
+      evidence_scope: exposed_development_only
+      ibex:
+        development: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/development_cache/deltaWing_resampled
+        confirmation: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/confirmation_cache/deltaWing_resampled
+
+  - id: deltaWing_LBM
+    physical_family: delta_wing
+    kind: netcdf
+    raw_paths:
+      local:
+        - "C:/Users/xingdi/OneDrive - KAUST/WorkingInProcess/FLowVisAssets/flowData3D/LBM_3D/deltaWing_mag0_3.nc"
+      ibex: []
+    legacy_task5_cache:
+      evidence_scope: exposed_development_only
+      ibex:
+        development: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/development_cache/deltaWing_LBM
+        confirmation: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/confirmation_cache/deltaWing_LBM
+
+  - id: f22raptor
+    physical_family: f22_raptor
+    kind: netcdf
+    raw_paths:
+      local:
+        - "C:/Users/xingdi/OneDrive - KAUST/WorkingInProcess/FLowVisAssets/flowData3D/LBM_3D/f22raptor_re400000.nc"
+      ibex: []
+    legacy_task5_cache:
+      evidence_scope: exposed_development_only
+      ibex:
+        development: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/development_cache/f22raptor
+        confirmation: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/confirmation_cache/f22raptor
+
+  - id: channel
+    physical_family: channel
+    kind: vtk
+    raw_paths:
+      local:
+        - "C:/Users/xingdi/OneDrive - KAUST/WorkingInProcess/FLowVisAssets/flowData3D/channel_flow/channel.vtk"
+      ibex: []
+    legacy_task5_cache:
+      evidence_scope: exposed_development_only
+      ibex:
+        development: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/development_cache/channel
+        confirmation: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/confirmation_cache/channel
+
+  - id: boeing747
+    physical_family: boeing_747
+    kind: netcdf
+    raw_paths:
+      local:
+        - "C:/Users/xingdi/OneDrive - KAUST/WorkingInProcess/FLowVisAssets/flowData3D/LBM_3D/boeing747_808_2392.nc"
+      ibex: []
+    legacy_task5_cache:
+      evidence_scope: exposed_development_only
+      ibex:
+        development: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/development_cache/boeing747
+        confirmation: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/confirmation_cache/boeing747
+
+  - id: smokeBuoyancy
+    physical_family: smoke_buoyancy
+    kind: netcdf
+    raw_paths:
+      local:
+        - "C:/Users/xingdi/OneDrive - KAUST/WorkingInProcess/FLowVisAssets/flowData3D/SmokeBuoyancy80_239.nc"
+      ibex:
+        - /home/zhanx0o/DeepVortex/FLowDataFolder/SmokeBuoyancy80_239.nc
+    legacy_task5_cache:
+      evidence_scope: exposed_development_only
+      ibex:
+        development: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/development_cache/smokeBuoyancy
+        confirmation: /home/zhanx0o/FMT_Task12_3D_20260823/outputs/mainExp_Task5_3D_1.1/confirmation_cache/smokeBuoyancy

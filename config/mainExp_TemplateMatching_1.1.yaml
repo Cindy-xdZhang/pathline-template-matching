@@ -1,0 +1,142 @@
+experiment: mainExp_TemplateMatching_1.1
+status: baseline_parameters_preregistered_full_experiment_not_frozen
+random_seed: 15068
+dataset_registry: config/datasets.yaml
+
+primitive:
+  dimension: 3
+  line_order: [center, x_plus, x_minus, y_plus, y_minus, z_plus, z_minus]
+  line_count: 7
+  sampled_points_per_line: 32
+  integrator_output_channels: [x, y, z, t]
+  descriptor_input_channels: [x, y, z]
+  integration_method: RK4
+  offset_reference: minimum_positive_grid_interval
+  # FMT Task5 1.1 used rounded integration indices. Alternative physical-time
+  # or arc-length interpolation first requires a new Verify_ version; adopting
+  # it into the paper method also requires a new mainExp version.
+  resampling: rounded_integration_index
+
+label:
+  name: whole_loaded_volume_ivd_p95
+  definition: "norm(curl(v) - mean_loaded_volume(curl(v)))"
+  percentile: 95.0
+  comparison: greater_than_or_equal
+  attached_to: primitive_seed_at_seed_time
+  warning: "loaded volume may be spatially strided; never call it full-resolution IVD"
+
+descriptor:
+  id: fmt_independent_3d_161d_sha256_25fce29499c9089e
+  source_sha256: 7ff09c1b578d0bd0927ccf0b771de30a01e0b79fff1b7b40576cbca57ce1e6c1
+  legacy_task5_cache_compatible: true
+  trainable_parameters: 0
+  batch_dependent_statistics: false
+  num_freq: 6
+  mode: gram
+  include_chirality: true
+  neighbor_pool: sort
+  neighbor_weight: 1.0
+  neighbor_scale: 1.0
+  feature_width: 161
+
+library:
+  sampling: balanced_within_each_flow_time_scale
+  maximum_templates_per_class_per_stratum: 512
+  selected_per_class_formula: min(512, available_positive, available_negative)
+  empty_class_action: fail_and_report_stratum
+  candidate_order: stable_source_ordinal_then_seed_index
+  sampling_random_seed: 15068
+  normalization: library_only_per_feature_mean_and_standard_deviation
+  matcher: exact_one_nearest_neighbor
+  metric: euclidean
+  binary_score: distance_to_nearest_negative_minus_distance_to_nearest_positive
+  reject_rule: disabled_in_1.1
+
+split:
+  development_evaluation: leave_one_physical_family_out
+  selection_scope: development_families_only
+  confirmation: sealed_flow_families_not_used_by_FMT_or_this_project
+  leakage_guards:
+    - a physical family cannot appear in both library and query partitions
+    - a full pathline source window belongs to one partition
+    - scale tuples used for selection cannot be renamed as confirmation tuples
+    - query features and labels cannot fit the library scaler or metric
+
+query_population:
+  selection: all_valid_primitives_in_held_out_family_and_evaluation_scale_set
+  label_balancing: disabled
+  downsampling: disabled
+  required_audit: assigned_valid_invalid_and_natural_class_counts
+
+comparisons:
+  - raw_centered_7x32x3_exact_1nn
+  - raw_centered_library_only_pca_161d_exact_1nn
+  - fmt_independent_3d_161d_sha256_25fce29499c9089e_exact_1nn
+  - eligible_library_candidate_prior_constant_score
+
+comparison_definitions:
+  raw_centered_flatten_order: C_order_line_then_time_then_xyz
+  raw_center: center_line_at_seed_time_xyz
+  raw_pca_fit_scope: eligible_library_features_only_per_fold
+  raw_pca_components: 161
+  raw_pca_solver: deterministic_full_svd
+  prior_fit_scope: eligible_library_candidate_labels_before_class_balancing
+  prior_positive_rule: greater_than_0.5
+  prior_tie_rule: non_vortex
+
+scale_evaluation:
+  seen_scale: library tuples build the library and query the held-out family
+  descriptor_selection_only: excluded from mainExp metrics; usable only by Verify versions
+  unseen_scale: library uses library tuples; held-out-family query uses unseen_scale_evaluation tuples
+  report_seen_and_unseen_separately: true
+
+full_freeze_blockers:
+  - sealed confirmation family manifest and first-read hashes are absent
+  - builder and leave-one-family-out evaluator are absent
+  - confidence-interval decision rule requires an explicit user decision
+
+metrics:
+  primary: [average_precision, f1]
+  secondary: [auroc, precision, recall, balanced_accuracy]
+  aggregation: [per_flow, dataset_macro, physical_family_macro, per_scale_tuple]
+  uncertainty: paired_bootstrap_by_source_timeslice
+
+# Copied from FMT Task5 1.1 as the initial discrete scale protocol. These are
+# development resources, not new-project sealed confirmation evidence.
+scale_sets:
+  library:
+    - {name: lib_o025_d0125_n32, offset_grid_scale: 0.25, dt_scale: 0.125, integration_steps: 32}
+    - {name: lib_o025_d0125_n48, offset_grid_scale: 0.25, dt_scale: 0.125, integration_steps: 48}
+    - {name: lib_o025_d0250_n32, offset_grid_scale: 0.25, dt_scale: 0.250, integration_steps: 32}
+    - {name: lib_o025_d0125_n64, offset_grid_scale: 0.25, dt_scale: 0.125, integration_steps: 64}
+    - {name: lib_o025_d0250_n40, offset_grid_scale: 0.25, dt_scale: 0.250, integration_steps: 40}
+    - {name: lib_o025_d0250_n48, offset_grid_scale: 0.25, dt_scale: 0.250, integration_steps: 48}
+    - {name: lib_o050_d0125_n32, offset_grid_scale: 0.50, dt_scale: 0.125, integration_steps: 32}
+    - {name: lib_o050_d0125_n48, offset_grid_scale: 0.50, dt_scale: 0.125, integration_steps: 48}
+    - {name: lib_o050_d0250_n32, offset_grid_scale: 0.50, dt_scale: 0.250, integration_steps: 32}
+    - {name: lib_o050_d0125_n64, offset_grid_scale: 0.50, dt_scale: 0.125, integration_steps: 64}
+    - {name: lib_o050_d0250_n40, offset_grid_scale: 0.50, dt_scale: 0.250, integration_steps: 40}
+    - {name: lib_o050_d0250_n48, offset_grid_scale: 0.50, dt_scale: 0.250, integration_steps: 48}
+    - {name: lib_o100_d0125_n32, offset_grid_scale: 1.00, dt_scale: 0.125, integration_steps: 32}
+    - {name: lib_o100_d0125_n48, offset_grid_scale: 1.00, dt_scale: 0.125, integration_steps: 48}
+    - {name: lib_o100_d0250_n32, offset_grid_scale: 1.00, dt_scale: 0.250, integration_steps: 32}
+    - {name: lib_o100_d0125_n64, offset_grid_scale: 1.00, dt_scale: 0.125, integration_steps: 64}
+    - {name: lib_o100_d0250_n40, offset_grid_scale: 1.00, dt_scale: 0.250, integration_steps: 40}
+    - {name: lib_o100_d0250_n48, offset_grid_scale: 1.00, dt_scale: 0.250, integration_steps: 48}
+  descriptor_selection_only:
+    - {name: dev_o0375_d020_n40, offset_grid_scale: 0.375, dt_scale: 0.20, integration_steps: 40}
+    - {name: dev_o0375_d020_n50, offset_grid_scale: 0.375, dt_scale: 0.20, integration_steps: 50}
+    - {name: dev_o0375_d030_n40, offset_grid_scale: 0.375, dt_scale: 0.30, integration_steps: 40}
+    - {name: dev_o0750_d020_n40, offset_grid_scale: 0.750, dt_scale: 0.20, integration_steps: 40}
+    - {name: dev_o0750_d020_n50, offset_grid_scale: 0.750, dt_scale: 0.20, integration_steps: 50}
+    - {name: dev_o0750_d030_n40, offset_grid_scale: 0.750, dt_scale: 0.30, integration_steps: 40}
+  unseen_scale_evaluation:
+    - {name: eval_o033_d015_n40, offset_grid_scale: 0.33, dt_scale: 0.15, integration_steps: 40}
+    - {name: eval_o033_d020_n45, offset_grid_scale: 0.33, dt_scale: 0.20, integration_steps: 45}
+    - {name: eval_o033_d030_n40, offset_grid_scale: 0.33, dt_scale: 0.30, integration_steps: 40}
+    - {name: eval_o067_d015_n40, offset_grid_scale: 0.67, dt_scale: 0.15, integration_steps: 40}
+    - {name: eval_o067_d020_n45, offset_grid_scale: 0.67, dt_scale: 0.20, integration_steps: 45}
+    - {name: eval_o067_d030_n40, offset_grid_scale: 0.67, dt_scale: 0.30, integration_steps: 40}
+    - {name: eval_o125_d015_n40, offset_grid_scale: 1.25, dt_scale: 0.15, integration_steps: 40}
+    - {name: eval_o125_d020_n45, offset_grid_scale: 1.25, dt_scale: 0.20, integration_steps: 45}
+    - {name: eval_o125_d030_n40, offset_grid_scale: 1.25, dt_scale: 0.30, integration_steps: 40}
