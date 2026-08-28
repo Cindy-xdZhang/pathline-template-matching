@@ -13,4 +13,4 @@
 
 冻结配置为 `config/Verify_ArcLengthResampling_1.1.yaml`，执行入口为 `scripts/verify_arc_length_resampling_1_1.py`。正式证据必须由干净、已提交且与 Ibex checkout 一致的 Git revision 生成，输出到新的 `outputs/Verify_ArcLengthResampling_1.1/slurm_JOBID_COMMIT12/verification.json`。主实验投递前需记录该文件 SHA-256、commit、设备和运行日志。
 
-当前状态：`frozen_pre_run_not_run`。因此目前只能说明本地单元测试通过，尚不能声称 Ibex verification 已通过。
+当前状态：`completed`。Ibex job `50966318` 在 numerical commit `59d54903d1f0f9d7525f69ceed136d08fd6797ed` 上完成，exit `0:0`，77/77 tests 通过；1000/1000 个解析 primitive valid，最大 XYZ 绝对误差为 `1.1897237328639676e-07`，目标弧长最大绝对误差为 `0`，8 个 external batches 与输入重排结果逐元素一致。验证输出 `verification.json` 的 SHA-256 为 `742b25d5e732d63e09658c926850a5bd3f8be172f703933b5a52699093bab0cd`；stdout/stderr SHA-256 分别为 `c0c0dd9eb67c9cbe8de0d22a2364a879b74131d2325b0416d3005e2899b58878` 与 `bd4ce2ffd5108ee8d16a127edd1119eb8a2327353a5ae77e9021296d2e9d4977`。该结论只支持弧长 primitive 数值契约，不是模板匹配性能证据。

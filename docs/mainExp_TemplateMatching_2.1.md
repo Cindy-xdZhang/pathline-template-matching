@@ -1,12 +1,12 @@
 # mainExp_TemplateMatching_2.1：1000 个弧长尺度的固定 8:2 流场检索
 
-状态：**`frozen_pre_run_not_run`**。本文件、`config/mainExp_TemplateMatching_2.1.yaml` 与实现已冻结 raw-field development 实验；尚未提交 Ibex job，尚无 accuracy 或其他性能结果，也不是 formal confirmation。
+状态：**`development_completed_confirmation_not_run`**。冻结的 raw-field development 实验已由 Ibex job `50966604` 完成；已产生 accuracy、辅助指标、bootstrap、逐尺度表和两张三联图，但它仍不是 formal confirmation。
 
 ## 为什么是 2.1
 
 `mainExp_TemplateMatching_1.2` 使用旧 Task5 cache、固定的旧尺度和七个 physical family leave-one-out。本实验同时改变 primitive 的重采样方法、尺度三元组、library/query population 和流场拆分，因此按 major iteration 新建 `mainExp_TemplateMatching_2.1`，不修改或覆盖 1.2 的代码、配置和结果。
 
-2.1 的尺度三元组是 `(dx_grid_scale, ds_frame_scale, arc_length_grid_scale)`。第三维是目标空间弧长，不是旧协议的固定积分步数；每条线按空间弧长均匀重采样为 32 点。依据项目唯一研究协议，弧长重采样必须先由 `Verify_ArcLengthResampling_1.1` 验证。该 Verify、实现测试和输入门禁未完成前，2.1 主 job 禁止投递。
+2.1 的尺度三元组是 `(dx_grid_scale, ds_frame_scale, arc_length_grid_scale)`。第三维是目标空间弧长，不是旧协议的固定积分步数；每条线按空间弧长均匀重采样为 32 点。依据项目唯一研究协议，弧长重采样必须先由 `Verify_ArcLengthResampling_1.1` 验证。Ibex job `50966318` 已先行通过该门禁，随后才提交 portable staging、cache 和 evaluation。
 
 ## 冻结的 8:2 拆分
 
@@ -112,14 +112,61 @@ selected_positive = 1
 
 完整 required-output 列表以 config 为准。Ibex home 已接近 soft quota，因此 portable windows、primitive cache 和每个 run 固定写到 `/ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_2.1_development/`；run 目录为其中新的 `runs/slurm_JOBID_COMMIT12`。目录已存在即失败，禁止覆盖。Git 仓库只保存小型证据摘要，不复制大型 cache。`result_manifest.json` 和所有必需输出完成并持久化后，最后原子写 `RUN_COMPLETE.json`；缺少 completion marker 的目录不能称 completed。
 
-## 当前投递门禁
+## Ibex 执行与不可变证据
 
-1. 必须把冻结的 config、builder、runner、tests 和 Slurm 脚本提交为同一 Git revision，local staging 与 Ibex 都只能使用该 clean revision。
-2. 必须先在 Ibex 完成 `Verify_ArcLengthResampling_1.1`；失败则不得生成主实验 cache。
-3. Ibex 目前只有 5/10 raw fields。本地已确认的 `halfcylinderRe6400`、`deltaWing_LBM`、`f22raptor`、`channel`、`boeing747` 必须在同一 revision 下生成 portable windows 并上传；其余五个由 Ibex raw fields 生成。
-4. 必须在首次读取 test predictions 前冻结 10 个 dataset×4 个 source times 的 portable/input manifests，逐文件验证 config、registry、builder commit 和 SHA-256。
-5. 目前仍无 Slurm job、result manifest 或任何性能数字；不得写成已部署、已完成或 formal confirmation。
+旧状态是“方法已冻结、尚无性能结果”；当前状态是“development 已完成、formal confirmation 未运行”。变化原因是以下任务按门禁顺序完成；旧状态没有错，只适用于正式投递前。
 
-`evaluation_summary.log` 只是 evaluator 写入 run directory 的内部摘要，不得称为 scheduler stdout。真实 Slurm stdout/stderr 位于仓库 `slurm_logs/`，每个 job 必须在 `docs/ibex_run_registry.md` 登记其绝对路径、终态和文件 SHA-256；结论必须引用这些真实日志。
+| 阶段 | Job / 结果 |
+|---|---|
+| 解析弧长验证 | `50966318`，`COMPLETED`；77/77 tests；1000/1000 primitives valid；最大XYZ误差 `1.1897e-7`，目标弧长误差0 |
+| Ibex portable staging | `50966482`，5/5 array tasks `COMPLETED`；与本地5个数据集汇合后10 manifests/40 windows逐文件通过 |
+| Primitive cache | `50966524`，40/40 array tasks `COMPLETED`；assigned `2,560,000`，valid `1,615,207`，invalid `944,793` |
+| GPU evaluation | `50966604`，`COMPLETED`，exit `0:0`，elapsed `00:11:14`；Tesla V100-PCIE-32GB；batch MaxRSS `9069608K` |
+| 重复排队 job | `50966575` 从未开始；`50966604` 成功后主动取消，未产生第二套结果 |
 
-实现已包含弧长 RK4 primitive builder、portable-window staging、40-way cache builder、bounded-memory train-only Raw-PCA、template library、exact 1NN evaluator、指标、5000 次 bootstrap，以及固定 source ordinal 2 的两张三联图证据链。冻结前完整标准回归为 77/77 通过；这只是运行前代码证据，不是性能结果。
+数值 commit 为 `59d54903d1f0f9d7525f69ceed136d08fd6797ed`，config SHA-256 为 `89b66176eb381eddc62d739dacafe86e681b60455f1ffb5e5f34ee9af8c81d1d`。结果目录是 `/ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_2.1_development/runs/slurm_50966604_59d54903d1f0`；`result_manifest.json` 的文件/content SHA-256 分别为 `ff49a9ee3d95d9b6b2be4b2345393cf622b1bf63e3e82954ee1798d853b0e557` 与 `201ff46b0db3f4b12b75e82516663d5b613fd4fdd08aff15c7ef744fc4341707`。模板库含41,450个模板，正负类各20,725个；train-only PCA 使用1,370,364个valid train candidates。测试端assigned 512,000、valid 244,843，整体coverage为47.8209%。
+
+冻结 config 中 `evidence_scope.performance_results_exist: false` 是运行前状态，不能在完成后用于判断结果是否存在。config 和源结果不可原地改写；权威完成证据是 `result_manifest.status=development_completed_confirmation_not_run` 与 `RUN_COMPLETE.json` 中相同状态及匹配的两个manifest哈希。
+
+## 主要结果
+
+主表先在每个测试physical family的四个source timeslice上计算指标，再对 `2 families × 4 timeslices` 等权平均。它避免Tangaroa的242,682个valid query按样本数淹没Smoke的2,161个valid query；pooled行只作描述。
+
+| 方法 | Accuracy | Average Precision | F1 | Balanced accuracy | AUROC | Precision | Recall |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Train-label prior | 0.5868 | 0.4132 | 0.0000 | 0.5000 | 0.5000 | 0.0000 | 0.0000 |
+| Raw672 exact 1NN | 0.4723 | 0.4258 | 0.4683 | 0.5117 | 0.4888 | 0.4130 | **0.9166** |
+| Train-only Raw-PCA161 exact 1NN | 0.6496 | 0.5517 | 0.4876 | **0.6045** | **0.6537** | 0.4279 | 0.8207 |
+| FMT161 exact 1NN | **0.7049** | **0.6029** | **0.4883** | 0.5686 | 0.5176 | **0.4406** | 0.7186 |
+
+FMT在本次development split上的macro accuracy与Average Precision最高；它与Raw-PCA161的F1几乎相同，同时balanced accuracy、AUROC和recall更低。因此证据是混合的，不能概括成“FMT在所有指标上更好”。
+
+| Test dataset | Assigned | Valid | Coverage | Positive / negative | FMT accuracy | FMT AP | FMT F1 | FMT balanced accuracy | FMT AUROC |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `tangaroa` | 256,000 | 242,682 | 94.7977% | 11,409 / 231,273 | 0.7180 | 0.4155 | 0.1640 | 0.6564 | 0.5991 |
+| `smokeBuoyancy` | 256,000 | 2,161 | **0.8441%** | 1,674 / 487 | 0.6923 | 0.7660 | 0.8105 | 0.5007 | 0.4910 |
+
+Smoke只有0.8441%的assigned primitives满足七条线均达到目标弧长；其高AP/F1只描述这2,161个valid queries，不能外推到其余99.16%的assigned seeds。两流场合并的pooled FMT accuracy/AP/F1为 `0.7177/0.4526/0.1906`，但该行主要反映Tangaroa样本量，因此不是主结论。
+
+5000次、seed `25068` 的paired dataset-source-timeslice bootstrap给出：
+
+| FMT减比较方法 | Metric | Difference | 95% percentile interval |
+|---|---|---:|---:|
+| FMT − Raw672 | Accuracy | +0.2325 | [+0.1880, +0.2857] |
+| FMT − Raw-PCA161 | Accuracy | +0.0552 | [+0.0114, +0.1109] |
+| FMT − Raw672 | Average Precision | +0.1771 | [+0.1303, +0.2245] |
+| FMT − Raw-PCA161 | Average Precision | +0.0512 | [+0.0234, +0.0826] |
+| FMT − Raw672 | F1 | +0.0201 | [+0.0027, +0.0384] |
+| FMT − Raw-PCA161 | F1 | +0.0007 | [−0.0212, +0.0278] |
+| FMT − Raw-PCA161 | Balanced accuracy | −0.0359 | [−0.1260, +0.0353] |
+| FMT − Raw-PCA161 | AUROC | −0.1361 | [−0.2717, −0.0474] |
+
+区间是只对固定的两个已暴露test families及其timeslices做的描述性不确定性估计，不是对新physical family泛化的置信保证。
+
+## 三联图与图件审计
+
+两个test dataset都按预注册规则使用source ordinal 2。每张图的三栏分别是：(a) whole-loaded-volume IVD-p95完整等值面、同一valid query seed背景与固定120正类+120负类中心pathlines；(b) FMT global exact 1NN模板类别分配，不是聚类；(c) 对同一seeds的TP、FP、FN和淡化TN。Tangaroa图中 `TP/FP/TN/FN=1851/19940/37706/966`；Smoke图中为 `305/138/33/49`。
+
+两张PNG均为7560×1800、360 dpi，并各有含可编辑文字的PDF、immutable scene NPZ、render metadata和面板几何JSON。本地下载后按result manifest重新核验全部40个文件，0个大小或SHA-256不一致。PDF最小字体为7 pt；三面板几何在1.5 pt阈值下均为PASS；collision audit均为0 FAIL。Tangaroa的13个与Smoke的9个WARN只涉及3D坐标刻度接触轴面或栅格边缘，逐图检查后未发现文字遮挡。该21×5 inch宽图是FMT式研究诊断图；若作为期刊最终版缩放到双栏宽度，需要另建layout版本并重新检查缩放后的字号，不能直接按比例缩小。
+
+`evaluation_summary.log` 只是 evaluator 写入run directory的内部摘要，不是scheduler stdout。真实Slurm日志、终态、设备与文件SHA-256登记在 `docs/ibex_run_registry.md`；结构化结果摘要位于 `docs/evidence/mainExp_TemplateMatching_2.1_ibex_summary.json`。formal confirmation仍未运行。
