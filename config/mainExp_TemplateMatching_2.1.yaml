@@ -1,0 +1,437 @@
+experiment: mainExp_TemplateMatching_2.1
+phase: development_raw_reintegration
+status: frozen_pre_run_not_run
+parent_experiment: mainExp_TemplateMatching_1.2
+revision_scope: major_method_and_split_change
+dataset_registry: config/datasets.yaml
+output_root: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_2.1_development
+
+storage:
+  ibex_root: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_2.1_development
+  portable_window_root: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_2.1_development/portable_windows
+  primitive_cache_root: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_2.1_development/primitive_cache
+  run_root: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_2.1_development/runs
+  reason: home_quota_has_insufficient_headroom_for_full_raw672_and_fmt161_cache
+  git_repository_outputs: small_evidence_summaries_only
+
+evidence_scope:
+  level: exposed_development_only
+  reason: all_ten_registered_flows_have_already_been_exposed_by_FMT_and_mainExp_TemplateMatching_1.2
+  formal_confirmation: false
+  sealed_confirmation_claim: forbidden
+  performance_results_exist: false
+  conclusion_mode: no_performance_conclusion_before_run_then_descriptive_development_only
+
+protocol_gates:
+  - Verify_ArcLengthResampling_1.1 must pass before the main job is submitted
+  - raw-field access and canonical window hashing must succeed for all ten datasets
+  - the VTK channel dataset must provide a validated four-source-time contract
+  - implementation tests must pass from the exact committed revision used on Ibex
+  - test predictions may not be read until the config, code commit, and input manifest are frozen
+
+split:
+  method: fixed_eight_train_two_test_by_complete_physical_family
+  selection_basis: user_frozen_before_mainExp_TemplateMatching_2.1_execution
+  train_datasets:
+    - cylinder3d
+    - halfcylinderRe640
+    - halfcylinderRe6400
+    - deltaWing_resampled
+    - deltaWing_LBM
+    - f22raptor
+    - channel
+    - boeing747
+  test_datasets:
+    - tangaroa
+    - smokeBuoyancy
+  train_physical_families:
+    half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+    delta_wing: [deltaWing_resampled, deltaWing_LBM]
+    f22_raptor: [f22raptor]
+    channel: [channel]
+    boeing_747: [boeing747]
+  test_physical_families:
+    tangaroa: [tangaroa]
+    smoke_buoyancy: [smokeBuoyancy]
+  leakage_guards:
+    - no physical family appears in both train and test
+    - every source timeslice and its complete twelve-frame future window remain in one partition
+    - test primitives, labels, coverage, matches, and metrics cannot fit or select any method component
+    - no test-driven scale deletion, validity replacement, threshold selection, or resampling is allowed
+
+source_times:
+  count_per_dataset: 4
+  time_axis_requirement: uniform_strictly_increasing
+  maximum_future_horizon_frames: "12.000000000000"
+  minimum_required_frame_count: 16
+  eligible_source_index_range: "0 through frame_count - 13 inclusive"
+  selection_formula: "source_index[k] = floor(k * (frame_count - 13) / 3), k in [0,1,2,3]"
+  uniqueness_requirement: four_unique_indices_or_fail
+  selection_dependencies: [time_axis_length_only]
+  field_value_or_label_dependent_selection: forbidden
+
+source_loading:
+  max_spatial_dim: 96
+  native_axis_lengths: [x_native_count, y_native_count, z_native_count]
+  per_axis_stride_formula: "stride_axis = ceil(native_axis_count / 96)"
+  required_recorded_stride_order: [x, y, z]
+  spatial_slice_rule: "native_axis[0::stride_axis]"
+  loaded_axis_maximum_count: 96
+  temporal_stride: 1
+  derived_window_frame_count: 13
+  derived_window_scope: four_source_windows_from_the_loaded_strided_spatial_volume
+  stride_or_window_selection_using_velocity_ivd_label_or_validity: forbidden
+  netcdf_coordinate_policy:
+    default: require_finite_physical_coordinates_for_x_y_z_t
+    dataset_overrides:
+      f22raptor:
+        axes: [x, y, z, t]
+        action: explicit_integer_index_coordinates
+        reason: all_four_registered_coordinate_variables_are_fully_masked
+    implicit_coordinate_fallback: forbidden
+  channel_vtk_contract:
+    source_type: steady_structured_grid_with_velocity_point_array
+    derived_unsteady_series: deterministic_killing_observer
+    total_frames: 159
+    duration: 1.000000000000
+    crop_fraction: 0.100000000000
+    output_spatial_policy: cropped_regular_resampling_with_each_axis_at_most_96
+    observer_source_sha256: aaaaaedee75e3ab9b106ec6a6c0a7fd5a415b319c8d596107cff9cbd614cf752
+    vtk_builder_source_sha256: 5f43fa77b103a551ccf038e9c067fedd6cf84e02e171b7357a51c7b1ec2f0a3c
+    scientific_scope: synthetic_unsteady_observer_view_of_one_steady_channel_field
+
+seed_grid:
+  shape_xyz: [40, 40, 40]
+  assigned_seed_count_per_source_time: 64000
+  coordinate_rule: endpoint_inclusive_linspace_in_scale_independent_interior_center_domain
+  interior_margin_reference: maximum_dx_physical_for_dataset
+  interior_bounds: "[domain_min + max_dx_physical, domain_max - max_dx_physical] on each axis"
+  insufficient_interior_action: fail
+  seed_index_order: z_outer_y_middle_x_inner
+  spatial_or_label_randomization: none
+
+scale_protocol:
+  tuple_fields: [dx_grid_scale, ds_frame_scale, arc_length_grid_scale]
+  decimal_places: 12
+  canonical_values_are_the_explicit_numeric_scalars_below: true
+  canonical_manifest_serialization: fixed_point_12_decimal_places
+  runtime_linspace_regeneration: forbidden
+  cartesian_order: dx_outer_ds_middle_arc_inner
+  scale_id_formula: "((dx_index * 10) + ds_index) * 10 + arc_index"
+  expected_unique_tuple_count: 1000
+  duplicate_tuple_action: fail
+  dx_reference: minimum_positive_loaded_strided_spatial_grid_interval
+  ds_reference: one_uniform_source_frame_interval
+  arc_length_reference: minimum_positive_loaded_strided_spatial_grid_interval
+  physical_conversion:
+    dx_physical: dx_grid_scale_times_minimum_positive_loaded_strided_spatial_grid_interval
+    rk4_time_step: ds_frame_scale_times_source_frame_interval
+    target_spatial_arc_length: arc_length_grid_scale_times_minimum_positive_loaded_strided_spatial_grid_interval
+    maximum_integration_time: twelve_times_source_frame_interval
+  dx_grid_scale:
+    generation_note: linspace_0.25_to_1.25_count_10_rounded_to_12_decimal_places
+    values:
+      - 0.250000000000
+      - 0.361111111111
+      - 0.472222222222
+      - 0.583333333333
+      - 0.694444444444
+      - 0.805555555556
+      - 0.916666666667
+      - 1.027777777778
+      - 1.138888888889
+      - 1.250000000000
+  ds_frame_scale:
+    generation_note: linspace_0.125_to_0.30_count_10_rounded_to_12_decimal_places
+    values:
+      - 0.125000000000
+      - 0.144444444444
+      - 0.163888888889
+      - 0.183333333333
+      - 0.202777777778
+      - 0.222222222222
+      - 0.241666666667
+      - 0.261111111111
+      - 0.280555555556
+      - 0.300000000000
+  arc_length_grid_scale:
+    generation_note: linspace_4_to_12_count_10_rounded_to_12_decimal_places
+    values:
+      - 4.000000000000
+      - 4.888888888889
+      - 5.777777777778
+      - 6.666666666667
+      - 7.555555555556
+      - 8.444444444444
+      - 9.333333333333
+      - 10.222222222222
+      - 11.111111111111
+      - 12.000000000000
+
+scale_assignment:
+  assignment_count_per_seed: 1
+  assignment_scope: independently_restarted_for_each_dataset_source_time
+  algorithm: deterministic_balanced_permutation_modulo
+  random_generator: numpy_Generator_PCG64
+  seed: 15068
+  formula: "assignment[permutation[j]] = j mod 1000 for j=0..63999"
+  assigned_seeds_per_scale_per_source_time: 64
+  imbalance_tolerance: 0
+  independent_of: [coordinates, velocity, IVD, reference_class, validity]
+
+primitive:
+  dimension: 3
+  line_order: [center, x_plus, x_minus, y_plus, y_minus, z_plus, z_minus]
+  line_count: 7
+  sampled_points_per_line: 32
+  direction: forward_only
+  integration_method: RK4
+  integration_time_step: scale_protocol.physical_conversion.rk4_time_step
+  maximum_integration_time: scale_protocol.physical_conversion.maximum_integration_time
+  horizon_step_rule: clamp_the_final_RK4_step_to_the_exact_remaining_time_without_integrating_past_twelve_frames
+  target_length: scale_protocol.physical_conversion.target_spatial_arc_length
+  target_crossing_rule: linearly_truncate_the_last_integrated_polyline_segment_at_exact_target_cumulative_spatial_arc_length
+  resampling: uniform_spatial_arc_length_including_both_endpoints
+  resampling_positions: "target_arc_length * j / 31 for j=0..31"
+  resampling_interpolation: piecewise_linear_in_cumulative_spatial_arc_length
+  integrator_output_channels: [x, y, z, t]
+  descriptor_input_channels: [x, y, z]
+  centering: subtract_center_line_initial_xyz_from_all_seven_lines
+  validity_rule: all_seven_lines_reach_the_target_arc_length_before_or_at_the_twelve_frame_horizon
+  invalid_conditions:
+    - any line exits the loaded spatial domain before reaching target length
+    - any line fails to reach target length by the maximum integration time
+    - any nonfinite coordinate, velocity, time, or cumulative length occurs
+    - arc-length interpolation cannot produce 32 finite ordered samples
+  partial_primitive_retention: forbidden
+
+label:
+  name: whole_loaded_volume_ivd_p95
+  definition: "norm(curl(v) - spatial_mean_loaded_volume(curl(v)))"
+  source_time: exact_selected_source_frame
+  loaded_spatial_stride_xyz: per_dataset_recorded_stride_from_source_loading
+  ivd_volume_scope: entire_loaded_strided_spatial_volume_at_source_time
+  native_full_resolution_label_claim: forbidden
+  percentile: "95.000000000000"
+  percentile_method: linear
+  comparison: greater_than_or_equal
+  seed_value_sampling: trilinear_spatial_interpolation
+  temporal_interpolation: none_exact_source_frame
+  attached_to: center_seed_before_integration
+  scale_independent: true
+  required_audit:
+    - numeric_threshold_per_dataset_source_time
+    - native_and_loaded_volume_shapes_spacing_bounds_and_per_dataset_stride
+    - volume_and_assigned_seed_positive_fraction
+    - canonical_ivd_array_sha256
+
+descriptor:
+  id: fmt_independent_3d_161d_sha256_25fce29499c9089e
+  source_sha256: 7ff09c1b578d0bd0927ccf0b771de30a01e0b79fff1b7b40576cbca57ce1e6c1
+  trainable_parameters: 0
+  batch_dependent_statistics: false
+  feature_width: 161
+  input_shape: [7, 32, 3]
+
+library:
+  population: valid_train_primitives_only
+  stratum: dataset_by_source_time_by_scale_by_class
+  balancing: exactly_one_positive_and_one_negative_from_every_two_class_nonempty_stratum
+  maximum_templates_per_class_per_stratum: 1
+  selected_per_class_formula: one_if_both_classes_are_nonempty_else_zero
+  empty_class_action: skip_both_classes_and_audit
+  maximum_global_template_count: 64000
+  candidate_order_within_class: ascending_seed_index
+  stratum_traversal_order: frozen_train_dataset_order_then_source_time_then_scale_id_then_negative_then_positive
+  sampling_random_generator: numpy_Generator_PCG64
+  sampling_random_seed: 15068
+  sampling_rule: one_global_generator_draws_negative_then_positive_only_for_each_two_class_nonempty_stratum
+  concatenation: one_global_cross_dataset_cross_time_cross_scale_library
+  scale_restricted_matching: false
+  final_library_requirement: at_least_one_selected_template_from_each_class
+
+query_population:
+  population: every_valid_test_primitive
+  label_balancing: disabled
+  downsampling: disabled
+  invalid_replacement: forbidden
+  scale_restricted_matching: false
+  required_audit: assigned_valid_invalid_and_natural_class_counts_per_dataset_time_scale
+
+methods:
+  - id: eligible_train_candidate_prior_constant_score
+    role: baseline
+    fit_scope: valid_train_candidates_before_class_balancing
+    binary_prediction: positive_only_if_train_positive_fraction_is_strictly_greater_than_0.5
+    tie_rule: non_vortex
+  - id: raw_centered_7x32x3_global_exact_1nn
+    feature_width: 672
+    flatten_order: C_order_line_then_arc_sample_then_xyz
+    normalization_fit_scope: selected_balanced_train_library_only
+  - id: raw_centered_train_only_pca_161d_global_exact_1nn
+    feature_width: 161
+    pca_fit_scope: valid_train_candidates_before_class_balancing
+    pca_solver: deterministic_two_pass_streaming_covariance_eigendecomposition
+    pca_accumulation_dtype: float64
+    pca_covariance_shape: [672, 672]
+    pca_component_order: descending_eigenvalue
+    pca_sign_rule: largest_absolute_loading_nonnegative
+    normalization_fit_scope: selected_balanced_train_library_only
+  - id: fmt_independent_3d_161d_sha256_25fce29499c9089e_global_exact_1nn
+    feature_width: 161
+    normalization_fit_scope: selected_balanced_train_library_only
+
+preprocessing:
+  train_only: true
+  normalization: per_method_per_feature_mean_and_population_standard_deviation
+  zero_standard_deviation_action: replace_divisor_with_one_and_audit
+  serialized_artifacts: [feature_mean, feature_standard_deviation, zero_variance_feature_mask]
+  query_statistics_usage: forbidden
+
+matcher:
+  type: exact_one_nearest_neighbor
+  search_population: all_selected_templates_from_all_1000_scales
+  metric: euclidean
+  binary_score: distance_to_nearest_negative_minus_distance_to_nearest_positive
+  positive_rule: score_greater_than_zero
+  tie_rule: non_vortex
+  approximate_index: forbidden
+  reject_rule: disabled
+  required_match_metadata:
+    - query_dataset_source_time_seed_scale_and_label
+    - matched_train_dataset_source_time_seed_scale_and_label
+    - nearest_positive_distance
+    - nearest_negative_distance
+    - selected_template_distance
+
+metrics:
+  user_requested: [accuracy]
+  protocol_primary: [average_precision, f1]
+  required_secondary: [balanced_accuracy, auroc, precision, recall, coverage]
+  accuracy_definition: "(TP + TN) / (TP + TN + FP + FN) over valid query primitives"
+  balanced_accuracy_definition: mean_of_positive_recall_and_negative_recall
+  coverage_definition: valid_assigned_query_count_divided_by_assigned_query_count
+  invalid_primitives_in_classification_denominator: false
+  invalid_primitives_in_coverage_denominator: true
+  precision_recall_f1_zero_denominator_value: 0
+  auroc_or_average_precision_single_class_action: report_null_and_audit_do_not_coerce
+  aggregation:
+    - per_dataset_source_time
+    - per_test_dataset
+    - equal_weight_two_test_physical_family_macro
+    - per_scale_tuple
+    - pooled_all_valid_test_queries_descriptive
+  test_macro_definition: mean_of_the_two_within_dataset_source_timeslice_macro_values
+  prior_baseline_required_in_every_table: true
+
+bootstrap:
+  enabled: true
+  seed: 25068
+  replicates: 5000
+  paired_unit: dataset_source_timeslice
+  paired_across_methods: true
+  stratify_by: test_physical_family
+  resample_count_per_family: 4
+  interval: percentile_95
+  numpy_percentile_method: linear
+  estimand: equal_weight_two_test_physical_family_macro
+  interpretation: descriptive_only_for_two_previously_exposed_test_families
+
+visualization:
+  evidence_scope: explanatory_exposed_development_only
+  datasets: frozen_test_datasets_only
+  source_ordinal: 2
+  metric_based_or_prediction_based_scene_selection: forbidden
+  prediction_method: fmt_independent_3d_161d_sha256_25fce29499c9089e_global_exact_1nn
+  panel_order:
+    - whole_loaded_volume_ivd_p95_isosurface_plus_center_pathlines
+    - fmt_exact_1nn_template_class_assignment
+    - fmt_true_positive_false_positive_false_negative_true_negative_against_ivd_p95
+  clustering_claim: forbidden_template_assignment_is_not_kmeans_or_clustering
+  evaluated_seed_rule: every_valid_query_seed_in_the_selected_source_window_in_identical_order_across_all_panels
+  display_center_pathlines:
+    count: 240
+    negative_count: 120
+    positive_count: 120
+    insufficient_class_action: fail
+    selection_seed: 15068
+    selection_inputs: [normalized_seed_xyz, normalized_dx_index, normalized_ds_index, normalized_arc_index, reference_class]
+    selection_algorithm: deterministic_per_class_maximin
+    prediction_or_metric_usage: forbidden
+    sampled_time_source: exact_cached_center_sample_time
+  ivd_background:
+    source: exact_cached_whole_loaded_volume_ivd
+    isosurface_level: exact_cached_ivd_p95_threshold
+    triangle_subsampling: forbidden
+  png_dpi: 360
+  exports: [scene_npz, png_360dpi, pdf_with_editable_text_and_rasterized_3d_marks, panel_alignment_json, visualization_manifest_json]
+  panel_alignment_tolerance_points: 1.5
+  figure_claim_scope: spatial_context_and_error_decomposition_not_aggregate_performance_proof
+
+provenance:
+  raw_input_hash: sha256_of_exact_source_file_bytes
+  raw_file_required_fields: [registered_path, size_bytes, sha256, kind]
+  coordinate_required_fields: [axis_order, shape, dtype, units, minimum, maximum, spacing, sha256]
+  derived_window_layout: "maxdim96 strided velocity[T,Z,Y,X,3], x[X], y[Y], z[Z], time[T]"
+  derived_window_hash_rule: sha256_over_canonical_little_endian_c_contiguous_array_bytes_with_dtype_and_shape_metadata
+  derived_window_required_arrays: [velocity, x, y, z, time]
+  derived_window_required_fields: [dataset, split, source_index, frame_index_range, source_time, canonical_array_sha256s, combined_sha256]
+  required_manifest_hashes:
+    - dataset_registry_sha256
+    - config_sha256
+    - git_commit
+    - scale_manifest_sha256
+    - raw_input_manifest_sha256
+    - derived_window_manifest_sha256
+    - seed_and_scale_assignment_manifest_sha256
+    - label_manifest_sha256
+    - primitive_manifest_sha256
+    - template_library_manifest_sha256
+    - preprocessing_artifact_sha256s
+
+execution:
+  platform: Ibex_from_committed_git_revision
+  preferred_device: cuda
+  fallback_device: cpu_for_tests_only
+  matcher_arithmetic: float32
+  cuda_tensorfloat32: disabled
+  torch_deterministic_algorithms: enabled
+  cublas_workspace_config: ':4096:8'
+  run_directory_pattern: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_2.1_development/runs/slurm_JOBID_COMMIT12
+  existing_run_directory_action: fail
+  completion_marker: RUN_COMPLETE.json
+  completion_marker_write_order: last_after_all_required_outputs_and_result_manifest_are_fsynced
+
+required_outputs:
+  - frozen_config.yaml
+  - input_manifest.json
+  - scale_manifest.json
+  - raw_input_manifest.json
+  - derived_window_manifest.json
+  - seed_and_scale_assignment_manifest.json
+  - label_manifest.json
+  - primitive_manifest.json
+  - audit_counts.csv
+  - template_library_manifest.json
+  - preprocessing_manifest.json
+  - per_query_matches.csv
+  - per_dataset_source_time_metrics.csv
+  - per_dataset_metrics.csv
+  - per_test_family_metrics.csv
+  - per_scale_tuple_metrics.csv
+  - bootstrap_differences.csv
+  - main_table.csv
+  - main_table.md
+  - development_report.md
+  - visualization_manifest.json
+  - environment_versions.json
+  - evaluation_summary.log
+  - result_manifest.json
+  - RUN_COMPLETE.json
+
+pre_run_known_blockers:
+  - the exact frozen revision must be committed, pushed, and checked out cleanly on both the local staging machine and Ibex
+  - Verify_ArcLengthResampling_1.1 must pass on Ibex from that exact frozen revision
+  - five locally available raw datasets must be staged and transferred because their raw sources are not registered on Ibex
+  - all ten portable-window manifests and forty cache shards must pass their immutable hash and completeness gates
+  - no mainExp_TemplateMatching_2.1 performance result exists

@@ -1,0 +1,35 @@
+experiment: Verify_ArcLengthResampling_1.1
+status: frozen_pre_run_not_run
+purpose: verify_the_arc_length_primitive_contract_before_mainExp_TemplateMatching_2.1
+parent_experiment: mainExp_TemplateMatching_2.1
+
+scale_source: config/mainExp_TemplateMatching_2.1.yaml
+required_scale_count: 1000
+scale_order: dx_outer_ds_middle_arc_inner
+scale_id_dtype: int32
+
+analytic_field:
+  velocity_xyz: [0.5, -1.0, 1.5]
+  grid_spacing_xyz: [0.1, 0.1, 0.1]
+  source_frame_interval: 0.1
+  source_frame_count: 13
+  seed_count: 1000
+  one_seed_per_scale: true
+
+required_checks:
+  - all_1000_numeric_scale_tuples_are_unique_and_ordered
+  - every_constant_velocity_line_reaches_its_spatial_arc_target
+  - every_output_line_has_32_uniform_arc_length_samples
+  - final_endpoint_is_linearly_truncated_at_the_exact_target_arc_length
+  - dx_ds_and_arc_metadata_match_the_frozen_physical_conversion
+  - complete_results_are_identical_under_external_batching_and_input_reordering
+  - zero_velocity_and_boundary_exit_fail_closed
+
+tolerances:
+  spatial_absolute: 0.000002
+  time_absolute: 0.000002
+
+evidence_scope: analytic_component_verification_only
+performance_claim: forbidden
+run_directory_pattern: outputs/Verify_ArcLengthResampling_1.1/slurm_JOBID_COMMIT12
+output_name: verification.json

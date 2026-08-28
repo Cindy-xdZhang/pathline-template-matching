@@ -17,6 +17,7 @@ def _make_field(
     invalid_coordinate: bool = False,
     omit_x_coordinate: bool = False,
     extra_dimension: bool = False,
+    nonuniform_time: bool = False,
 ) -> np.ndarray:
     with nc.Dataset(path, "w") as dataset:
         for name, size in (("tdim", 6), ("xdim", 8), ("ydim", 6), ("zdim", 4)):
@@ -31,6 +32,9 @@ def _make_field(
         ):
             if omit_x_coordinate and name == "x":
                 continue
+            if nonuniform_time and name == "time":
+                values = np.asarray(values).copy()
+                values[-1] += 0.03
             dataset.createVariable(name, "f4", (dimension,))[:] = values
         if invalid_coordinate:
             dataset.variables["x"][2] = np.nan
@@ -98,3 +102,40 @@ def test_extra_velocity_dimension_requires_explicit_policy():
             assert "explicit member-selection policy" in str(error)
         else:
             raise AssertionError("an extra velocity dimension was selected silently")
+
+
+def test_coordinate_index_fallback_must_be_explicit_and_is_audited():
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "bad_x_coordinate.nc"
+        _make_field(path, invalid_coordinate=True)
+        window = load_netcdf_window_3d(
+            path,
+            1,
+            2,
+            max_spatial_dim=4,
+            index_coordinate_axes=("x",),
+        )
+        assert np.array_equal(window.coordinates_xyz[0], np.asarray([0, 2, 4, 6]))
+        assert window.coordinate_sources == {
+            "x": "explicit_index_fallback",
+            "y": "coordinate",
+            "z": "coordinate",
+            "t": "coordinate",
+        }
+        assert window.metadata()["coordinate_sources"]["x"] == "explicit_index_fallback"
+
+
+def test_full_time_axis_must_be_uniform_even_outside_selected_window():
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "nonuniform_late_time.nc"
+        _make_field(path, nonuniform_time=True)
+        for operation in (
+            lambda: inspect_netcdf_3d(path),
+            lambda: load_netcdf_window_3d(path, 0, 2, max_spatial_dim=8),
+        ):
+            try:
+                operation()
+            except ValueError as error:
+                assert "non-uniform time" in str(error)
+            else:
+                raise AssertionError("non-uniform full time axis was accepted")

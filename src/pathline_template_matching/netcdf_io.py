@@ -39,6 +39,7 @@ class FlowWindow3D:
     source_start_index: int
     spatial_strides: dict[str, int]
     components: tuple[str, str, str]
+    coordinate_sources: dict[str, str]
 
     @property
     def spacing_xyz(self) -> np.ndarray:
@@ -55,6 +56,7 @@ class FlowWindow3D:
             "loaded_shape_TZYXC": list(self.velocity.shape),
             "spatial_strides": dict(self.spatial_strides),
             "components": list(self.components),
+            "coordinate_sources": dict(self.coordinate_sources),
             "spacing_xyz": self.spacing_xyz.tolist(),
             "source_time_min": float(self.time[0]),
             "source_time_max": float(self.time[-1]),
@@ -105,6 +107,40 @@ def _coordinate(dataset: nc.Dataset, dimension: str, indices: np.ndarray) -> tup
     )
 
 
+def _coordinate_unit_metadata(
+    dataset: nc.Dataset,
+    dimension: str,
+    *,
+    coordinate_source: str,
+) -> dict[str, object]:
+    """Record a coordinate's units attribute without inventing missing units."""
+
+    if coordinate_source == "explicit_index_fallback":
+        return {
+            "units_attribute_present": False,
+            "units_attribute_value": None,
+            "effective_units": "index_coordinate_dimensionless",
+        }
+    axis = _axis_for_dimension(dimension)
+    candidates = [dimension] + [
+        name for name in dataset.variables if name.lower() in _AXIS_ALIASES[axis]
+    ]
+    for name in dict.fromkeys(candidates):
+        if name not in dataset.variables:
+            continue
+        variable = dataset.variables[name]
+        if variable.dimensions != (dimension,):
+            continue
+        present = "units" in variable.ncattrs()
+        value = str(variable.getncattr("units")) if present else None
+        return {
+            "units_attribute_present": bool(present),
+            "units_attribute_value": value,
+            "effective_units": value if present else "attribute_absent",
+        }
+    raise ValueError(f"cannot resolve coordinate variable for dimension {dimension!r}")
+
+
 def _components(dataset: nc.Dataset) -> tuple[str, str, str]:
     for names in _COMPONENT_CANDIDATES:
         if all(name in dataset.variables for name in names):
@@ -128,14 +164,48 @@ def _validate_coordinate(values: np.ndarray, axis: str, *, require_uniform: bool
         raise ValueError(f"non-uniform {axis} coordinate is unsupported")
 
 
-def inspect_netcdf_3d(path: str | Path) -> dict[str, object]:
+def inspect_netcdf_3d(
+    path: str | Path,
+    *,
+    index_coordinate_axes: tuple[str, ...] | list[str] = (),
+) -> dict[str, object]:
     """Inspect dimensions and velocity component names without loading the field."""
 
     path = Path(path)
+    fallback_axes = tuple(str(axis).lower() for axis in index_coordinate_axes)
+    if len(set(fallback_axes)) != len(fallback_axes) or any(
+        axis not in "xyzt" for axis in fallback_axes
+    ):
+        raise ValueError("index_coordinate_axes must be unique axes from x,y,z,t")
     with nc.Dataset(path) as dataset:
         dims = {axis: _axis_dimension(dataset, axis) for axis in "xyzt"}
         shape = {axis: len(dataset.dimensions[dims[axis]]) for axis in "xyzt"}
-        time, time_source = _coordinate(dataset, dims["t"], np.arange(shape["t"]))
+        coordinates: dict[str, np.ndarray] = {}
+        coordinate_sources: dict[str, str] = {}
+        coordinate_units: dict[str, dict[str, object]] = {}
+        for axis in "xyzt":
+            indices = np.arange(shape[axis])
+            try:
+                coordinates[axis], coordinate_sources[axis] = _coordinate(
+                    dataset, dims[axis], indices
+                )
+            except ValueError:
+                if axis not in fallback_axes:
+                    raise
+                coordinates[axis] = indices.astype(np.float64)
+                coordinate_sources[axis] = "explicit_index_fallback"
+            _validate_coordinate(
+                coordinates[axis],
+                "time" if axis == "t" else axis,
+                require_uniform=True,
+            )
+            coordinate_units[axis] = _coordinate_unit_metadata(
+                dataset,
+                dims[axis],
+                coordinate_source=coordinate_sources[axis],
+            )
+        time = coordinates["t"]
+        time_source = coordinate_sources["t"]
         components = _components(dataset)
         component_dimensions = {
             name: list(dataset.variables[name].dimensions) for name in components
@@ -149,6 +219,8 @@ def inspect_netcdf_3d(path: str | Path) -> dict[str, object]:
         "time_min": float(time[0]),
         "time_max": float(time[-1]),
         "time_source": time_source,
+        "coordinate_sources": coordinate_sources,
+        "coordinate_units": coordinate_units,
     }
 
 
@@ -157,13 +229,26 @@ def load_netcdf_window_3d(
     start_index: int,
     frame_count: int,
     max_spatial_dim: int = 96,
+    *,
+    index_coordinate_axes: tuple[str, ...] | list[str] = (),
 ) -> FlowWindow3D:
-    """Read and validate a strided temporal window from a regular 3D field."""
+    """Read and validate a strided temporal window from a regular 3D field.
+
+    Physical coordinates are required by default.  A dataset-specific caller
+    may explicitly name axes whose unusable coordinate variables are replaced
+    by integer array indices.  This exception is recorded in the returned
+    metadata and is never selected implicitly.
+    """
 
     path = Path(path)
     max_spatial_dim = int(max_spatial_dim)
     if max_spatial_dim < 2:
         raise ValueError("max_spatial_dim must be at least 2")
+    fallback_axes = tuple(str(axis).lower() for axis in index_coordinate_axes)
+    if len(set(fallback_axes)) != len(fallback_axes) or any(
+        axis not in "xyzt" for axis in fallback_axes
+    ):
+        raise ValueError("index_coordinate_axes must be unique axes from x,y,z,t")
     with nc.Dataset(path) as dataset:
         dims = {axis: _axis_dimension(dataset, axis) for axis in "xyzt"}
         sizes = {axis: len(dataset.dimensions[dims[axis]]) for axis in "xyzt"}
@@ -222,11 +307,32 @@ def load_netcdf_window_3d(
             raise ValueError("velocity window contains NaN or Inf")
 
         coordinates: dict[str, np.ndarray] = {}
+        coordinate_sources: dict[str, str] = {}
         for axis in "xyz":
             selected = np.arange(sizes[axis])[indices[axis]]
-            coordinates[axis], _ = _coordinate(dataset, dims[axis], selected)
+            try:
+                coordinates[axis], coordinate_sources[axis] = _coordinate(
+                    dataset, dims[axis], selected
+                )
+            except ValueError:
+                if axis not in fallback_axes:
+                    raise
+                coordinates[axis] = selected.astype(np.float64)
+                coordinate_sources[axis] = "explicit_index_fallback"
             _validate_coordinate(coordinates[axis], axis, require_uniform=True)
-        all_time, _ = _coordinate(dataset, dims["t"], np.arange(sizes["t"]))
+        try:
+            all_time, coordinate_sources["t"] = _coordinate(
+                dataset, dims["t"], np.arange(sizes["t"])
+            )
+        except ValueError:
+            if "t" not in fallback_axes:
+                raise
+            all_time = np.arange(sizes["t"], dtype=np.float64)
+            coordinate_sources["t"] = "explicit_index_fallback"
+        if len(all_time) > 1:
+            _validate_coordinate(all_time, "time", require_uniform=True)
+        elif not np.isfinite(all_time).all():
+            raise ValueError("time coordinate is not finite")
         selected_time = all_time[start:stop]
         if len(selected_time) > 1:
             _validate_coordinate(selected_time, "time", require_uniform=True)
@@ -241,4 +347,5 @@ def load_netcdf_window_3d(
         source_start_index=start,
         spatial_strides=strides,
         components=components,
+        coordinate_sources=coordinate_sources,
     )

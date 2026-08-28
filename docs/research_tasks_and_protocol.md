@@ -31,7 +31,7 @@
 
 1. 主开发评测按 physical family 做 leave-one-family-out，不允许随机拆 primitive 或空间 seed。
 2. 一个 source timeslice 及其全部 pathline future window 必须属于同一拆分。
-3. scale tuple 以数值三元组 `(neighbor distance, integration step, integration steps)` 判等，不能只按名称判等。
+3. scale tuple 必须按对应实验版本的数值三元组判等，不能只按名称判等：1.x 使用 `(neighbor distance, integration step, integration steps)`；2.1 使用 `(neighbor distance dx, RK4 time step ds, target spatial arc length)`。
 4. confirmation physical family 必须在完整方法、代码 commit 与 manifest 冻结后首次读取；冻结前不得读取 raw field、query feature、valid rate、标签或指标。
 5. 一旦查看 confirmation 标签或指标，该数据以后只能算已暴露 development 数据。修改方法后必须更换新 confirmation。
 6. 旧 FMT 的 10 个 flow 条目、Task5 development/confirmation cache 和所有已报告 scale tuple 对本项目都属于已暴露 development 资源；旧缓存中的 `confirmation` 只是历史目录名，不是本项目的 sealed confirmation。
@@ -40,7 +40,7 @@
 
 - 3D 主任务固定 7 条线：`center, x+, x−, y+, y−, z+, z−`。
 - 每条线最终固定 `L=32`；积分器输出 `(x,y,z,t)`，输入 descriptor 前只保留 `(x,y,z)`，时间通道仅用于物理时间和重采样审计。
-- 相对 tuple 固定为 `(offset_grid_scale, dt_scale, integration_steps)`；逐数据集必须另存实际邻居距离、物理时间步长、积分步数、总积分时间、重采样方法和有效线长度。
+- 1.x 的相对 tuple 固定为 `(offset_grid_scale, dt_scale, integration_steps)`；2.1 的相对 tuple 改为 `(dx_grid_scale, ds_frame_scale, target_arc_length_grid_scale)`。逐数据集必须另存实际邻居距离、物理 RK4 时间步长、实际积分步数、累计空间弧长、终止时间、重采样方法和七条线的有效状态。
 - scale assignment 必须与空间位置和 IVD 标签独立；过滤出域 primitive 后还要报告每个 `scale × class` 的 assigned、valid 和 invalid 数量。
 - rounded index、物理时间插值和弧长插值是三个不同方法版本。替代方法先用 `Verify_...` 检验；若被主方法采用，必须再升级 `mainExp_...`。
 
@@ -82,7 +82,7 @@ positive iff IVD(seed, seed_time) >= percentile95(IVD volume)
 
 ## 9. 证据与运行记录
 
-每项方法结论必须同时指向：experiment version、config SHA-256、Git commit、dataset/cache manifest、逐 query 或逐 timeslice 表、汇总 JSON/CSV、设备、stdout/stderr。
+每项方法结论必须同时指向：experiment version、config SHA-256、Git commit、dataset/cache manifest、逐 query 或逐 timeslice 表、汇总 JSON/CSV、设备，以及 scheduler 实际生成的 stdout/stderr 路径与 SHA-256。runner 自写的摘要文件不能冒充 scheduler 日志。
 
 失败、取消、超时、无效、负结果和反例不得删除。旧结论被修订时，必须并列记录“旧结论、当前结论、改变原因、旧结论错误在哪里”。
 
@@ -115,3 +115,19 @@ Development 表格必须将 seen-scale 与 unseen-scale 分开，保留所有 fl
 ## 11. `mainExp_TemplateMatching_1.2` 对 1.1 失败的冻结修订
 
 1.1 job `50930751` 在产生任何性能指标前发现一个 library stratum 缺 positive 并按协议失败。1.1 证据和配置保持不变。1.2 只把空类处理改为：若 `m=min(cap,n_negative,n_positive)=0`，该 `flow×source-time×scale` stratum 两类都选择0个模板，并在 audit/manifest 保留候选数、空类和跳过原因；不得只选择非空类。Query 仍保留全部 valid primitive。Raw-PCA 的无监督拟合和 constant prior 仍使用所有非留出 library-source rows，包括被跳过 stratum；三个 1NN arm 的 scaler 只使用实际平衡模板。其余拆分、方法、指标、bootstrap、三联图和 sealed-confirmation 禁令完全继承 1.1。
+
+## 12. `mainExp_TemplateMatching_2.1` 空间弧长与固定 8:2 流场拆分
+
+2.1 是新的 major iteration，不覆盖 1.2。用户已明确：`ds` 是 RK4 的物理时间步长；`dx` 是中心 seed 到 `x±/y±/z±` 六个邻 seed 的初始距离；第三个尺度是每条 pathline 的目标累计欧氏空间弧长，不是积分步数或时间 horizon。
+
+- 训练流场固定为 `cylinder3d`、`halfcylinderRe640`、`halfcylinderRe6400`、`deltaWing_resampled`、`deltaWing_LBM`、`f22raptor`、`channel`、`boeing747`；测试流场固定为 `tangaroa`、`smokeBuoyancy`。两个测试项各自属于 singleton physical family，train/test 无 family 交叉。不得改成 primitive 随机 8:2。
+- 三个尺度轴各含 config 中显式列出的10个数值，共1000个 Cartesian tuples；每个 source timeslice 的64,000个 seeds 各只分配一个 tuple，每 tuple 恰好64个 seeds，分配与坐标、velocity、IVD、label、validity独立。
+- 每条线 forward RK4 最多前进12个 source-frame intervals。累计 polyline 欧氏弧长首次跨过目标时，在最后 segment 上线性截断到精确目标，再按累计空间弧长等距采样32点。七条线必须全部达到目标；任一出域、到时限仍不足或非有限即整个 primitive invalid。
+- 每个数据集选4个 source times，每个 time 加载当前帧及未来12帧；空间每轴用 `ceil(native_count/96)` stride，IVD mean 与 p95 都在完整的 loaded-strided volume 上计算，不得称为 native full-resolution IVD。
+- F22 的 `x/y/z/t` coordinate variables 已确认全部 masked；2.1 只允许该 dataset 在 config 中显式使用 integer index coordinates，其他 NetCDF 不得隐式 fallback。`channel` 是 steady VTK 经冻结 Killing observer 产生的 deterministic 159-frame synthetic unsteady view，必须与实测时变流场区分。
+- Train library 按 `dataset×source-time×scale×class` 分层；双类非空时才按 negative、positive 顺序各消耗一次 PCG64(15068) 随机抽样，确定性各取1个模板；任一类为空则两类都取0并审计，且该 stratum 不消耗随机数。Test 使用全部 valid primitives 的自然类别分布。匹配跨全部1000尺度做 global exact Euclidean 1NN。
+- 用户要求的普通 accuracy 必须报告，但约5%的 IVD-p95 正类会使它偏向多数类，因此同表必须给 prior、balanced accuracy、Average Precision、F1、Area Under the Receiver Operating Characteristic Curve、precision、recall 与 coverage。
+- 两个 test flow 的解释性三联图都固定 source ordinal `2`，不按任何性能数字选图。三栏使用同一组全部 valid query seeds：IVD-p95 等值面+240条中心pathlines、FMT exact-1NN template class assignment、FMT TP/FP/FN/TN。第二栏不得称 clustering；240条线只允许用坐标、scale tuple 和 reference class 确定性选择，禁止读取 prediction 或 metric。
+- 这10个 flow 都已在 FMT 或1.2中暴露，因此2.1只能产生 exposed-development 描述，不是 sealed confirmation。首次读取 test predictions 前必须冻结 config、代码 commit、portable-window/input manifest，并先通过 `Verify_ArcLengthResampling_1.1`。
+
+2.1 的全部精确数值、哈希、输出和运行规则以 `config/mainExp_TemplateMatching_2.1.yaml` 为准。
