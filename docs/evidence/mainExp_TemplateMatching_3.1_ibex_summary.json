@@ -1,0 +1,742 @@
+{
+  "schema": "pathline_template_matching.phase31_ibex_summary.v1",
+  "experiment": "mainExp_TemplateMatching_3.1",
+  "status": "development_completed_confirmation_not_run",
+  "evidence_scope": "descriptive_exposed_development_only",
+  "performance_results_exist": true,
+  "formal_confirmation_run": false,
+  "reported_metric_rounding_decimals": 4,
+  "metric_display_note": "Display values are rounded to four decimal places from the immutable CSV files; the source files and their SHA-256 values remain authoritative.",
+  "evidence_boundary": {
+    "resource_status": "all ten flows were exposed before this run",
+    "sealed_confirmation": false,
+    "test_data_used_for_method_or_scale_selection": false,
+    "allowed_claim": "descriptive results for the frozen 8:2 split, H48, 2000 scale tuples, whole-loaded-volume IVD-p95 labels, and global exact one-nearest-neighbour matching",
+    "disallowed_claims": [
+      "formal confirmation on previously unread physical families",
+      "FMT is universally superior to Raw-PCA161",
+      "the expanded long-arc block universally improves retrieval",
+      "a causal 1000-scale-library versus 2000-scale-library improvement, because all retrieval arms query one global 2000-scale library and H48, windows, center margin, and fitted populations also changed from 2.1",
+      "the second triptych panel is clustering or K-means"
+    ],
+    "visualization_role": "fixed explanatory spatial context and TP/FP/FN/TN decomposition, not aggregate performance proof"
+  },
+  "source_config_caveat": {
+    "frozen_pre_run_performance_results_exist": false,
+    "field_is_historical_after_completion": true,
+    "authoritative_completion_fields": [
+      "result_manifest.status",
+      "RUN_COMPLETE.status",
+      "RUN_COMPLETE.result_manifest_file_sha256",
+      "RUN_COMPLETE.result_manifest_content_sha256"
+    ],
+    "immutable_config_and_numerical_results_were_not_rewritten": true
+  },
+  "provenance": {
+    "numerical_git_commit": "260a07ad380d64fc300cabe8926244e92d8ba04a",
+    "main_config_sha256": "771980f14a6019a1f6e4bf03668d9f37dcf63495ae2dafa866312b12fc71855e",
+    "verify_config_sha256": "222caf2e70e099f5d4fd50cb8d9489781b5825b574f9abd77ff4ed96298205d9",
+    "dataset_registry_sha256": "5a0cdb522e2b947828e70be1109d32df75156fc0071802654e60897ccf81bfb9",
+    "result_manifest_file_sha256": "56c597ce70f16847d208b3ea41132e1d3804ff5baec704e46c7c5d989c536142",
+    "result_manifest_content_sha256": "b93981d8f3d139a8cf8c5e50344a6c311a52b1ca37d7a06ebf395cce94f53423",
+    "artifact_rows_content_sha256": "5724034505e3e7ac771eb4250d8cb3b8c7883c60cb32e672912560cea13fc6dd",
+    "run_complete_file_sha256": "f68bc9aea80b28ff5110b5aa53504be2d2e702a9942d2efc2242507f3a193896",
+    "visualization_manifest_file_sha256": "e0a936aafd1d4bbf28644a95de29e9e5c927e9629d0649fe41645140b4d2b89f",
+    "visualization_manifest_content_sha256": "d412d4d11faf04484c2295b2fd9a6195e7bdf75ed6dcb8b2cc47c10516bf06cd",
+    "remote_run_directory": "/ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/runs/slurm_50999189_260a07ad380d",
+    "local_download_directory": "outputs/mainExp_TemplateMatching_3.1_download/slurm_50999189_260a07ad380d",
+    "job_registry": "docs/ibex_run_registry.md",
+    "experiment_document": "docs/mainExp_TemplateMatching_3.1.md"
+  },
+  "split": {
+    "ratio": "8:2",
+    "unit": "complete_physical_family",
+    "ratio_counts_dataset_entries": true,
+    "train_dataset_entry_count": 8,
+    "test_dataset_entry_count": 2,
+    "train_unique_physical_family_count": 5,
+    "test_unique_physical_family_count": 2,
+    "family_overlap": false,
+    "train": [
+      "cylinder3d",
+      "halfcylinderRe640",
+      "halfcylinderRe6400",
+      "deltaWing_resampled",
+      "deltaWing_LBM",
+      "f22raptor",
+      "channel",
+      "boeing747"
+    ],
+    "test": [
+      "tangaroa",
+      "smokeBuoyancy"
+    ],
+    "train_physical_families": [
+      "half_cylinder",
+      "delta_wing",
+      "f22_raptor",
+      "channel",
+      "boeing_747"
+    ],
+    "test_physical_families": [
+      "tangaroa",
+      "smoke_buoyancy"
+    ]
+  },
+  "scale_and_primitive_protocol": {
+    "maximum_source_frame_intervals": 48,
+    "portable_window_frame_count": 49,
+    "sampled_points_per_line": 32,
+    "line_order": [
+      "center",
+      "x+",
+      "x-",
+      "y+",
+      "y-",
+      "z+",
+      "z-"
+    ],
+    "dx_definition": "center-to-each-of-six-neighbour-line seed distance in minimum loaded-grid-spacing units",
+    "ds_definition": "forward RK4 integration time step in source-frame-interval units",
+    "arc_length_definition": "target cumulative Euclidean spatial arc length for each of seven lines in minimum loaded-grid-spacing units",
+    "scale_count": 2000,
+    "block_order": [
+      "legacy_2_1",
+      "expanded_3_1"
+    ],
+    "blocks": {
+      "legacy_2_1": {
+        "scale_id_start": 0,
+        "scale_id_stop_exclusive": 1000,
+        "tuple_count": 1000,
+        "assignment_seed": 15068,
+        "dx_values": [0.25, 0.361111111111, 0.472222222222, 0.583333333333, 0.694444444444, 0.805555555556, 0.916666666667, 1.027777777778, 1.138888888889, 1.25],
+        "ds_values": [0.125, 0.144444444444, 0.163888888889, 0.183333333333, 0.202777777778, 0.222222222222, 0.241666666667, 0.261111111111, 0.280555555556, 0.3],
+        "arc_length_values": [4.0, 4.888888888889, 5.777777777778, 6.666666666667, 7.555555555556, 8.444444444444, 9.333333333333, 10.222222222222, 11.111111111111, 12.0],
+        "rows_content_sha256": "41de6f1d52d46e41ee259bc7742e5a6bb1334523914a9e35e874f809e5a02cb2",
+        "parent_projection_sha256": "d3577011be68ee710d42f65d70ea7791428f71297471ff0468f4980fbfc558f3",
+        "canonical_assignment_sha256_per_source": "21cdb937f57baf1a786a6a4622870e234074b684e5a5cda4c4271837631e0fee"
+      },
+      "expanded_3_1": {
+        "scale_id_start": 1000,
+        "scale_id_stop_exclusive": 2000,
+        "tuple_count": 1000,
+        "assignment_seed": 35068,
+        "dx_values": [0.125, 0.388888888889, 0.652777777778, 0.916666666667, 1.180555555556, 1.444444444444, 1.708333333333, 1.972222222222, 2.236111111111, 2.5],
+        "ds_values": [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5],
+        "arc_length_values": [13.0, 20.444444444444, 27.888888888889, 35.333333333333, 42.777777777778, 50.222222222222, 57.666666666667, 65.111111111111, 72.555555555556, 80.0],
+        "rows_content_sha256": "f16ffe312a01f6abf88dc02a4a6c897cf16930b4c692101f31b863e4226b605c"
+      }
+    },
+    "union_rows_content_sha256": "443743692d93ae9af9fbaf2184cc2ed129b1ee8f43e60afe0c4256ac76636ea5",
+    "unique_center_seed_count_per_source_time": 64000,
+    "assignment_count_per_center_seed": 2,
+    "assigned_primitive_count_per_source_time": 128000,
+    "assigned_train": 4096000,
+    "assigned_test": 1024000,
+    "assigned_total": 5120000
+  },
+  "verification_gates": {
+    "synthetic_phase_a": {
+      "job_id": "50997878",
+      "status": "COMPLETED",
+      "exit_code": "0:0",
+      "marker_sha256": "002887a4e0a354e5e8a287b1782fa13914660252353f92445061857b271f35c4",
+      "marker_path": "/ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/synthetic/slurm_50997878_260a07ad380d/SYNTHETIC_PASS.json",
+      "synthetic_verification_sha256": "2ba2ed718bf37bf4176eb80d447f98d0d4ecc13994232a4fd3786bee90b6376c",
+      "real_flow_data_opened": false
+    },
+    "train_portable_population": {
+      "job_id": "50998449",
+      "status": "COMPLETED",
+      "manifest_count": 8,
+      "window_count": 32,
+      "marker_sha256": "489d303b4430be7eded4fe39ab87107c778e1f7db2579cb9e3bb1fdfce209341",
+      "rows_content_sha256": "7f9fee3913e62f62bb4fc26666ab83ec2b2dd1406efd862af5de14e271e466fc"
+    },
+    "train_coverage_phase_b": {
+      "job_id": "50998592",
+      "status": "COMPLETED",
+      "exit_code": "0:0",
+      "marker_sha256": "1792d08f344a630ec1205e71617eb308b4b36ffe2338a6789b24e8d5f07f1981",
+      "verification_json_sha256": "19d1da9046cd8f91b1a882459e92ecf7b51ecf726af367c323d16ebd5fc9480a",
+      "coverage_summary_sha256": "0aabaabea15355551c11bcebc16d23f39f783ddc29c1388ca920b92e30c20c75",
+      "reported_strata": 64000,
+      "test_data_opened": false
+    },
+    "all_portable_population": {
+      "job_id": "50998971",
+      "status": "COMPLETED",
+      "manifest_count": 10,
+      "window_count": 40,
+      "marker_sha256": "d81270ce9bf3674d392df13745806410a68999da386aa9d264fc6a1ec5df8fc8",
+      "rows_content_sha256": "a00f0b647de19eaa2fafd484ca71de466df94041c77ff134f4c383ae367a83b1"
+    }
+  },
+  "ibex_jobs": {
+    "phase_a_synthetic": {
+      "job_id": "50997878",
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "elapsed": "00:00:55",
+      "node": "cn604-15",
+      "device": "CPU",
+      "unit_tests_passed": 102,
+      "stdout_sha256": "131e73a0aa511fdb6a3c2cdc38693d0ecc357e6aef55ba6461b3dc7d69d8a665",
+      "stderr_sha256": "789018d1feb81fc79efc03c8fba4526ce529f290c583ee0af07c1ae6098fa245"
+    },
+    "partial_train_portable_staging": {
+      "job_id": "50997913",
+      "state": "COMPLETED",
+      "array_tasks_completed": 3,
+      "datasets": ["cylinder3d", "halfcylinderRe640", "deltaWing_resampled"],
+      "note": "The remaining five train datasets were staged on Windows at the same numerical commit and uploaded windows-first, manifest-last.",
+      "windows_only_upload_record_set_sha256": "bb89f243d42ae5b328fe828b9d73f0471f0e5cc4ba160ffe4dda0e172019fef9"
+    },
+    "train_portable_preflight": {
+      "job_id": "50998449",
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "elapsed": "00:00:51",
+      "node": "cn504-17",
+      "stdout_sha256": "b2d7affb5818a7a42bd038e84dd58a199456695300b4dc03ce05dbc781d1f4f1",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "train_cache_builder": {
+      "job_id": "50998455",
+      "state": "COMPLETED",
+      "array_tasks_completed": 32,
+      "maximum_elapsed": "00:01:21",
+      "assigned": 4096000,
+      "valid": 2967612,
+      "invalid": 1128388,
+      "cache_files": 32,
+      "sidecars": 32,
+      "nonempty_stderr_count": 0
+    },
+    "phase_b_train_coverage": {
+      "job_id": "50998592",
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "elapsed": "00:00:31",
+      "node": "cn604-14",
+      "stdout_sha256": "4085f13493b73989da44ad328c4e002adfd2702e70202a75e55a18bddeff7aac",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "test_portable_staging": {
+      "job_id": "50998676",
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "elapsed": "00:03:31",
+      "node": "cn604-14",
+      "datasets": ["tangaroa", "smokeBuoyancy"],
+      "window_count": 8,
+      "stdout_sha256": "58babd51e450478473af858bca8f443c66eaf17722ced382157767d1b7032183",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "all_portable_preflight": {
+      "job_id": "50998971",
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "elapsed": "00:00:57",
+      "node": "cn604-11",
+      "stdout_sha256": "4639bc838e6ad388148592433c09433a2490255c8c9f393064c5455204cccbd3",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "test_cache_builder": {
+      "job_id": "50998991",
+      "state": "COMPLETED",
+      "array_tasks_completed": 8,
+      "maximum_elapsed": "00:00:54",
+      "assigned": 1024000,
+      "valid": 478521,
+      "invalid": 545479,
+      "cache_files": 8,
+      "sidecars": 8,
+      "nonempty_stderr_count": 0
+    },
+    "cancelled_duplicate_evaluation": {
+      "job_id": "50999097",
+      "state": "CANCELLED by 178058",
+      "started": false,
+      "elapsed": "00:00:00",
+      "node_or_gpu_allocated": false,
+      "performance_evidence": false,
+      "reason": "cancelled only after job 50999189 obtained a GPU and passed its startup gate"
+    },
+    "successful_gpu_evaluation": {
+      "job_id": "50999189",
+      "submitted_local": "2026-08-29T23:23:40+03:00",
+      "started_local": "2026-08-30T00:29:49+03:00",
+      "ended_local": "2026-08-30T00:46:39+03:00",
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "elapsed": "00:16:50",
+      "node": "gpu510-32",
+      "gpu": "Tesla V100-PCIE-32GB",
+      "gpu_memory_mib": 32768,
+      "cpu_count": 16,
+      "requested_memory_gib": 128,
+      "batch_max_rss_kib": 19637504,
+      "stdout_path": "slurm_logs/PTM31evaluate.50999189.out",
+      "stdout_sha256": "6377a3469babb4741688ce68675e744644a13215d7dfc433348709120eaa9f9a",
+      "stderr_path": "slurm_logs/PTM31evaluate.50999189.err",
+      "stderr_sha256": "c47846812e3ea68ef54b5141a0714b68a979188483eb5066b3bc5b382dd6788f"
+    }
+  },
+  "runtime_gate": {
+    "unit_tests_passed": 102,
+    "unit_tests_failed": 0,
+    "cuda_matcher_gate_passed": true,
+    "device": "cuda",
+    "cuda_device_name": "Tesla V100-PCIE-32GB",
+    "torch_deterministic_algorithms": true,
+    "cuda_matmul_allow_tf32": false,
+    "cudnn_allow_tf32": false,
+    "float32_matmul_precision": "highest",
+    "cublas_workspace_config": ":4096:8",
+    "python": "3.12.9",
+    "numpy": "1.26.4",
+    "torch": "2.6.0+cu118"
+  },
+  "population_and_library": {
+    "assigned_all_cache": 5120000,
+    "valid_all_cache": 3446133,
+    "invalid_all_cache": 1673867,
+    "train": {
+      "assigned": 4096000,
+      "valid": 2967612,
+      "invalid": 1128388,
+      "coverage": 0.7245146484375
+    },
+    "test": {
+      "assigned": 1024000,
+      "valid": 478521,
+      "invalid": 545479,
+      "coverage": 0.4673056640625
+    },
+    "pca_sample_count": 2967612,
+    "pca_input_width": 672,
+    "pca_output_width": 161,
+    "pca_solver": "deterministic_two_pass_streaming_covariance_eigendecomposition",
+    "train_preprocessing_rebuilt": true,
+    "phase21_selected_library_appended": false,
+    "eligible_train_positive_fraction": 0.04818116384486921,
+    "template_count": 96160,
+    "positive_template_count": 48080,
+    "negative_template_count": 48080,
+    "templates_by_block": {
+      "legacy_2_1": {
+        "positive": 30052,
+        "negative": 30052,
+        "total": 60104
+      },
+      "expanded_3_1": {
+        "positive": 18028,
+        "negative": 18028,
+        "total": 36056
+      }
+    },
+    "template_library_file_sha256": "525db0508a2bb253aa241bdef2bc50047ac20a7afebcc092f5e337e3aea0dd43",
+    "template_library_combined_array_sha256": "9d277eed76f3441c8b66e131b5bd30df5762aa0a6e8c984a425a3ed20f38db3b",
+    "preprocessing_artifact_file_sha256": "580c4cb55c9ea775de22d07f5721394e25a6975f69f983df62815dd87578320e",
+    "preprocessing_combined_array_sha256": "60a2fca6881523a8c54a6f5e08d738c3d81b8b5c45006bd20394643b66b62531"
+  },
+  "methods": {
+    "prior": "eligible_train_candidate_prior_constant_score",
+    "raw_672d": "raw_centered_7x32x3_global_exact_1nn",
+    "raw_pca_161d": "raw_centered_train_only_pca_161d_global_exact_1nn",
+    "fmt_161d": "fmt_independent_3d_161d_sha256_25fce29499c9089e_global_exact_1nn"
+  },
+  "primary_aggregation": "equal_weight_test_family_source_time_macro_over_2_families_x_4_timeslices",
+  "primary_sample_count": 478521,
+  "primary_coverage": 0.4673,
+  "primary_metrics_display_4dp": {
+    "prior": {
+      "accuracy": 0.7429,
+      "average_precision": 0.2571,
+      "f1": 0.0,
+      "balanced_accuracy": 0.5,
+      "auroc": 0.5,
+      "precision": 0.0,
+      "recall": 0.0
+    },
+    "raw_672d": {
+      "accuracy": 0.3987,
+      "average_precision": 0.2753,
+      "f1": 0.3505,
+      "balanced_accuracy": 0.5070,
+      "auroc": 0.4871,
+      "precision": 0.2530,
+      "recall": 0.8247
+    },
+    "raw_pca_161d": {
+      "accuracy": 0.5912,
+      "average_precision": 0.4366,
+      "f1": 0.3998,
+      "balanced_accuracy": 0.6004,
+      "auroc": 0.6507,
+      "precision": 0.2882,
+      "recall": 0.7952
+    },
+    "fmt_161d": {
+      "accuracy": 0.6041,
+      "average_precision": 0.3621,
+      "f1": 0.3787,
+      "balanced_accuracy": 0.5704,
+      "auroc": 0.5215,
+      "precision": 0.2805,
+      "recall": 0.6825
+    }
+  },
+  "paired_source_timeslice_bootstrap": {
+    "replicates": 5000,
+    "seed": 25068,
+    "paired_unit": "dataset_source_timeslice",
+    "stratified_by": "test_physical_family",
+    "interval": "percentile_95_numpy_linear",
+    "differences_are": "fmt_minus_comparator",
+    "finite_replicate_count_per_row": 5000,
+    "display_decimals": 4,
+    "rows": [
+      {"metric": "accuracy", "comparator": "prior", "point": -0.1388, "lower": -0.1940, "upper": -0.0906},
+      {"metric": "accuracy", "comparator": "raw_672d", "point": 0.2054, "lower": 0.1829, "upper": 0.2326},
+      {"metric": "accuracy", "comparator": "raw_pca_161d", "point": 0.0129, "lower": -0.0117, "upper": 0.0421},
+      {"metric": "average_precision", "comparator": "prior", "point": 0.1050, "lower": 0.0793, "upper": 0.1321},
+      {"metric": "average_precision", "comparator": "raw_672d", "point": 0.0868, "lower": 0.0734, "upper": 0.0981},
+      {"metric": "average_precision", "comparator": "raw_pca_161d", "point": -0.0745, "lower": -0.0927, "upper": -0.0507},
+      {"metric": "f1", "comparator": "prior", "point": 0.3787, "lower": 0.3506, "upper": 0.4010},
+      {"metric": "f1", "comparator": "raw_672d", "point": 0.0282, "lower": 0.0210, "upper": 0.0357},
+      {"metric": "f1", "comparator": "raw_pca_161d", "point": -0.0211, "lower": -0.0367, "upper": -0.0002},
+      {"metric": "balanced_accuracy", "comparator": "prior", "point": 0.0704, "lower": 0.0530, "upper": 0.0832},
+      {"metric": "balanced_accuracy", "comparator": "raw_672d", "point": 0.0634, "lower": 0.0555, "upper": 0.0722},
+      {"metric": "balanced_accuracy", "comparator": "raw_pca_161d", "point": -0.0300, "lower": -0.0547, "upper": 0.0038},
+      {"metric": "auroc", "comparator": "prior", "point": 0.0215, "lower": -0.0262, "upper": 0.0557},
+      {"metric": "auroc", "comparator": "raw_672d", "point": 0.0345, "lower": 0.0113, "upper": 0.0574},
+      {"metric": "auroc", "comparator": "raw_pca_161d", "point": -0.1291, "lower": -0.1464, "upper": -0.1072},
+      {"metric": "precision", "comparator": "prior", "point": 0.2805, "lower": 0.2488, "upper": 0.3073},
+      {"metric": "precision", "comparator": "raw_672d", "point": 0.0275, "lower": 0.0223, "upper": 0.0324},
+      {"metric": "precision", "comparator": "raw_pca_161d", "point": -0.0077, "lower": -0.0194, "upper": 0.0072},
+      {"metric": "recall", "comparator": "prior", "point": 0.6825, "lower": 0.6298, "upper": 0.7195},
+      {"metric": "recall", "comparator": "raw_672d", "point": -0.1422, "lower": -0.1715, "upper": -0.1176},
+      {"metric": "recall", "comparator": "raw_pca_161d", "point": -0.1127, "lower": -0.1380, "upper": -0.0715}
+    ]
+  },
+  "per_test_dataset_display_4dp": {
+    "tangaroa": {
+      "physical_family": "tangaroa",
+      "assigned": 512000,
+      "valid": 455800,
+      "invalid": 56200,
+      "positive": 22552,
+      "negative": 433248,
+      "coverage": 0.8902,
+      "methods": {
+        "prior": {"accuracy": 0.9505, "average_precision": 0.0495, "f1": 0.0, "balanced_accuracy": 0.5, "auroc": 0.5, "precision": 0.0, "recall": 0.0},
+        "raw_672d": {"accuracy": 0.3534, "average_precision": 0.1680, "f1": 0.1024, "balanced_accuracy": 0.5393, "auroc": 0.6133, "precision": 0.0550, "recall": 0.7457},
+        "raw_pca_161d": {"accuracy": 0.6958, "average_precision": 0.3278, "f1": 0.1775, "balanced_accuracy": 0.6805, "auroc": 0.7473, "precision": 0.1025, "recall": 0.6636},
+        "fmt_161d": {"accuracy": 0.7530, "average_precision": 0.2820, "f1": 0.1833, "balanced_accuracy": 0.6616, "auroc": 0.5971, "precision": 0.1096, "recall": 0.5602}
+      }
+    },
+    "smokeBuoyancy": {
+      "physical_family": "smoke_buoyancy",
+      "assigned": 512000,
+      "valid": 22721,
+      "invalid": 489279,
+      "positive": 10282,
+      "negative": 12439,
+      "coverage": 0.0444,
+      "methods": {
+        "prior": {"accuracy": 0.5475, "average_precision": 0.4525, "f1": 0.0, "balanced_accuracy": 0.5, "auroc": 0.5, "precision": 0.0, "recall": 0.0},
+        "raw_672d": {"accuracy": 0.4330, "average_precision": 0.3636, "f1": 0.5904, "balanced_accuracy": 0.4737, "auroc": 0.3628, "precision": 0.4386, "recall": 0.9028},
+        "raw_pca_161d": {"accuracy": 0.4746, "average_precision": 0.5276, "f1": 0.6134, "balanced_accuracy": 0.5133, "auroc": 0.5536, "precision": 0.4598, "recall": 0.9211},
+        "fmt_161d": {"accuracy": 0.4498, "average_precision": 0.4251, "f1": 0.5686, "balanced_accuracy": 0.4803, "auroc": 0.4567, "precision": 0.4406, "recall": 0.8011}
+      }
+    }
+  },
+  "per_scale_block_display_4dp": {
+    "legacy_2_1": {
+      "scale_ids": [0, 999],
+      "assigned": 512000,
+      "valid": 267875,
+      "invalid": 244125,
+      "positive": 21847,
+      "negative": 246028,
+      "coverage": 0.5232,
+      "methods": {
+        "prior": {"accuracy": 0.9184, "average_precision": 0.0816, "f1": 0.0, "balanced_accuracy": 0.5, "auroc": 0.5, "precision": 0.0, "recall": 0.0},
+        "raw_672d": {"accuracy": 0.1652, "average_precision": 0.2318, "f1": 0.1399, "balanced_accuracy": 0.4692, "auroc": 0.6669, "precision": 0.0764, "recall": 0.8325},
+        "raw_pca_161d": {"accuracy": 0.6619, "average_precision": 0.3501, "f1": 0.2618, "balanced_accuracy": 0.6953, "auroc": 0.7714, "precision": 0.1593, "recall": 0.7353},
+        "fmt_161d": {"accuracy": 0.7386, "average_precision": 0.3036, "f1": 0.2745, "balanced_accuracy": 0.6784, "auroc": 0.6083, "precision": 0.1774, "recall": 0.6064}
+      }
+    },
+    "expanded_3_1": {
+      "scale_ids": [1000, 1999],
+      "assigned": 512000,
+      "valid": 210646,
+      "invalid": 301354,
+      "positive": 10987,
+      "negative": 199659,
+      "coverage": 0.4114,
+      "methods": {
+        "prior": {"accuracy": 0.9478, "average_precision": 0.0522, "f1": 0.0, "balanced_accuracy": 0.5, "auroc": 0.5, "precision": 0.0, "recall": 0.0},
+        "raw_672d": {"accuracy": 0.6013, "average_precision": 0.2533, "f1": 0.1585, "balanced_accuracy": 0.6574, "auroc": 0.7000, "precision": 0.0891, "recall": 0.7201},
+        "raw_pca_161d": {"accuracy": 0.7150, "average_precision": 0.4691, "f1": 0.2181, "balanced_accuracy": 0.7372, "auroc": 0.8127, "precision": 0.1273, "recall": 0.7620},
+        "fmt_161d": {"accuracy": 0.7387, "average_precision": 0.3588, "f1": 0.2168, "balanced_accuracy": 0.7174, "auroc": 0.7118, "precision": 0.1285, "recall": 0.6936}
+      }
+    },
+    "interpretation": "These are pooled-query descriptive rows with different valid populations and class proportions; no paired block-level confidence interval was preregistered."
+  },
+  "long_arc_coverage_counterexample": {
+    "train_gate_expanded_valid_by_arc": [
+      {"arc_length": 13.0, "valid": 189880},
+      {"arc_length": 20.444444444444, "valid": 183657},
+      {"arc_length": 27.888888888889, "valid": 126185},
+      {"arc_length": 35.333333333333, "valid": 90996},
+      {"arc_length": 42.777777777778, "valid": 79825},
+      {"arc_length": 50.222222222222, "valid": 75141},
+      {"arc_length": 57.666666666667, "valid": 71881},
+      {"arc_length": 65.111111111111, "valid": 68021},
+      {"arc_length": 72.555555555556, "valid": 63087},
+      {"arc_length": 80.0, "valid": 58525}
+    ],
+    "test_expanded_by_dataset": {
+      "tangaroa": {"assigned": 256000, "valid": 209180, "invalid": 46820, "coverage": 0.817109375},
+      "smokeBuoyancy": {"assigned": 256000, "valid": 1466, "invalid": 254534, "coverage": 0.0057265625}
+    },
+    "selected_long_arc_rows": [
+      {"dataset": "tangaroa", "arc_length": 72.555555555556, "assigned": 25600, "valid": 18344, "invalid": 7256, "coverage": 0.7165625},
+      {"dataset": "tangaroa", "arc_length": 80.0, "assigned": 25600, "valid": 17744, "invalid": 7856, "coverage": 0.693125},
+      {"dataset": "smokeBuoyancy", "arc_length": 72.555555555556, "assigned": 25600, "valid": 1, "invalid": 25599, "coverage": 0.0000390625},
+      {"dataset": "smokeBuoyancy", "arc_length": 80.0, "assigned": 25600, "valid": 0, "invalid": 25600, "coverage": 0.0}
+    ],
+    "conclusion": "H48 makes the new arc range technically feasible in the train population and in Tangaroa, but Smoke buoyancy coverage collapses at the longest arcs; the long-arc expansion is not universally executable or superior."
+  },
+  "source_artifacts": {
+    "audit_counts.csv": "27647f427d36d231d4d66c8b371e9893c427d5c6ff1a1ab2447b6c7b1d79f92a",
+    "bootstrap_differences.csv": "eded1bf0f6dad91c6de8bb4f30411a8303f61072ed54f8dc78ef272be92e609d",
+    "cache_manifest.json": "a22fbfc2ce9c8136606e193411f382588954cf9578dd5b026c453c817c7f6895",
+    "derived_window_manifest.json": "6543aa3af262f79689df29e606d677455a436dcf37378cd9e7972ca82fd461dc",
+    "development_report.md": "95afdf39535c4e5dee5eb4686f680ccbbc001d581187b27ddaa47f15e3ce0b17",
+    "environment_versions.json": "ea70b1a747397fc8e851e9389496aa32bae14aa00e66667c238c6e45bf492ee0",
+    "evaluation_summary.log": "55ddf07a92dcf8d55b5fc5e600ac98f1e58d41e7636b6676b7c8fc66254a77b6",
+    "frozen_config.yaml": "771980f14a6019a1f6e4bf03668d9f37dcf63495ae2dafa866312b12fc71855e",
+    "input_manifest.json": "8c8e6c8c2fe33e9d023aae62c474069dc3a097720246671c59fb64dc6433d0ee",
+    "label_manifest.json": "605e68d330e6835329775ff3a2e25ef7d3e369fd4c4ae2438dd896d5c6b0dc22",
+    "main_table.csv": "362a6d3ce66562fc84d132f8507020fe034e506e1da07f9d566b35833110f1ce",
+    "main_table.md": "14e26087c61a1548568227d957532b111b4ed72a6e8e229067f9108f0e72cfd2",
+    "per_dataset_metrics.csv": "4bb15fec6785dae0bedbf655dc0a29498c613cccbd86c429a63981b022cfd820",
+    "per_dataset_source_time_metrics.csv": "604afba467e1c7cbbaea6b382491d41921877237dee317a5e92d5ce64c5aa244",
+    "per_query_matches.csv": "492d521f5ebbcd470ff1f94de119e5ecf2b17cda0c0d5e1edfbd202aa5f50fa4",
+    "per_scale_block_metrics.csv": "60b485e872147a2967c943c9eb6acc55cff87e5f2dccbd14ae27b31618987eb9",
+    "per_scale_tuple_metrics.csv": "3d22937d4cb35b1406a1a146bf6bd97daf0464863ca7585f8e05e5a6bdbf816a",
+    "per_test_family_metrics.csv": "1e567a8b7697ce6906f0dfdf9a8159be21e5b542d90a6b85a945ba696b27a097",
+    "preprocessing_artifacts.npz": "580c4cb55c9ea775de22d07f5721394e25a6975f69f983df62815dd87578320e",
+    "preprocessing_manifest.json": "e5e496702d96b4c4d02671a7da711108dcb3437092addf47ad9256ec4a28807c",
+    "primitive_manifest.json": "ca5879b605b00cac359f8b2d89258c03e74cef049d542fa78b1ae831153b986b",
+    "raw_input_manifest.json": "74aa3ae2826dee71a332ca7fd281385b17c3ac8faa7a172e959f371071a015d9",
+    "run_start.json": "1fded8df9a02695a663e5176130c63c30d6dc8cbd8b2b5078a9ad314b0692237",
+    "scale_manifest.json": "5ae302683e7b2307927a120070cb35ba8f159162243c016529a8c4d824084b33",
+    "seed_and_scale_assignment_manifest.json": "736b1425e77a49924546790fcc51493db14224c36cb4ea91c896a28903a6115c",
+    "template_library.npz": "525db0508a2bb253aa241bdef2bc50047ac20a7afebcc092f5e337e3aea0dd43",
+    "template_library_audit.csv": "603fa002fcb169814c3382cdcfbc1320cf42817ffa9e19037a771901ded85a22",
+    "template_library_manifest.json": "a21b3b7c44b2fbad3aa6ca2d15514bba79a1c410dfeeba704ed61c7f221372d4",
+    "visualization_manifest.json": "e0a936aafd1d4bbf28644a95de29e9e5c927e9629d0649fe41645140b4d2b89f"
+  },
+  "visualization": {
+    "selection": "both test datasets at frozen source ordinal 2, one figure per dataset and scale block, fixed before performance",
+    "selection_uses_predictions_or_metrics": false,
+    "figure_count": 4,
+    "source_ordinal": 2,
+    "display_pathlines_per_figure": 240,
+    "display_pathlines_per_reference_class": 120,
+    "required_exports_per_figure": 5,
+    "additional_audit_files_per_figure": 2,
+    "result_manifest_anchored_visual_file_count": 28,
+    "panel_order": [
+      "whole-loaded-volume IVD-p95 isosurface plus fixed center pathlines",
+      "FMT global exact one-nearest-neighbour template class assignment",
+      "TP, FP, FN, and faint TN against IVD-p95"
+    ],
+    "figures": [
+      {
+        "dataset": "tangaroa",
+        "scale_block_id": "legacy_2_1",
+        "source_index": 101,
+        "source_cache_sha256": "94ff704bd4d84d0cfb73555f9e059f07f0b6727f60b01caa1da809dbddd7c1f7",
+        "fmt_prediction_sha256": "5fefbf8f4a5fdf2c08f2883cd17b595274bc7105d960c0a5d7b5cd492b90a1e9",
+        "query_count": 61656,
+        "reference_positive": 3235,
+        "reference_negative": 58421,
+        "true_positive": 1733,
+        "false_positive": 13570,
+        "true_negative": 44851,
+        "false_negative": 1502,
+        "artifacts": {
+          "scene_npz": {"path": "scenes/tangaroa_source_ordinal_2_legacy_2_1.scene.npz", "sha256": "fc6dfd53a4bb6d5e927164932a3314797da260db7221ae223b54e5ca488a94fc"},
+          "scene_manifest": {"path": "scenes/tangaroa_source_ordinal_2_legacy_2_1.scene.json", "sha256": "5caed8cbd788917363d13319fc9854e18c727a0afab1f6b383b69bf723dfde2d"},
+          "svg": {"path": "figures/tangaroa_source_ordinal_2_legacy_2_1_triptych.svg", "sha256": "aca9941523887044d886687e89eab2bd64acb46c68107473004c5e396dfe3cb0"},
+          "pdf": {"path": "figures/tangaroa_source_ordinal_2_legacy_2_1_triptych.pdf", "sha256": "e5953e6fd2bc5b729faedc4ac3fea55468e052724a79a29f00221a10578a424b"},
+          "png": {"path": "figures/tangaroa_source_ordinal_2_legacy_2_1_triptych.png", "sha256": "f334c00ba83b982a6f00917557607357e07c3663fe993b81c0f23e8f16575078"},
+          "alignment": {"path": "figures/tangaroa_source_ordinal_2_legacy_2_1_triptych.alignment.json", "sha256": "abfc8dc7f382fd9d609f3a274bff702599bac56d76894b7d36eff4123f1b83ef"},
+          "render_metadata": {"path": "figures/tangaroa_source_ordinal_2_legacy_2_1_triptych.render.json", "sha256": "f0b0169cfd90627d163d7b39c9639d1a753ec3d78afd90060c6cf2053cbb8d05"}
+        },
+        "post_download_qa": {
+          "alignment_verdict": "PASS",
+          "alignment_fail": 0,
+          "alignment_warn": 0,
+          "alignment_audit_sha256": "da280d08700e9b3bf6aaa0787f517a70e71046a688fc9b78f52abaa688871a56",
+          "collision_fail": 0,
+          "collision_warn": 14,
+          "collision_audit_sha256": "a5a5f13adf31190c2bb606e607203be7d145b1c47ab7997d0f9e23f12a541d41"
+        }
+      },
+      {
+        "dataset": "tangaroa",
+        "scale_block_id": "expanded_3_1",
+        "source_index": 101,
+        "source_cache_sha256": "94ff704bd4d84d0cfb73555f9e059f07f0b6727f60b01caa1da809dbddd7c1f7",
+        "fmt_prediction_sha256": "8340d390ed398c3836de1db6d6189379789a71250f048d1eecedc0e1442308fa",
+        "query_count": 51947,
+        "reference_positive": 2447,
+        "reference_negative": 49500,
+        "true_positive": 1859,
+        "false_positive": 14943,
+        "true_negative": 34557,
+        "false_negative": 588,
+        "artifacts": {
+          "scene_npz": {"path": "scenes/tangaroa_source_ordinal_2_expanded_3_1.scene.npz", "sha256": "c7ce7be10b59a6dea5c58dd457dd0ed536ac3cdb546a4c4159fb59afeb368548"},
+          "scene_manifest": {"path": "scenes/tangaroa_source_ordinal_2_expanded_3_1.scene.json", "sha256": "e32fa1b5a865deb0433e8ada553da9a350ab5600d74e8f2f4bace7dbd5b5cc2b"},
+          "svg": {"path": "figures/tangaroa_source_ordinal_2_expanded_3_1_triptych.svg", "sha256": "d249543c4434af1a8027260ceaaebed58cf99c83906803fed9dc6712aac207cc"},
+          "pdf": {"path": "figures/tangaroa_source_ordinal_2_expanded_3_1_triptych.pdf", "sha256": "fecb33880cf41efab803f75c3249e80bb69787506fcababbae216de4d87e45e0"},
+          "png": {"path": "figures/tangaroa_source_ordinal_2_expanded_3_1_triptych.png", "sha256": "7932c4bb6396138523e3d4ec38e939f002092e00a2b0cb0d5d1e9ec9d5a9a9b8"},
+          "alignment": {"path": "figures/tangaroa_source_ordinal_2_expanded_3_1_triptych.alignment.json", "sha256": "abfc8dc7f382fd9d609f3a274bff702599bac56d76894b7d36eff4123f1b83ef"},
+          "render_metadata": {"path": "figures/tangaroa_source_ordinal_2_expanded_3_1_triptych.render.json", "sha256": "dd897d0cb85e19de958991ab3e2c0bc12ab7a8df18940b6476fddb9ebb6a8f45"}
+        },
+        "post_download_qa": {
+          "alignment_verdict": "PASS",
+          "alignment_fail": 0,
+          "alignment_warn": 0,
+          "alignment_audit_sha256": "da280d08700e9b3bf6aaa0787f517a70e71046a688fc9b78f52abaa688871a56",
+          "collision_fail": 0,
+          "collision_warn": 11,
+          "collision_audit_sha256": "d9852fec378ddce1d6350baf5df89b20245afc58c2042575e9716fb49e1d90d6"
+        }
+      },
+      {
+        "dataset": "smokeBuoyancy",
+        "scale_block_id": "legacy_2_1",
+        "source_index": 74,
+        "source_cache_sha256": "ba890ee3f06ffe901784aca0e994195ba62c20b77d0de682f0a2cd4214ae0d28",
+        "fmt_prediction_sha256": "1d3102298c09f8e2fbb65354ca35b05b42cd5577912e5bdc495f925b62cebf6f",
+        "query_count": 5710,
+        "reference_positive": 2477,
+        "reference_negative": 3233,
+        "true_positive": 1995,
+        "false_positive": 2727,
+        "true_negative": 506,
+        "false_negative": 482,
+        "artifacts": {
+          "scene_npz": {"path": "scenes/smokeBuoyancy_source_ordinal_2_legacy_2_1.scene.npz", "sha256": "d6b3405d8d111116cb01210f004d5172b88d9e09f2b237863ede51d9de351830"},
+          "scene_manifest": {"path": "scenes/smokeBuoyancy_source_ordinal_2_legacy_2_1.scene.json", "sha256": "bbac106fb293dccd5fa5de34d9690527296758857310ac5b26e97b8391ef04d4"},
+          "svg": {"path": "figures/smokeBuoyancy_source_ordinal_2_legacy_2_1_triptych.svg", "sha256": "0dc0f987ed980794b9e1e3bf42c79723446c4b3c72fb2b0a93c970311742b191"},
+          "pdf": {"path": "figures/smokeBuoyancy_source_ordinal_2_legacy_2_1_triptych.pdf", "sha256": "96fdf17156317bfc9744bdc4f9b284241a00236e5d617577fec0bde9a819183c"},
+          "png": {"path": "figures/smokeBuoyancy_source_ordinal_2_legacy_2_1_triptych.png", "sha256": "3869af9ef3557eb0233b41a6358671ca4d5b4d47dd2e2f7b1eb040795a0c0a07"},
+          "alignment": {"path": "figures/smokeBuoyancy_source_ordinal_2_legacy_2_1_triptych.alignment.json", "sha256": "abfc8dc7f382fd9d609f3a274bff702599bac56d76894b7d36eff4123f1b83ef"},
+          "render_metadata": {"path": "figures/smokeBuoyancy_source_ordinal_2_legacy_2_1_triptych.render.json", "sha256": "e2d80a1f54690e235ea54f05f9ee09518d551f9976c75c871e6e27517ceb6a46"}
+        },
+        "post_download_qa": {
+          "alignment_verdict": "PASS",
+          "alignment_fail": 0,
+          "alignment_warn": 0,
+          "alignment_audit_sha256": "da280d08700e9b3bf6aaa0787f517a70e71046a688fc9b78f52abaa688871a56",
+          "collision_fail": 0,
+          "collision_warn": 9,
+          "collision_audit_sha256": "17b9b209ecd9d22dcc74fcb600f569e492f8fd7aa1b6e4bb2cc005e697d90dc6"
+        }
+      },
+      {
+        "dataset": "smokeBuoyancy",
+        "scale_block_id": "expanded_3_1",
+        "source_index": 74,
+        "source_cache_sha256": "ba890ee3f06ffe901784aca0e994195ba62c20b77d0de682f0a2cd4214ae0d28",
+        "fmt_prediction_sha256": "2934f34ad5316a079d3a7a17f79af4df82355e9015b6b4aa36f448a8fc077f84",
+        "query_count": 369,
+        "reference_positive": 245,
+        "reference_negative": 124,
+        "true_positive": 201,
+        "false_positive": 98,
+        "true_negative": 26,
+        "false_negative": 44,
+        "artifacts": {
+          "scene_npz": {"path": "scenes/smokeBuoyancy_source_ordinal_2_expanded_3_1.scene.npz", "sha256": "0883f4259ece1b42bf4e43842c6f005092c2fa09e28f492fd24af0c0e601f5ed"},
+          "scene_manifest": {"path": "scenes/smokeBuoyancy_source_ordinal_2_expanded_3_1.scene.json", "sha256": "c5811d21a15795e98e6c37f8bbe2744f10949d8a6e527a5126843e7703eb8a39"},
+          "svg": {"path": "figures/smokeBuoyancy_source_ordinal_2_expanded_3_1_triptych.svg", "sha256": "2694b99e66c62b5ae829b7f67afc4a7a9cdb6733d5657bde16ebb9b73421feba"},
+          "pdf": {"path": "figures/smokeBuoyancy_source_ordinal_2_expanded_3_1_triptych.pdf", "sha256": "b54e3996327de945fa1b8eeaa403fc20e6b70742791406859f2db1e2144320f4"},
+          "png": {"path": "figures/smokeBuoyancy_source_ordinal_2_expanded_3_1_triptych.png", "sha256": "e4b611ddc9388511ad9400ca31ab9ba2e76639401abd5d3aefc5554d6250c0e5"},
+          "alignment": {"path": "figures/smokeBuoyancy_source_ordinal_2_expanded_3_1_triptych.alignment.json", "sha256": "abfc8dc7f382fd9d609f3a274bff702599bac56d76894b7d36eff4123f1b83ef"},
+          "render_metadata": {"path": "figures/smokeBuoyancy_source_ordinal_2_expanded_3_1_triptych.render.json", "sha256": "27e54aba7163631cc822fd64dfe65e6807e3e89ced44d7122e6c1a72d69512cf"}
+        },
+        "post_download_qa": {
+          "alignment_verdict": "PASS",
+          "alignment_fail": 0,
+          "alignment_warn": 0,
+          "alignment_audit_sha256": "da280d08700e9b3bf6aaa0787f517a70e71046a688fc9b78f52abaa688871a56",
+          "collision_fail": 0,
+          "collision_warn": 9,
+          "collision_audit_sha256": "8b6940c214dfb280ffc06bd0e4e216a3915a983b93f97dbf4316e4f4ec2b0065"
+        }
+      }
+    ],
+    "post_download_qa_summary": {
+      "alignment_audits_passed": 4,
+      "alignment_audits_failed": 0,
+      "panel_alignment_tolerance_points": 1.5,
+      "collision_fail_total": 0,
+      "collision_warn_total": 43,
+      "collision_warn_range_per_figure": [9, 14],
+      "collision_warn_review": "All overlay warnings were visually reviewed as expected 3D coordinate-tick contact with coordinate panes or rasterized pane edges; no title, label, or legend clipping was found.",
+      "minimum_pdf_glyph_size_points": 7.0,
+      "native_figure_inches": [21.0, 5.0],
+      "png_pixels": [7560, 1800],
+      "png_dpi": 360,
+      "approximate_rasterized_3d_layer_dpi_in_pdf_and_svg": 100,
+      "research_report_ready": true,
+      "nature_submission_ready_without_rerender": false,
+      "submission_warning": "Do not scale the 21-inch diagnostic canvas directly to journal double-column width; make a separately versioned scene-only rerender and repeat font, collision, alignment, and raster-resolution audits."
+    }
+  },
+  "artifact_and_table_verification": {
+    "immutable_remote_file_count_expected": 59,
+    "immutable_remote_file_count_verified": 59,
+    "result_manifest_artifact_count_expected": 57,
+    "result_manifest_artifact_count_verified": 57,
+    "manifest_artifact_size_or_sha256_mismatches": 0,
+    "missing_manifest_artifacts": [],
+    "completion_files_excluded_from_artifact_rows": [
+      "result_manifest.json",
+      "RUN_COMPLETE.json"
+    ],
+    "local_download_verified_against_same_manifest": true,
+    "local_qa_products_are_not_part_of_the_immutable_59_file_run": true,
+    "csv_data_row_counts": {
+      "main_table.csv": 8,
+      "per_dataset_source_time_metrics.csv": 32,
+      "per_dataset_metrics.csv": 8,
+      "per_test_family_metrics.csv": 8,
+      "per_scale_block_metrics.csv": 8,
+      "per_scale_tuple_metrics.csv": 8000,
+      "bootstrap_differences.csv": 21
+    }
+  },
+  "conclusion": {
+    "previous_status": "method frozen; no mainExp_TemplateMatching_3.1 performance evidence",
+    "current_status": "complete exposed-development run and four fixed triptychs passed provenance, file, and figure audits",
+    "reason_for_change": "Ibex job 50999189 completed the unchanged numerical commit and frozen configuration",
+    "fmt_vs_raw_672d": "FMT has positive 95% paired-bootstrap differences for accuracy, Average Precision, F1, balanced accuracy, AUROC, and precision; FMT recall is lower.",
+    "fmt_vs_raw_pca_161d": "FMT has lower Average Precision, F1, AUROC, and recall with intervals not crossing zero; accuracy, balanced accuracy, and precision intervals cross zero.",
+    "long_arc": "The expanded block builds 36,056 balanced templates and many valid Tangaroa queries, but Smoke buoyancy expanded coverage is 0.5727% and its arc-80 coverage is zero.",
+    "claim_not_supported": "FMT is the overall best method, the long-arc expansion is universally beneficial, or the 2.1-to-3.1 difference is a single-variable causal effect of library growth from 1000 to 2000 scales.",
+    "formal_confirmation": "not run"
+  }
+}

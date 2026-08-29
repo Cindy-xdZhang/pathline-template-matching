@@ -1,6 +1,6 @@
 # mainExp_TemplateMatching_3.1：H48 下两尺度 block 的 2000-tuple 检索
 
-状态：**`frozen_pre_run_not_run`**。本实验的唯一冻结配置是 `config/mainExp_TemplateMatching_3.1.yaml`。尚未运行 `Verify_LongArcHorizon_1.1`，尚未提交 3.1 Slurm job，也没有 3.1 accuracy、coverage、匹配或图件结果。Config中的`performance_results_exist_at_config_freeze: false`只记录冻结时事实；正式运行后的状态必须由`result_manifest.json`与`RUN_COMPLETE.json`判定，不得把该预运行字段复制成运行时结论。
+状态：**`development_completed_confirmation_not_run`**。冻结配置仍是 `config/mainExp_TemplateMatching_3.1.yaml`；数值运行使用 Git commit `260a07ad380d64fc300cabe8926244e92d8ba04a`。Ibex job `50999189` 已完成，`result_manifest.json` 与 `RUN_COMPLETE.json` 均通过逐文件哈希验收。Config中的`performance_results_exist_at_config_freeze: false`只记录冻结时事实，不是运行后状态。结果来自已暴露的10-flow development资源，formal confirmation没有运行。
 
 ## 为什么是 3.1，而不是修改 2.1
 
@@ -98,16 +98,105 @@ Accuracy、Average Precision、F1、balanced accuracy、Area Under the Receiver 
 
 每张图都必须导出scene NPZ、含可编辑文字且3D marks栅格化的SVG、同类PDF、360 dpi PNG预览及panel-alignment JSON。SVG是主矢量输出；PDF用于glyph与collision审计；PNG只作360 dpi预览。`visualization_manifest.json`必须为每张图的5个required exports逐文件记录relative path、export kind、size bytes与SHA-256；scene/render metadata可作为附加审计文件单独列出。全局`visualization_manifest.json`不自哈希，其文件SHA-256由最终`result_manifest.json`记录。任一必需文件缺失或hash不符都不得写`RUN_COMPLETE.json`。
 
-## 当前投递状态
+## 已完成运行与证据
 
-当前只冻结了方法与配置。正式投递前必须：
+完整流程已按冻结顺序执行：Phase A、32个train windows preflight、32个train caches、Phase B、40个全体windows preflight、8个test caches、GPU evaluator。执行副本 `50999189` 在 `gpu510-32` 的 Tesla V100-PCIE-32GB 上于 2026-08-30 00:29:49–00:46:39 +03:00 完成，`ExitCode=0:0`，102/102 tests及CUDA确定性门禁通过。排队重复副本 `50999097` 在执行副本通过启动门禁后被取消，未分配节点、运行时间为0，保留在job registry中。
 
-1. 从同一 clean committed revision 通过全部3.1 implementation tests；
-2. 在Ibex/WekaFS完成并登记Verify Phase A `synthetic`，取得有效`SYNTHETIC_PASS.json`及其SHA-256；
-3. 只生成8个train datasets×4 sources的49帧portable windows：Ibex array只处理当前在Ibex有raw的`cylinder3d, halfcylinderRe640, deltaWing_resampled`；Windows必须在同一clean Git commit和同一Phase A marker下生成`halfcylinderRe6400, deltaWing_LBM, f22raptor, channel, boeing747`，然后先上传window files、最后逐dataset发布manifest，不得对portable root使用删除式同步；只有preflight实际加载并校验8/8 train manifests、32/32 windows、config/registry/commit/size/file SHA-256后写出`TRAIN_PORTABLES_PASS.json`，才可提交32个train cache shards；
-4. 只用这32个immutable train caches完成并登记Verify Phase B `train_coverage`，取得最终`verification.json`和`TRAIN_COVERAGE_PASS.json`；
-5. Verify两阶段均通过后，才生成2个test datasets×4 sources的8个windows；只有preflight实际加载并校验10/10 manifests和40/40 windows后写出`ALL_PORTABLES_PASS.json`，才可生成8个test caches，至此完整主实验共40个双block cache shards；
-6. evaluator可在一个单向自动的manifest冻结步骤中解析immutable cache sidecars，但在`input_manifest.json`写完前不得向操作者报告sidecar值、不得用于任何方法或运行决策，也不得打开test NPZ arrays、计算labels/coverage/predictions/metrics；若冻结步骤中途失败，该run directory保留为未完成证据且不得继续。只有config、Git commit、input/scale/assignment manifests冻结后才可进入数值评估；
-7. 将每个Slurm job立即登记到`docs/ibex_run_registry.md`，失败、取消和重投均不得覆盖。
+| Evidence | Value |
+|---|---|
+| Numerical Git commit | `260a07ad380d64fc300cabe8926244e92d8ba04a` |
+| Main config SHA-256 | `771980f14a6019a1f6e4bf03668d9f37dcf63495ae2dafa866312b12fc71855e` |
+| Dataset registry SHA-256 | `5a0cdb522e2b947828e70be1109d32df75156fc0071802654e60897ccf81bfb9` |
+| Successful Slurm job | `50999189`, Tesla V100 32GB, 16 CPU, 128GB, elapsed `00:16:50` |
+| Input/cache manifest SHA-256 | `8c8e6c8c2fe33e9d023aae62c474069dc3a097720246671c59fb64dc6433d0ee` / `a22fbfc2ce9c8136606e193411f382588954cf9578dd5b026c453c817c7f6895` |
+| Scale/library manifest SHA-256 | `5ae302683e7b2307927a120070cb35ba8f159162243c016529a8c4d824084b33` / `a21b3b7c44b2fbad3aa6ca2d15514bba79a1c410dfeeba704ed61c7f221372d4` |
+| Result manifest file SHA-256 | `56c597ce70f16847d208b3ea41132e1d3804ff5baec704e46c7c5d989c536142` |
+| Result manifest content SHA-256 | `b93981d8f3d139a8cf8c5e50344a6c311a52b1ca37d7a06ebf395cce94f53423` |
+| Visualization manifest file/content SHA-256 | `e0a936aafd1d4bbf28644a95de29e9e5c927e9629d0649fe41645140b4d2b89f` / `d412d4d11faf04484c2295b2fd9a6195e7bdf75ed6dcb8b2cc47c10516bf06cd` |
+| `RUN_COMPLETE.json` SHA-256 | `f68bc9aea80b28ff5110b5aa53504be2d2e702a9942d2efc2242507f3a193896` |
+| Scheduler stdout/stderr SHA-256 | `6377a3469babb4741688ce68675e744644a13215d7dfc433348709120eaa9f9a` / `c47846812e3ea68ef54b5141a0714b68a979188483eb5066b3bc5b382dd6788f` |
+| Immutable run | `/ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/runs/slurm_50999189_260a07ad380d` |
 
-目前没有3.1性能证据，因此不得提前写“长弧长提高/降低accuracy”“2000 scales优于1000 scales”或任何formal confirmation结论。
+远端和完整本地副本都通过59/59文件集合、57/57 manifest artifacts的size与SHA-256核验；CSV行数为主表8、source-time 32、dataset 8、family 8、block 8、tuple 8000、bootstrap 21。结构化摘要见[mainExp_TemplateMatching_3.1_ibex_summary.json](evidence/mainExp_TemplateMatching_3.1_ibex_summary.json)。
+
+## 模板库与 query population
+
+3.1没有追加2.1模板，而是从3.1 train population重建Principal Component Analysis、scalers、prior与library。训练有效候选为2,967,612/4,096,000；Raw-PCA使用全部2,967,612个有效train candidates拟合。最终模板库共96,160个模板，正负各48,080：legacy block为60,104，expanded block为36,056。
+
+Test共有1,024,000个assigned rows，其中478,521个七线primitive有效，整体coverage为46.7306%。覆盖率高度依赖流场：Tangaroa为455,800/512,000=`89.0234%`，Smoke buoyancy为22,721/512,000=`4.4377%`。按block pooled coverage为legacy `52.3193%`、expanded `41.1418%`。因此任何只报pooled accuracy而不报coverage和逐流场结果的结论都不完整。
+
+## 主结果：physical-family/source-time等权宏平均
+
+下表是预注册主点估计；`sample_count=478,521`，coverage均为0.467306。Prior在默认判定下全部预测非涡，因此其accuracy受多数类比例影响，但F1、precision、recall均为0。
+
+| Method | Accuracy | Average Precision | F1 | Balanced accuracy | AUROC | Precision | Recall |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Label prior | 0.7429 | 0.2571 | 0.0000 | 0.5000 | 0.5000 | 0.0000 | 0.0000 |
+| Raw672 exact 1NN | 0.3987 | 0.2753 | 0.3505 | 0.5070 | 0.4871 | 0.2530 | 0.8247 |
+| Train-only Raw-PCA161 exact 1NN | 0.5912 | 0.4366 | 0.3998 | 0.6004 | 0.6507 | 0.2882 | 0.7952 |
+| FMT161 exact 1NN | 0.6041 | 0.3621 | 0.3787 | 0.5704 | 0.5215 | 0.2805 | 0.6825 |
+
+### Paired bootstrap：FMT减去比较方法
+
+下面的95%区间是**方法差值**的source-timeslice paired bootstrap percentile interval，5000次、seed `25068`；它不是单个方法自己的置信区间。
+
+| Metric | FMT − prior | FMT − Raw672 | FMT − Raw-PCA161 |
+|---|---|---|---|
+| Accuracy | −0.1388 [−0.1940, −0.0906] | +0.2054 [+0.1829, +0.2326] | +0.0129 [−0.0117, +0.0421] |
+| Average Precision | +0.1050 [+0.0793, +0.1321] | +0.0868 [+0.0734, +0.0981] | −0.0745 [−0.0927, −0.0507] |
+| F1 | +0.3787 [+0.3506, +0.4010] | +0.0282 [+0.0210, +0.0357] | −0.0211 [−0.0367, −0.0002] |
+| Balanced accuracy | +0.0704 [+0.0530, +0.0832] | +0.0634 [+0.0555, +0.0722] | −0.0300 [−0.0547, +0.0038] |
+| AUROC | +0.0215 [−0.0262, +0.0557] | +0.0345 [+0.0113, +0.0574] | −0.1291 [−0.1464, −0.1072] |
+| Precision | +0.2805 [+0.2488, +0.3073] | +0.0275 [+0.0223, +0.0324] | −0.0077 [−0.0194, +0.0072] |
+| Recall | +0.6825 [+0.6298, +0.7195] | −0.1422 [−0.1715, −0.1176] | −0.1127 [−0.1380, −0.0715] |
+
+## 逐测试流场与尺度block结果
+
+以下两表是pooled-query描述结果，不使用主bootstrap区间，不应冒充主估计量。
+
+| Dataset | Method | Coverage | Accuracy | AP | F1 | Balanced accuracy | AUROC |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Tangaroa | Prior | 0.8902 | 0.9505 | 0.0495 | 0.0000 | 0.5000 | 0.5000 |
+| Tangaroa | Raw672 | 0.8902 | 0.3534 | 0.1680 | 0.1024 | 0.5393 | 0.6133 |
+| Tangaroa | Raw-PCA161 | 0.8902 | 0.6958 | 0.3278 | 0.1775 | 0.6805 | 0.7473 |
+| Tangaroa | FMT161 | 0.8902 | 0.7530 | 0.2820 | 0.1833 | 0.6616 | 0.5971 |
+| Smoke buoyancy | Prior | 0.0444 | 0.5475 | 0.4525 | 0.0000 | 0.5000 | 0.5000 |
+| Smoke buoyancy | Raw672 | 0.0444 | 0.4330 | 0.3636 | 0.5904 | 0.4737 | 0.3628 |
+| Smoke buoyancy | Raw-PCA161 | 0.0444 | 0.4746 | 0.5276 | 0.6134 | 0.5133 | 0.5536 |
+| Smoke buoyancy | FMT161 | 0.0444 | 0.4498 | 0.4251 | 0.5686 | 0.4803 | 0.4567 |
+
+| Scale block | Method | Coverage | Accuracy | AP | F1 | Balanced accuracy | AUROC |
+|---|---|---:|---:|---:|---:|---:|---:|
+| legacy 0–999 | Raw672 | 0.5232 | 0.1652 | 0.2318 | 0.1399 | 0.4692 | 0.6669 |
+| legacy 0–999 | Raw-PCA161 | 0.5232 | 0.6619 | 0.3501 | 0.2618 | 0.6953 | 0.7714 |
+| legacy 0–999 | FMT161 | 0.5232 | 0.7386 | 0.3036 | 0.2745 | 0.6784 | 0.6083 |
+| expanded 1000–1999 | Raw672 | 0.4114 | 0.6013 | 0.2533 | 0.1585 | 0.6574 | 0.7000 |
+| expanded 1000–1999 | Raw-PCA161 | 0.4114 | 0.7150 | 0.4691 | 0.2181 | 0.7372 | 0.8127 |
+| expanded 1000–1999 | FMT161 | 0.4114 | 0.7387 | 0.3588 | 0.2168 | 0.7174 | 0.7118 |
+
+Expanded block的pooled FMT Average Precision、balanced accuracy和AUROC高于legacy block，但F1更低；这些block结果具有不同的有效样本和类比例，没有预注册paired block置信区间，因此不能据此宣告“长弧一定改善FMT”。本实验也不是“1000模板库对2000模板库”的因果对照：三个检索臂都查询同一个global 2000-scale库，block表只按query所属block分解；相对2.1，3.1的H48、49帧source windows、center margin和拟合population也同时改变。覆盖率反例更明确：Tangaroa expanded coverage为81.7109%，Smoke expanded coverage仅0.5727%。Smoke在arc `72.5556`只有1/25,600个assigned rows有效，在arc `80`为0/25,600；Tangaroa在arc `80`仍有17,744/25,600=`69.3125%`有效。这说明H48使长弧在部分流场可执行，但固定arc 4–80不能在所有流场保持相近coverage。
+
+## 四张解释性三联图
+
+四张图均使用固定source ordinal `2`，不是按性能选图。每图三栏依次为：(a) whole-loaded-volume IVD-p95等值面与240条中心pathlines；(b) FMT global exact 1NN模板类别分配，红色为预测涡、蓝色为预测非涡；(c) 与IVD-p95标签的TP/FP/FN/TN分解，其中TP为红圆、TN为淡蓝圆、FP为紫色三角、FN为橙色`x`。同一图的三栏共享完全相同query rows、顺序、相机和bounds；两个block从不叠画或投票。240条展示线由与prediction/metric无关的确定性maximin规则在IVD reference正负类中各选120条，只是解释性抽样，不代表自然类比例。Legacy与expanded具有各自的valid-query总体和展示线集合，不是同一批seed的配对前后图；marker面积与透明度也不表示频率，定量解释必须使用计数表。
+
+| Dataset × block | Source index | Valid / 64,000 | Coverage | TP | FP | TN | FN |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Tangaroa × legacy | 101 | 61,656 | 96.3375% | 1,733 | 13,570 | 44,851 | 1,502 |
+| Tangaroa × expanded | 101 | 51,947 | 81.1672% | 1,859 | 14,943 | 34,557 | 588 |
+| Smoke buoyancy × legacy | 74 | 5,710 | 8.9219% | 1,995 | 2,727 | 506 | 482 |
+| Smoke buoyancy × expanded | 74 | 369 | 0.5766% | 201 | 98 | 26 | 44 |
+
+每图的scene NPZ、SVG、PDF、360-dpi PNG、alignment JSON及两份附加审计文件均由result manifest锚定。下载后的四份独立alignment strict audit均为PASS；PDF最小glyph为7pt。碰撞审计为0 FAIL，9–14个WARN均经overlay逐图复核为3D坐标刻度与坐标面/栅格边缘的预期接触，无标题或标签裁切。这些post-download QA文件位于独立QA目录，不属于59-file immutable run，也不冒充Slurm artifacts。冻结图适合实验报告，但不是Nature投稿版：21英寸画布缩到期刊双栏后字体过小，且PDF/SVG内三维栅格层约100dpi。若要投稿，应另建`Other_MainExp31FigureLayout_1.1`从immutable scenes重渲染，不得覆盖本run。
+
+## 当前可支持的结论
+
+先前状态是“方法已冻结、没有3.1性能证据”；当前状态是“完整exposed-development运行和四图已通过哈希验收”。改变原因是job `50999189`成功完成，而不是修改了冻结方法。
+
+1. 扩展库已实际建立：2000尺度、H48、96,160个平衡模板和478,521个有效test queries均有逐文件证据。
+2. FMT161相对未经PCA的Raw672，在Accuracy、Average Precision、F1、balanced accuracy、AUROC和precision上的主差值区间均高于0；recall低于Raw672。
+3. FMT161并未优于强Raw-PCA161基线：Raw-PCA的Average Precision、F1、AUROC和recall差值区间优于FMT；Accuracy、balanced accuracy和precision差值区间跨0。不能把本实验写成“FMT模板匹配总体最佳”。
+4. Prior的高accuracy来自多数类，F1/precision/recall为0；因此普通accuracy不能单独代表涡检索质量。
+5. 长弧block能产生大量有效模板和Tangaroa queries，但在Smoke buoyancy上覆盖率坍缩。这个反例必须保留，不能从当前已暴露test反向删尺度或调horizon。
+6. 本实验只评估global 2000-scale库，并非1000库与2000库的单变量因果对照；不能把2.1/3.1或legacy/expanded描述差异直接归因于模板库扩容。
+7. 这些结论只适用于当前8:2拆分、2000 tuples、H48、IVD-p95标签和exact 1NN。formal confirmation未运行；未来若改方法，必须使用新版本和新的未读physical families。

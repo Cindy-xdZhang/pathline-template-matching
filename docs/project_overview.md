@@ -25,9 +25,9 @@ FMT Task5 的 `mainExp_Task5_3D_1.1` 在 10 个数据条目上支持“FMT 改�
 ### 3.1 Primitive
 
 - 3D 线顺序固定为 `center, x+, x−, y+, y−, z+, z−`。
-- 每个 seed 分配一个尺度 tuple：`(offset_grid_scale, dt_scale, integration_steps)`。
+- 1.x旧cache为每个seed分配`(offset_grid_scale, dt_scale, integration_steps)`；当前raw-flow-backed 2.1/3.1使用`(dx_grid_scale, ds_frame_scale, target_arc_length_grid_scale)`，其中第三项是每条线的目标累计空间弧长。
 - 线数固定为 7，每线采样点数固定为 32。积分器输出 `7×32×4=(x,y,z,t)`；描述符只读取 `7×32×3=(x,y,z)`，时间仅用于物理时间与重采样审计。
-- `mainExp_TemplateMatching_1.1` 沿用 FMT Task5 的 rounded-integration-index 采样。物理时间线性插值和弧长插值必须先使用新的 `Verify_...`；若验证后成为论文主方法，还必须升级 `mainExp_TemplateMatching_x.y`，不能替换 1.1 的结果。
+- `mainExp_TemplateMatching_1.1/1.2`沿用FMT Task5的rounded-integration-index采样且保持不变。2.1经`Verify_ArcLengthResampling_1.1`后使用目标弧长精确截断与32点等弧长重采样；3.1经`Verify_LongArcHorizon_1.1`后把最大future horizon从12扩为48个source-frame intervals。不同版本的primitive/cache身份不得混用。
 - 当前 FMT 基线的六个邻居共享一个距离。若未来允许六个距离分别变化，必须升方法版本并增加 config 字段和测试。
 
 ### 3.2 标签
@@ -55,7 +55,7 @@ label(seed) = IVD(seed) >= percentile95(IVD volume)
 
 FMT Task5 的主 268 维配方由 `161D base + 63D time-local Gram + 44D kinematic` 拼接。44 维 kinematic 块用当前 batch 的平均涡量；同一 query 会因 batch 组成改变。它不进入本项目首版主基线。
 
-## 4. 首个模式匹配基线
+## 4. 模式匹配基线与当前版本
 
 ```mermaid
 flowchart LR
@@ -71,23 +71,23 @@ flowchart LR
   I --> J["标签 + 最近模板 metadata + distance margin"]
 ```
 
-基础 descriptor/scale 参数位于 [config/mainExp_TemplateMatching_1.1.yaml](../config/mainExp_TemplateMatching_1.1.yaml)。1.1 development 因一个 library stratum 缺正类而在指标前 fail closed；记录见 [1.1 文档](mainExp_TemplateMatching_1.1.md)。当前 cache-backed 版本是已完成的 [mainExp_TemplateMatching_1.2](mainExp_TemplateMatching_1.2.md)：空类 stratum 两类模板都跳过并审计，其余方法不变。Ibex job `50932239` 已完成 evaluator、统计汇总和 20 张三联图；formal confirmation 仍未冻结，因为新的 sealed confirmation manifest、raw-field builder 和置信区间结论规则仍缺失。
+1.1因一个library stratum缺正类而在指标前fail closed；1.2保留旧Task5 cache语义并完成7-family leave-one-out development。随后2.1实现raw-flow-backed空间弧长primitive与固定8:2完整流场拆分；当前完成版本是[mainExp_TemplateMatching_3.1](mainExp_TemplateMatching_3.1.md)：H48、49帧窗口、保留2.1的1000个tuple并新增1000个长弧tuple，重新建立全部train preprocessing与96,160个平衡模板。Ibex job `50999189`完成1,024,000个assigned test rows的评测与4张固定`dataset×block`三联图。
 
-- 模板库在每个 `flow × source time × scale tuple` 取 `m=min(512,n_positive,n_negative)` 个正类和负类。1.1 的规则是任一类为空则失败；当前 1.2 规则是两类都选择0个模板并登记，query、Raw-PCA 拟合候选和 constant prior 候选不因此删除。
+- 1.x模板库在每个`flow×source time×scale tuple`取`m=min(512,n_positive,n_negative)`个正类和负类。2.1/3.1在每个双类非空的`dataset×source time×scale tuple`中正负各取1个；单类stratum两类均不取，但仍保留candidate、coverage和prior审计。
 - 标准化的均值和标准差只从 library feature 拟合；query 不得更新它们。
 - 匹配器是精确欧氏一最近邻。二分类连续分数为 `最近负类距离 − 最近正类距离`；分数大于零等价于最近模板属于正类。
-- 1.1/1.2 不启用 unknown/reject threshold。拒识属于后续独立版本。
+- 当前主实验不启用unknown/reject threshold；拒识属于后续独立版本。
 - 主对照包含 672 维 centered Raw、只在 library 拟合的 161 维 Raw-PCA、161 维 FMT，以及只用未平衡 library 候选标签比例的常数 prior。所有检索对照使用各自 library-only preprocessing 和相同 exact one-nearest-neighbor。
 
 ## 5. 数据拆分与证据等级
 
 旧 FMT 的 10 个数据条目和全部 Task5 scale tuple 已被开发过程查看过，只能作为本项目 development 资源，不能称为全项目未见 confirmation。
 
-开发评测采用 leave-one-physical-family-out：每次把一个完整 physical family 作为 query，其余 family 建库。正式 confirmation 必须来自新的 flow family；在完整方法、代码 commit 和 manifest 冻结前，不得读取其 raw field、query feature、有效率、标签或指标。
+1.x cache-backed开发评测采用leave-one-physical-family-out。2.1/3.1改为固定8:2完整流场拆分：`cylinder3d, halfcylinderRe640, halfcylinderRe6400, deltaWing_resampled, deltaWing_LBM, f22raptor, channel, boeing747`建库，`tangaroa, smokeBuoyancy`测试；完整physical family不跨两侧。正式confirmation仍必须来自新的、从未读取的flow families；在完整方法、代码commit和manifest冻结前不得读取其raw field、query feature、有效率、标签或指标。
 
-旧 cache 的 4 个 train-scale source times 用于建库及“未见 family、已见尺度”查询；2 个 validation-scale times 只允许进入 `Verify_...` 方法选择；历史 confirmation-scale times 用于“未见 family、未见尺度”的 development 查询。两类结果必须分开报告。
+旧cache的train/validation/historical-confirmation分工只适用于1.x。2.1/3.1从每个raw flow冻结4个完整source windows；3.1每窗49帧、同一40³ center grid分配到legacy/expanded两个block，每个source共128,000 assigned rows。
 
-每折 query 使用留出 family 和对应 evaluation scale set 的全部 valid primitives，保持自然类别比例，不按标签平衡或下采样；必须报告 assigned、valid、invalid 和自然正负类数量。
+每个版本的query population使用测试侧全部valid primitives，保持自然类别比例，不按标签平衡或下采样；必须报告assigned、valid、invalid和自然正负类数量。
 
 必须同时防止三种泄漏：
 
@@ -101,7 +101,7 @@ flowchart LR
 
 所有结果都要给出：逐 flow、dataset macro、physical-family macro、逐尺度 tuple，以及按 source timeslice 配对 bootstrap 的 95% confidence interval（置信区间）。不能只报告 primitive-level 随机 bootstrap，因为同一时间片内样本相关。
 
-`mainExp_TemplateMatching_1.2` 的 development run 给出了明确但混合的观察：FMT 161D 相对 Raw 672D 在 seen/unseen-scale 的 AP/F1 点估计都更高；相对同维 Raw-PCA 161D，seen-scale AP/F1 为 `+0.0527/+0.0806`，unseen-scale 为 `−0.0726/−0.0711`，5000 次配对 source-timeslice bootstrap 的95%区间分别全正和全负。用户尚未冻结置信区间通过规则，因此这些数值只描述暴露过的旧 Task5 cache，不宣告主命题通过或失败；formal confirmation 未运行。
+`mainExp_TemplateMatching_3.1`的exposed-development主估计中，FMT161的Accuracy/Average Precision/F1为`0.6041/0.3621/0.3787`。FMT相对Raw672的多数差值区间为正，但相对Raw-PCA161的Average Precision、F1、Area Under the Receiver Operating Characteristic Curve和recall更差；Smoke expanded-block coverage仅`0.5727%`且arc length `80 h_min`没有有效query。因此结果不支持“FMT总体最佳”或“长弧普遍改善”。完整数值与哈希见[3.1实验文档](mainExp_TemplateMatching_3.1.md)；formal confirmation未运行。
 
 ## 7. 当前代码边界
 
@@ -111,18 +111,13 @@ flowchart LR
 - 尺度 tuple 校验与均衡分配；
 - fail-closed NetCDF window loader；
 - whole-loaded-volume IVD；
-- 精简后的三维 RK4、7-line primitive 构造和 rounded-index `7×32×4=(x,y,z,t)` 重采样；FMT view 为前三通道 `7×32×3`，并通过常速度解析解与零速度多尺度测试；
+- 三维RK4、7-line primitive构造、旧rounded-index路径以及当前目标弧长精确截断与`7×32×4=(x,y,z,t)`等弧长重采样；FMT view为前三通道`7×32×3`；
 - library-only standardization、精确 1NN、class-distance margin、无 pickle 保存；
-- cache-backed 七个 physical family leave-one-out evaluator、四方法对照、逐 query/timeslice/flow/family/scale 表、成对 bootstrap、反例表和哈希链；
-- 每个 flow 的 seen/unseen-scale 三联图：IVD-p95+pathlines、FMT template class assignment、TP/FP/FN/TN；
-- Ibex 原始数据与旧 Task5 cache 的区分验证脚本。
+- 1.x cache-backed leave-one-family-out evaluator，以及2.1/3.1 raw portable-window、primitive-cache、固定8:2 evaluator、四方法对照、逐query/timeslice/flow/family/block/tuple表、成对bootstrap、反例表和哈希链；
+- 固定样本三联图：IVD-p95等值面+pathlines、FMT template class assignment、TP/FP/FN/TN；3.1按`test dataset×scale block`输出4张并保留immutable scenes；
+- Ibex原始数据、portable windows、new raw caches与旧Task5 cache的区分验证及分阶段完成门禁。
 
-尚未实现，因此本次 cache-backed development 完成后仍不能宣称已完成 formal confirmation 或整个研究目标：
-
-- 面向新 raw flow 的正式 primitive/cache builder；
-- seed-time IVD 插值；
-- sealed confirmation manifest、first-read gate 和 evaluator gate；
-- 新 flow family 的 sealed confirmation 数据。
+尚缺新的、从未读取的physical families及其sealed confirmation manifest/first-read流程，所以当前完成的raw-flow-backed development仍不能宣称formal confirmation或整个研究目标完成。
 
 这些应按 [experiment_log.md](experiment_log.md) 中的版本顺序实施，不能直接在旧 confirmation 上调参。
 

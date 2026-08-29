@@ -1,6 +1,6 @@
 # Verify_LongArcHorizon_1.1
 
-状态：**`frozen_pre_run_not_run`**。冻结配置为 `config/Verify_LongArcHorizon_1.1.yaml`；该组件尚未在本地或Ibex产生正式 verification 结果。
+状态：**`completed_passed`**。冻结配置为 `config/Verify_LongArcHorizon_1.1.yaml`；Phase A job `50997878` 与Phase B job `50998592`均在Ibex完成并通过，两个completion markers已由`mainExp_TemplateMatching_3.1` result manifest锚定。
 
 本组件是 `mainExp_TemplateMatching_3.1` 的强制前置门禁，只验证 H48 数值契约、2000-tuple union、双 block assignment 和 train-only coverage 技术可行性，不产生模板匹配性能结论。
 
@@ -57,4 +57,22 @@ Phase B `train_coverage` 只能读取这32个 immutable train caches及sidecars�
 /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/train_coverage/slurm_JOBID_COMMIT12
 ```
 
-Phase B required outputs 是两份 frozen configs、`train_cache_input_manifest.json`、完整 `train_only_coverage_diagnostics.csv`、`train_only_coverage_summary.json`、`environment_versions.json`、记录 Phase A marker SHA-256 的最终 `verification.json`，并最后写 `TRAIN_COVERAGE_PASS.json`。只有两个phase markers都存在、两阶段记录同一configs与Git commit hashes、且Phase B记录Phase A marker SHA-256时，`Verify_LongArcHorizon_1.1`才可判定通过。每个Slurm job都必须立即登记到`docs/ibex_run_registry.md`，但作业数不等于cache shard数；冻结要求是产出恰好32个train cache shards。当前没有job、marker或正式结论。
+Phase B required outputs 是两份 frozen configs、`train_cache_input_manifest.json`、完整 `train_only_coverage_diagnostics.csv`、`train_only_coverage_summary.json`、`environment_versions.json`、记录 Phase A marker SHA-256 的最终 `verification.json`，并最后写 `TRAIN_COVERAGE_PASS.json`。只有两个phase markers都存在、两阶段记录同一configs与Git commit hashes、且Phase B记录 Phase A marker SHA-256时，`Verify_LongArcHorizon_1.1`才可判定通过。每个Slurm job都必须立即登记到`docs/ibex_run_registry.md`，但作业数不等于cache shard数；冻结要求是产出恰好32个train cache shards。
+
+## 已完成证据
+
+| Phase | Slurm job | Device | Result |
+|---|---:|---|---|
+| A: synthetic | `50997878` | `cn604-15`, CPU, 16 CPU, 32GB | `COMPLETED 0:0`, 55s；102/102项目测试通过；2000/2000 constant-field primitives valid；after-H12/before-H48、exact-H48、beyond-H48分别为valid/valid/invalid；time-linear oracle通过 |
+| B: train coverage | `50998592` | `cn604-14`, CPU, 16 CPU, 64GB | `COMPLETED 0:0`, 31s；只读32个train caches；64,000个`dataset×source×block×scale` strata完整报告；expanded十个arc levels均有valid；全局正负selected templates均非空 |
+
+冻结证据身份：
+
+- numerical Git commit：`260a07ad380d64fc300cabe8926244e92d8ba04a`；
+- Verify config SHA-256：`222caf2e70e099f5d4fd50cb8d9489781b5825b574f9abd77ff4ed96298205d9`；
+- main config SHA-256：`771980f14a6019a1f6e4bf03668d9f37dcf63495ae2dafa866312b12fc71855e`；
+- Phase A marker SHA-256：`002887a4e0a354e5e8a287b1782fa13914660252353f92445061857b271f35c4`；
+- Phase B marker SHA-256：`1792d08f344a630ec1205e71617eb308b4b36ffe2338a6789b24e8d5f07f1981`；
+- Phase B `verification.json` SHA-256：`19d1da9046cd8f91b1a882459e92ecf7b51ecf726af367c323d16ebd5fc9480a`。
+
+Expanded block按arc level汇总的valid train counts依次为：`13→189,880`、`20.4444→183,657`、`27.8889→126,185`、`35.3333→90,996`、`42.7778→79,825`、`50.2222→75,141`、`57.6667→71,881`、`65.1111→68,021`、`72.5556→63,087`、`80→58,525`。按冻结library规则，legacy选中negative/positive各30,052，expanded各18,028。Phase B没有打开Tangaroa或Smoke文件，不产生性能结论；其唯一结论是H48和2000-tuple配置通过了预注册技术门禁。

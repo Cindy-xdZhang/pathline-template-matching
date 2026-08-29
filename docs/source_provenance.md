@@ -20,7 +20,7 @@
 | `FMT_Utils/NetCDF_window_3D.py` | `a7ef0ad56d29160f202425ea1e188d1f1bc3015de846352d23bac2253a2d3bd1` | `9748974aeae009d46d958eae3df1aa7d52e747c4` | `netcdf_io.py` | 保留维度感知 transpose/stride；mask、非有限、缺失/坏坐标、非等间距和额外维度均直接失败 |
 | `FLowUtils/ScalarField3d.py` | `cae0e07cd9071a6173a7dbeec2eddfb73823c8752435fa9df1cb13f46a969622` | `5cba739502313ca33d1d8374d9de0487c892ae98` | `ivd.py` | 只抽取 signed curl 与 whole-loaded-volume IVD；不带 Lambda-2、marching cubes 和绘图 |
 | `config/mainExp_Task5_3D_1.1.yaml` | `620a67fca986ddfc1d427158994c3cb85e7d04eab50aaa23c9d1db9807b3b735` | `a01d0576e7edff3ff5e949f06baa8e39eec749f6` | `config/mainExp_TemplateMatching_1.1.yaml` | 复制 18/6/9 个尺度 tuple；重新定义 retrieval 角色 |
-| `Build_Task5_Multiscale_Cache.py` | `a6824df66840871d15df187c7da4bf00758a46847a391b571b8270fb541d45f3` | `a01d0576e7edff3ff5e949f06baa8e39eec749f6` | provenance/data validator 参考 | 该源在编码处硬编码 `neighbor_weight=1, neighbor_scale=1`；新 wrapper 与其一致，正式 builder 尚未实现 |
+| `Build_Task5_Multiscale_Cache.py` | `a6824df66840871d15df187c7da4bf00758a46847a391b571b8270fb541d45f3` | `a01d0576e7edff3ff5e949f06baa8e39eec749f6` | provenance/data validator 参考 | 该源在编码处硬编码 `neighbor_weight=1, neighbor_scale=1`；新 wrapper 与其一致。2.1/3.1的空间弧长builder是本项目新实现，不是复制该源 |
 | `Visualize_Task1_3D_Horizontal.py` | `776527b2d25649cda290104f2100cff639a6e30ba57bfb300f46be5d3d311602` | 无；2026-08-27 审计时为 FMT 未跟踪文件，FMT 工作树 HEAD `4ba009ccd9cb604019aeb830591e6c54e2c7742a` 只提供上下文、不是其来源提交 | `visualization.py` | 重写横向 21×5 三栏、共享正交相机；不复制旧预测/K-Means/cache 路径 |
 | `Visualize_Task1_3D_PaperCandidates.py` | `5953b41166c626659fba73b25968bbad04186917686d1190c5da306a227c3410` | 无；2026-08-27 审计时为 FMT 未跟踪文件，FMT 工作树 HEAD 同上仅提供上下文 | `visualization.py`, `development_report.py` | 重写语义配色、IVD/pathline、binary assignment、TP/FP/FN/TN 层；当前 prediction 来自 exact 1NN，IVD-p95 mesh 由本项目 loader/IVD 与 scikit-image Marching Cubes 重建 |
 
@@ -28,7 +28,7 @@
 
 `config/mainExp_TemplateMatching_1.1_development.yaml` 及其 1.2 空类-stratum 修订、development-only retrieval、统计和三联图协议都是本项目新定义，不存在于 FMT。它们只消费旧 Task5 cache 中已有的 `raw_features`、`fmt_features`、`reference`、`seeds`、`scale_id` 和 metadata；不把历史 cache 重新解释为 sealed confirmation，也不声称重新积分了 Ibex 上缺失的 raw fields。
 
-本项目的 `development_data.py`、`development_library.py`、`development_experiment.py`、`development_report.py`、`matcher.py`、`metrics.py`、`pca.py` 和 `visualization.py` 均为新写代码，不是 FMT 文件逐字复制。上表最后两行记录的是视觉语义、固定相机和配色的参考来源；两个源文件没有 Git commit，不能用 FMT HEAD 冒充来源版本。1.1 在指标前失败；当前尚无 1.1/1.2 development 性能结果。
+本项目的 `development_data.py`、`development_library.py`、`development_experiment.py`、`development_report.py`、`matcher.py`、`metrics.py`、`pca.py` 和 `visualization.py` 均为新写代码，不是 FMT 文件逐字复制。上表最后两行记录的是视觉语义、固定相机和配色的参考来源；两个源文件没有 Git commit，不能用 FMT HEAD 冒充来源版本。1.1在指标前失败；1.2、2.1和3.1的development结果、数值commit及证据哈希分别记录在各自版本文档和`docs/experiment_log.md`中，均不属于FMT来源结论。
 
 ## 明确排除的实现
 
