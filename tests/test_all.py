@@ -103,6 +103,28 @@ from test_phase21_pipeline import (
     test_phase21_streaming_covariance_pca_matches_full_svd_without_concatenation,
     test_phase21_tiny_synthetic_eight_two_end_to_end,
 )
+from test_phase31_pipeline import (
+    test_phase31_build_all_scope_requires_coverage_even_for_train_target,
+    test_phase31_build_requires_population_pass_before_manifest_open,
+    test_phase31_cache_recovery_preserves_assigned_center_and_block_identity,
+    test_phase31_evaluation_requires_train_and_all_marker_singletons,
+    test_phase31_phase_b_rejects_escaped_cache_path_before_target_stat,
+    test_phase31_phase_b_rejects_unauthorized_marker_path_before_open,
+    test_phase31_portable_population_marker_authenticates_complete_train_scope,
+    test_phase31_portable_index_train_only_never_requires_test_manifests,
+    test_phase31_runner_phase_b_writes_seven_outputs_then_pass_marker,
+    test_phase31_strict_resolver_rejects_before_any_window_access,
+    test_phase31_tiny_eight_two_end_to_end_keeps_blocks_separate,
+    test_phase31_train_only_coverage_reports_all_strata_and_refuses_test_rows,
+    test_phase31_train_population_gate_rejects_old_commit_before_marker_open,
+    test_phase31_train_portable_preflight_loads_all_thirty_two_before_marker,
+    test_phase31_two_assignments_are_block_balanced_and_legacy_exact,
+    test_phase31_union_preserves_every_phase21_tuple_and_freezes_new_block,
+    test_phase31_uses_forty_nine_frame_source_windows,
+    test_phase31_verify_markers_authenticate_outputs_configs_and_prior_phase,
+    test_phase31_visualization_emits_four_unique_dataset_block_svgs,
+)
+from test_verify_long_arc_horizon import TestVerifyLongArcHorizon
 from test_scales import (
     test_balanced_assignment_is_reproducible_and_shuffled,
     test_frozen_scale_sets_are_valid_and_disjoint,
@@ -184,6 +206,25 @@ TESTS = (
     test_phase21_single_class_ranking_metrics_are_null_but_accuracy_is_retained,
     test_phase21_streaming_covariance_pca_matches_full_svd_without_concatenation,
     test_phase21_tiny_synthetic_eight_two_end_to_end,
+    test_phase31_union_preserves_every_phase21_tuple_and_freezes_new_block,
+    test_phase31_two_assignments_are_block_balanced_and_legacy_exact,
+    test_phase31_uses_forty_nine_frame_source_windows,
+    test_phase31_strict_resolver_rejects_before_any_window_access,
+    test_phase31_cache_recovery_preserves_assigned_center_and_block_identity,
+    test_phase31_tiny_eight_two_end_to_end_keeps_blocks_separate,
+    test_phase31_train_only_coverage_reports_all_strata_and_refuses_test_rows,
+    test_phase31_train_portable_preflight_loads_all_thirty_two_before_marker,
+    test_phase31_verify_markers_authenticate_outputs_configs_and_prior_phase,
+    test_phase31_runner_phase_b_writes_seven_outputs_then_pass_marker,
+    test_phase31_phase_b_rejects_escaped_cache_path_before_target_stat,
+    test_phase31_phase_b_rejects_unauthorized_marker_path_before_open,
+    test_phase31_train_population_gate_rejects_old_commit_before_marker_open,
+    test_phase31_evaluation_requires_train_and_all_marker_singletons,
+    test_phase31_build_all_scope_requires_coverage_even_for_train_target,
+    test_phase31_build_requires_population_pass_before_manifest_open,
+    test_phase31_portable_population_marker_authenticates_complete_train_scope,
+    test_phase31_portable_index_train_only_never_requires_test_manifests,
+    test_phase31_visualization_emits_four_unique_dataset_block_svgs,
     test_killing_frame_translation_and_identity_pushforward,
     test_channel_observer_is_finite_deterministic_and_domain_scaled,
     test_killing_rotation_orientation_matches_rodrigues_golden_value,
@@ -200,8 +241,10 @@ TESTS = (
 
 
 def load_tests(loader, standard_tests, pattern):
-    del loader, standard_tests, pattern
-    return unittest.TestSuite(unittest.FunctionTestCase(test) for test in TESTS)
+    del standard_tests, pattern
+    suite = unittest.TestSuite(unittest.FunctionTestCase(test) for test in TESTS)
+    suite.addTests(loader.loadTestsFromTestCase(TestVerifyLongArcHorizon))
+    return suite
 
 
 if __name__ == "__main__":

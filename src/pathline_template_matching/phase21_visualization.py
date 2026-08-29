@@ -32,6 +32,8 @@ from .visualization import DEFAULT_DPI, render_template_matching_triptych
 
 
 EXPERIMENT = "mainExp_TemplateMatching_2.1"
+EXPERIMENT31 = "mainExp_TemplateMatching_3.1"
+SUPPORTED_EXPERIMENTS = (EXPERIMENT, EXPERIMENT31)
 FIXED_SOURCE_ORDINAL = 2
 DISPLAY_PATHLINE_COUNT = 240
 DISPLAY_PER_CLASS = 120
@@ -67,6 +69,14 @@ SCENE_ARRAY_NAMES = (
     "ivd_mesh_level",
     "metadata_json",
 )
+SCENE31_EXTRA_ARRAY_NAMES = (
+    "valid_assigned_row_index",
+    "valid_center_seed_index",
+    "valid_scale_block_index",
+    "selected_assigned_row_index",
+    "selected_center_seed_index",
+    "selected_scale_block_index",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,6 +95,10 @@ class ValidatedPhase21VisualizationInput:
     ivd_volume: np.ndarray
     prediction: np.ndarray
     metadata: dict[str, Any]
+    valid_assigned_row_index: np.ndarray
+    valid_center_seed_index: np.ndarray
+    valid_scale_block_index: np.ndarray
+    scale_block_id: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,6 +119,7 @@ class RenderedTriptychArtifacts:
 
     png_path: Path
     pdf_path: Path
+    svg_path: Path | None
     metadata_path: Path
     alignment_path: Path
     metadata: dict[str, Any]
@@ -208,8 +223,9 @@ def validate_phase21_visualization_input(
     dataset = str(metadata.get("dataset", "")).strip()
     if dataset not in TEST_DATASETS:
         raise ValueError(f"2.1 triptychs are restricted to fixed test datasets: {dataset!r}")
-    if metadata.get("experiment") != EXPERIMENT:
-        raise ValueError("cache experiment does not match mainExp_TemplateMatching_2.1")
+    experiment = str(metadata.get("experiment", ""))
+    if experiment not in SUPPORTED_EXPERIMENTS:
+        raise ValueError("cache experiment is not a supported template-matching run")
     if metadata.get("split") != "test":
         raise ValueError("2.1 triptychs may only consume test-query caches")
     source_ordinal = int(metadata.get("source_ordinal", -1))
@@ -247,8 +263,64 @@ def validate_phase21_visualization_input(
         raise ValueError("valid_seed_index must be non-empty and unique")
     if np.any(np.diff(valid_seed_index) <= 0):
         raise ValueError("valid_seed_index must preserve increasing cache row order")
-    if valid_scale_id.min() < 0 or valid_scale_id.max() >= SCALE_COUNT:
-        raise ValueError("valid_scale_id is outside the frozen 1000-scale table")
+    scale_count = 2_000 if experiment == EXPERIMENT31 else SCALE_COUNT
+    if valid_scale_id.min() < 0 or valid_scale_id.max() >= scale_count:
+        raise ValueError("valid_scale_id is outside the frozen scale union")
+
+    if experiment == EXPERIMENT31:
+        identity_fields = {
+            "valid_assigned_row_index",
+            "valid_center_seed_index",
+            "valid_scale_block_index",
+        }
+        missing_identity = identity_fields - set(cache)
+        if missing_identity:
+            raise KeyError(
+                f"3.1 cache is missing explicit row identities: {sorted(missing_identity)}"
+            )
+        valid_assigned_row_index = _integer_vector(
+            cache["valid_assigned_row_index"],
+            name="valid_assigned_row_index",
+            count=count,
+            dtype=np.dtype(np.int64),
+        )
+        valid_center_seed_index = _integer_vector(
+            cache["valid_center_seed_index"],
+            name="valid_center_seed_index",
+            count=count,
+            dtype=np.dtype(np.int64),
+        )
+        valid_scale_block_index = _integer_vector(
+            cache["valid_scale_block_index"],
+            name="valid_scale_block_index",
+            count=count,
+            dtype=np.dtype(np.int8),
+        )
+        center_count = int(metadata.get("unique_center_seed_count", -1))
+        block_index = int(metadata.get("visualization_scale_block_index", -1))
+        scale_block_id = str(metadata.get("visualization_scale_block_id", ""))
+        scale_start = int(metadata.get("visualization_scale_id_start", -1))
+        scale_stop = int(metadata.get("visualization_scale_id_stop_exclusive", -1))
+        if center_count < 1 or block_index not in (0, 1) or not scale_block_id:
+            raise ValueError("3.1 visualization block identity is incomplete")
+        if not np.array_equal(valid_assigned_row_index, valid_seed_index):
+            raise ValueError("3.1 assigned-row identity disagrees with legacy alias")
+        if not np.array_equal(
+            valid_center_seed_index, valid_assigned_row_index % center_count
+        ):
+            raise ValueError("3.1 center-seed identity disagrees with assigned rows")
+        if not np.array_equal(
+            valid_scale_block_index,
+            valid_assigned_row_index // center_count,
+        ) or not np.all(valid_scale_block_index == block_index):
+            raise ValueError("3.1 visualization mixes scale blocks")
+        if np.any(valid_scale_id < scale_start) or np.any(valid_scale_id >= scale_stop):
+            raise ValueError("3.1 visualization scale IDs escape the selected block")
+    else:
+        valid_assigned_row_index = valid_seed_index
+        valid_center_seed_index = valid_seed_index
+        valid_scale_block_index = np.zeros(count, dtype=np.int8)
+        scale_block_id = "legacy_2_1"
 
     all_seeds = np.asarray(cache["seeds_xyz"])
     if all_seeds.ndim != 2 or all_seeds.shape[1:] != (3,) or all_seeds.dtype != np.float64:
@@ -304,6 +376,14 @@ def validate_phase21_visualization_input(
             "seeds_xyz": all_seeds,
             "ivd_volume": ivd,
         }
+        if experiment == EXPERIMENT31:
+            checked.update(
+                {
+                    "valid_assigned_row_index": valid_assigned_row_index,
+                    "valid_center_seed_index": valid_center_seed_index,
+                    "valid_scale_block_index": valid_scale_block_index,
+                }
+            )
         mismatches = {
             name: (stored_hashes.get(name), canonical_array_sha256(values))
             for name, values in checked.items()
@@ -325,6 +405,10 @@ def validate_phase21_visualization_input(
         ivd_volume=np.ascontiguousarray(ivd),
         prediction=predicted,
         metadata=metadata,
+        valid_assigned_row_index=valid_assigned_row_index,
+        valid_center_seed_index=valid_center_seed_index,
+        valid_scale_block_index=valid_scale_block_index,
+        scale_block_id=scale_block_id,
     )
 
 
@@ -376,6 +460,8 @@ def select_display_query_rows(
     dataset: str,
     source_ordinal: int,
     base_seed: int = DISPLAY_SELECTION_SEED,
+    scale_id_start: int = 0,
+    identity_scope: str | None = None,
 ) -> tuple[np.ndarray, dict[str, Any]]:
     """Select 120 rows per class in normalized XYZ plus three scale indices.
 
@@ -393,7 +479,8 @@ def select_display_query_rows(
         count=len(seeds),
         dtype=np.dtype(np.int32),
     )
-    decoded = scale_axis_indices(scales)
+    scale_id_start = int(scale_id_start)
+    decoded = scale_axis_indices(scales.astype(np.int64) - scale_id_start)
     bounds = np.asarray(domain_bounds, dtype=np.float64)
     if bounds.shape != (2, 3) or not np.isfinite(bounds).all() or not np.all(
         bounds[1] > bounds[0]
@@ -422,6 +509,8 @@ def select_display_query_rows(
                 "utf-8"
             )
         )
+        if identity_scope is not None:
+            identity_hash.update(f"|{identity_scope}".encode("utf-8"))
         identity_hash.update(
             canonical_array_sha256(
                 np.ascontiguousarray(selection_space[candidates], dtype=np.float64)
@@ -480,6 +569,18 @@ def select_display_query_rows(
         "selected_query_row_sha256": canonical_array_sha256(selected_rows),
         "classes": class_audit,
     }
+    if identity_scope is not None or scale_id_start != 0:
+        audit.update(
+            {
+                "scale_id_start": scale_id_start,
+                "identity_scope": identity_scope,
+                "selection_space": (
+                    "[normalized_x,normalized_y,normalized_z,"
+                    "within_block_dx_index/9,within_block_ds_index/9,"
+                    "within_block_arc_index/9]"
+                ),
+            }
+        )
     return np.ascontiguousarray(selected_rows), audit
 
 
@@ -626,6 +727,14 @@ def build_phase21_visualization_scene(
         domain_bounds=bounds,
         dataset=validated.dataset,
         source_ordinal=validated.source_ordinal,
+        scale_id_start=int(
+            validated.metadata.get("visualization_scale_id_start", 0)
+        ),
+        identity_scope=(
+            validated.scale_block_id
+            if validated.metadata.get("experiment") == EXPERIMENT31
+            else None
+        ),
     )
     primitives = validated.raw_features.reshape(-1, 7, 32, 3)
     center_xyz = (
@@ -673,15 +782,32 @@ def build_phase21_visualization_scene(
         },
         "valid_seed_index": validated.valid_seed_index,
         "valid_scale_id": validated.valid_scale_id,
+        "valid_assigned_row_index": validated.valid_assigned_row_index,
+        "valid_center_seed_index": validated.valid_center_seed_index,
+        "valid_scale_block_index": validated.valid_scale_block_index,
+        "scale_block_id": validated.scale_block_id,
         "selected_query_row": selected_rows,
         "selected_seed_index": selected_seed_index,
+        "selected_assigned_row_index": validated.valid_assigned_row_index[
+            selected_rows
+        ],
+        "selected_center_seed_index": validated.valid_center_seed_index[
+            selected_rows
+        ],
+        "selected_scale_block_index": validated.valid_scale_block_index[
+            selected_rows
+        ],
         "selected_reference": validated.valid_labels[selected_rows],
         "ivd_mesh_normals": mesh["normals"],
         "ivd_mesh_values": mesh["values"],
     }
     audit = {
-        "schema": "pathline_template_matching.phase21_visualization_scene.v1",
-        "experiment": EXPERIMENT,
+        "schema": (
+            "pathline_template_matching.phase31_visualization_scene.v1"
+            if validated.metadata.get("experiment") == EXPERIMENT31
+            else "pathline_template_matching.phase21_visualization_scene.v1"
+        ),
+        "experiment": validated.metadata.get("experiment"),
         "dataset": validated.dataset,
         "split": "test",
         "source_ordinal": validated.source_ordinal,
@@ -727,6 +853,21 @@ def build_phase21_visualization_scene(
         },
         "cache_metadata_sha256": canonical_json_sha256(validated.metadata),
     }
+    if validated.metadata.get("experiment") == EXPERIMENT31:
+        audit.update(
+            {
+                "valid_assigned_row_index_sha256": canonical_array_sha256(
+                    validated.valid_assigned_row_index
+                ),
+                "valid_center_seed_index_sha256": canonical_array_sha256(
+                    validated.valid_center_seed_index
+                ),
+                "valid_scale_block_index_sha256": canonical_array_sha256(
+                    validated.valid_scale_block_index
+                ),
+                "scale_block_id": validated.scale_block_id,
+            }
+        )
     return scene, audit
 
 
@@ -768,7 +909,23 @@ def _scene_arrays(scene: Mapping[str, Any], audit: Mapping[str, Any]) -> dict[st
             json.dumps(audit, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         ),
     }
-    if tuple(arrays) != SCENE_ARRAY_NAMES:
+    expected_names = SCENE_ARRAY_NAMES
+    if audit.get("experiment") == EXPERIMENT31:
+        metadata_json = arrays.pop("metadata_json")
+        for name, dtype in (
+            ("valid_assigned_row_index", np.int64),
+            ("valid_center_seed_index", np.int64),
+            ("valid_scale_block_index", np.int8),
+            ("selected_assigned_row_index", np.int64),
+            ("selected_center_seed_index", np.int64),
+            ("selected_scale_block_index", np.int8),
+        ):
+            arrays[name] = np.ascontiguousarray(scene[name], dtype=dtype)
+        arrays["metadata_json"] = metadata_json
+        expected_names = SCENE_ARRAY_NAMES[:-1] + SCENE31_EXTRA_ARRAY_NAMES + (
+            "metadata_json",
+        )
+    if tuple(arrays) != expected_names:
         raise AssertionError("scene array order/schema changed")
     return arrays
 
@@ -786,7 +943,7 @@ def _write_deterministic_npz(path: Path, arrays: Mapping[str, np.ndarray]) -> No
         with zipfile.ZipFile(
             temporary, mode="w", compression=zipfile.ZIP_DEFLATED, compresslevel=6
         ) as archive:
-            for name in SCENE_ARRAY_NAMES:
+            for name in arrays:
                 buffer = io.BytesIO()
                 np.lib.format.write_array(
                     buffer, np.asarray(arrays[name]), allow_pickle=False
@@ -840,6 +997,8 @@ def write_phase21_scene_artifact(
     if scene_path.exists() or manifest.exists():
         raise FileExistsError("scene NPZ and manifest are immutable and non-overwriting")
     arrays = _scene_arrays(scene, audit)
+    experiment = str(audit.get("experiment", EXPERIMENT))
+    array_order = list(arrays)
     array_manifest = {
         name: {
             "dtype": np.asarray(values).dtype.str,
@@ -850,14 +1009,18 @@ def write_phase21_scene_artifact(
     }
     _write_deterministic_npz(scene_path, arrays)
     manifest_payload: dict[str, Any] = {
-        "schema": "pathline_template_matching.phase21_scene_manifest.v1",
-        "experiment": EXPERIMENT,
+        "schema": (
+            "pathline_template_matching.phase31_scene_manifest.v1"
+            if experiment == EXPERIMENT31
+            else "pathline_template_matching.phase21_scene_manifest.v1"
+        ),
+        "experiment": experiment,
         "dataset": str(scene["dataset"]),
         "source_ordinal": int(scene["source_ordinal"]),
         "scene_npz": str(scene_path),
         "scene_npz_size_bytes": int(scene_path.stat().st_size),
         "scene_npz_sha256": sha256_file(scene_path),
-        "array_order": list(SCENE_ARRAY_NAMES),
+        "array_order": array_order,
         "arrays": array_manifest,
         "combined_array_manifest_sha256": canonical_json_sha256(array_manifest),
         "scientific_audit_sha256": canonical_json_sha256(dict(audit)),
@@ -887,20 +1050,31 @@ def load_phase21_scene_artifact(
     }
     if content_hash != canonical_json_sha256(without_hash):
         raise ValueError("scene manifest content SHA-256 mismatch")
-    if manifest.get("schema") != "pathline_template_matching.phase21_scene_manifest.v1":
-        raise ValueError("unsupported phase-2.1 scene manifest schema")
+    experiment = str(manifest.get("experiment", ""))
+    expected_schema = (
+        "pathline_template_matching.phase31_scene_manifest.v1"
+        if experiment == EXPERIMENT31
+        else "pathline_template_matching.phase21_scene_manifest.v1"
+    )
+    if experiment not in SUPPORTED_EXPERIMENTS or manifest.get("schema") != expected_schema:
+        raise ValueError("unsupported template-matching scene manifest schema")
     if int(manifest.get("source_ordinal", -1)) != FIXED_SOURCE_ORDINAL:
         raise ValueError("scene manifest does not use fixed source ordinal 2")
-    if manifest.get("array_order") != list(SCENE_ARRAY_NAMES):
+    expected_array_names = (
+        SCENE_ARRAY_NAMES[:-1] + SCENE31_EXTRA_ARRAY_NAMES + ("metadata_json",)
+        if experiment == EXPERIMENT31
+        else SCENE_ARRAY_NAMES
+    )
+    if manifest.get("array_order") != list(expected_array_names):
         raise ValueError("scene manifest array schema changed")
     if sha256_file(scene_path) != manifest.get("scene_npz_sha256"):
         raise ValueError("scene NPZ file SHA-256 mismatch")
     if int(manifest.get("scene_npz_size_bytes", -1)) != scene_path.stat().st_size:
         raise ValueError("scene NPZ size changed")
     with np.load(scene_path, allow_pickle=False) as archive:
-        if tuple(archive.files) != SCENE_ARRAY_NAMES:
+        if tuple(archive.files) != expected_array_names:
             raise ValueError("scene NPZ key order/schema changed")
-        arrays = {name: np.asarray(archive[name]) for name in SCENE_ARRAY_NAMES}
+        arrays = {name: np.asarray(archive[name]) for name in expected_array_names}
     actual_array_manifest = {
         name: {
             "dtype": values.dtype.str,
@@ -932,6 +1106,28 @@ def load_phase21_scene_artifact(
         or arrays["valid_scale_id"].shape != (count,)
     ):
         raise ValueError("scene complete-query arrays disagree")
+    if experiment == EXPERIMENT31:
+        if (
+            arrays["valid_assigned_row_index"].shape != (count,)
+            or arrays["valid_center_seed_index"].shape != (count,)
+            or arrays["valid_scale_block_index"].shape != (count,)
+            or not np.array_equal(
+                arrays["valid_assigned_row_index"], arrays["valid_seed_index"]
+            )
+            or not np.array_equal(
+                arrays["selected_assigned_row_index"],
+                arrays["valid_assigned_row_index"][arrays["selected_query_row"]],
+            )
+            or not np.array_equal(
+                arrays["selected_center_seed_index"],
+                arrays["valid_center_seed_index"][arrays["selected_query_row"]],
+            )
+            or not np.array_equal(
+                arrays["selected_scale_block_index"],
+                arrays["valid_scale_block_index"][arrays["selected_query_row"]],
+            )
+        ):
+            raise ValueError("3.1 scene explicit row identity changed")
     if arrays["display_pathlines"].shape != (DISPLAY_PATHLINE_COUNT, 32, 4):
         raise ValueError("scene must contain exactly 240 center pathlines")
     selected = arrays["selected_query_row"]
@@ -1002,9 +1198,14 @@ def render_phase21_scene_artifact(
         raise ValueError("output_stem must not have a file extension")
     png_path = stem.with_suffix(".png")
     pdf_path = stem.with_suffix(".pdf")
+    svg_path = stem.with_suffix(".svg") if artifact.metadata.get("experiment") == EXPERIMENT31 else None
     metadata_path = stem.with_suffix(".render.json")
     alignment_path = stem.with_suffix(".alignment.json")
-    outputs = (png_path, pdf_path, metadata_path, alignment_path)
+    outputs = tuple(
+        value
+        for value in (png_path, pdf_path, svg_path, metadata_path, alignment_path)
+        if value is not None
+    )
     existing = [path for path in outputs if path.exists()]
     if existing:
         raise FileExistsError(f"refusing to overwrite render artifacts: {existing}")
@@ -1012,6 +1213,7 @@ def render_phase21_scene_artifact(
         artifact.scene,
         png_path,
         pdf_output_path=pdf_path,
+        svg_output_path=svg_path,
         alignment_output_path=alignment_path,
         view=DATASET_VIEWS[str(artifact.scene["dataset"])],
         dpi=int(dpi),
@@ -1039,8 +1241,12 @@ def render_phase21_scene_artifact(
     if alignment.get("status") != "PASS":
         raise RuntimeError("triptych alignment JSON did not pass")
     metadata: dict[str, Any] = {
-        "schema": "pathline_template_matching.phase21_triptych_render.v1",
-        "experiment": EXPERIMENT,
+        "schema": (
+            "pathline_template_matching.phase31_triptych_render.v1"
+            if artifact.metadata.get("experiment") == EXPERIMENT31
+            else "pathline_template_matching.phase21_triptych_render.v1"
+        ),
+        "experiment": artifact.metadata.get("experiment"),
         "dataset": str(artifact.scene["dataset"]),
         "source_ordinal": FIXED_SOURCE_ORDINAL,
         "scene_npz": str(artifact.npz_path),
@@ -1051,6 +1257,8 @@ def render_phase21_scene_artifact(
         "png_sha256": sha256_file(png_path),
         "pdf": str(pdf_path),
         "pdf_sha256": sha256_file(pdf_path),
+        "svg": None if svg_path is None else str(svg_path),
+        "svg_sha256": None if svg_path is None else sha256_file(svg_path),
         "alignment_json": str(alignment_path),
         "alignment_json_sha256": sha256_file(alignment_path),
         "counts": counts,
@@ -1062,6 +1270,7 @@ def render_phase21_scene_artifact(
     return RenderedTriptychArtifacts(
         png_path=png_path,
         pdf_path=pdf_path,
+        svg_path=svg_path,
         metadata_path=metadata_path,
         alignment_path=alignment_path,
         metadata={**metadata, "metadata_file_sha256": sha256_file(metadata_path)},

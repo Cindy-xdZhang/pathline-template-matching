@@ -30,6 +30,7 @@ import yaml
 from .arc_length_primitives import (
     ArcLengthScaleTable,
     build_arc_length_scale_table,
+    build_arc_length_scale_union,
     integrate_arc_length_primitives_3d,
 )
 from .encoder import IndependentFMT3DConfig, encode_independent_fmt_3d
@@ -49,6 +50,80 @@ from .vector_field import UnsteadyVectorField3D
 
 
 EXPERIMENT = "mainExp_TemplateMatching_2.1"
+EXPERIMENT31 = "mainExp_TemplateMatching_3.1"
+SUPPORTED_EXPERIMENTS = (EXPERIMENT, EXPERIMENT31)
+LEGACY_DX_VALUES = (
+    0.250000000000,
+    0.361111111111,
+    0.472222222222,
+    0.583333333333,
+    0.694444444444,
+    0.805555555556,
+    0.916666666667,
+    1.027777777778,
+    1.138888888889,
+    1.250000000000,
+)
+LEGACY_DS_VALUES = (
+    0.125000000000,
+    0.144444444444,
+    0.163888888889,
+    0.183333333333,
+    0.202777777778,
+    0.222222222222,
+    0.241666666667,
+    0.261111111111,
+    0.280555555556,
+    0.300000000000,
+)
+LEGACY_ARC_VALUES = (
+    4.000000000000,
+    4.888888888889,
+    5.777777777778,
+    6.666666666667,
+    7.555555555556,
+    8.444444444444,
+    9.333333333333,
+    10.222222222222,
+    11.111111111111,
+    12.000000000000,
+)
+EXPANDED_DX_VALUES = (
+    0.125000000000,
+    0.388888888889,
+    0.652777777778,
+    0.916666666667,
+    1.180555555556,
+    1.444444444444,
+    1.708333333333,
+    1.972222222222,
+    2.236111111111,
+    2.500000000000,
+)
+EXPANDED_DS_VALUES = (
+    0.050000000000,
+    0.100000000000,
+    0.150000000000,
+    0.200000000000,
+    0.250000000000,
+    0.300000000000,
+    0.350000000000,
+    0.400000000000,
+    0.450000000000,
+    0.500000000000,
+)
+EXPANDED_ARC_VALUES = (
+    13.000000000000,
+    20.444444444444,
+    27.888888888889,
+    35.333333333333,
+    42.777777777778,
+    50.222222222222,
+    57.666666666667,
+    65.111111111111,
+    72.555555555556,
+    80.000000000000,
+)
 METHOD_PRIOR = "eligible_train_candidate_prior_constant_score"
 METHOD_RAW = "raw_centered_7x32x3_global_exact_1nn"
 METHOD_PCA = "raw_centered_train_only_pca_161d_global_exact_1nn"
@@ -88,8 +163,22 @@ def configure_deterministic_execution() -> dict[str, Any]:
 
 
 @dataclass(frozen=True)
+class ScaleAssignmentBlock:
+    """One contiguous scale block and its independently restarted assignment."""
+
+    block_id: str
+    scale_id_start: int
+    scale_count: int
+    assignment_seed: int
+
+    @property
+    def scale_id_stop(self) -> int:
+        return int(self.scale_id_start + self.scale_count)
+
+
+@dataclass(frozen=True)
 class Phase21Plan:
-    """Validated numerical plan derived from the frozen experiment YAML."""
+    """Validated numerical plan for the frozen 2.1 or 3.1 experiment."""
 
     config_path: Path
     config_sha256: str
@@ -113,6 +202,10 @@ class Phase21Plan:
     descriptor_config: IndependentFMT3DConfig
     method_ids: tuple[str, ...]
     required_outputs: tuple[str, ...]
+    maximum_source_frame_intervals: float = 12.0
+    assignment_count_per_seed: int = 1
+    scale_blocks: tuple[ScaleAssignmentBlock, ...] = ()
+    maximum_library_templates: int = 64_000
 
     @property
     def datasets(self) -> tuple[str, ...]:
@@ -121,6 +214,53 @@ class Phase21Plan:
     @property
     def assigned_seed_count(self) -> int:
         return int(np.prod(self.seed_shape_xyz, dtype=np.int64))
+
+    @property
+    def assigned_primitive_count(self) -> int:
+        return int(self.assigned_seed_count * self.assignment_count_per_seed)
+
+    @property
+    def artifact_tag(self) -> str:
+        return "phase31" if self.experiment == EXPERIMENT31 else "phase21"
+
+    @property
+    def cache_schema(self) -> str:
+        if self.experiment == EXPERIMENT31:
+            return "pathline_template_matching.phase31_cache.v1"
+        return "pathline_template_matching.phase21_cache.v2"
+
+    @property
+    def effective_scale_blocks(self) -> tuple[ScaleAssignmentBlock, ...]:
+        if self.scale_blocks:
+            return self.scale_blocks
+        return (
+            ScaleAssignmentBlock(
+                block_id="legacy_2_1",
+                scale_id_start=0,
+                scale_count=len(self.scale_table),
+                assignment_seed=self.assignment_seed,
+            ),
+        )
+
+    def primitive_scale_assignment(self) -> np.ndarray:
+        """Return block-major scale IDs for every assigned primitive row."""
+
+        blocks = []
+        for block in self.effective_scale_blocks:
+            local = balanced_scale_assignment(
+                self.assigned_seed_count, block.scale_count, block.assignment_seed
+            )
+            blocks.append(local + int(block.scale_id_start))
+        return np.ascontiguousarray(np.concatenate(blocks), dtype=np.int32)
+
+    def repeated_center_seeds(self, seeds_xyz: np.ndarray) -> np.ndarray:
+        seeds = np.ascontiguousarray(np.asarray(seeds_xyz, dtype=np.float64))
+        if seeds.shape != (self.assigned_seed_count, 3):
+            raise ValueError("center seed table disagrees with the frozen seed grid")
+        return np.ascontiguousarray(
+            np.concatenate([seeds for _ in self.effective_scale_blocks]),
+            dtype=np.float64,
+        )
 
     def split_for(self, dataset: str) -> str:
         if dataset in self.train_datasets:
@@ -155,32 +295,71 @@ class Phase21Plan:
         return result
 
     def validate_production_contract(self) -> None:
-        """Reject any silent drift from the committed 2.1 protocol."""
+        """Reject any silent drift from the committed 2.1/3.1 protocols."""
 
-        if self.experiment != EXPERIMENT:
-            raise ValueError(f"expected experiment {EXPERIMENT}, got {self.experiment}")
+        if self.experiment not in SUPPORTED_EXPERIMENTS:
+            raise ValueError(f"unsupported production experiment {self.experiment}")
         if len(self.train_datasets) != 8 or len(self.test_datasets) != 2:
             raise ValueError("production split must contain exactly eight train and two test flows")
         train_families = {self.family_by_dataset[name] for name in self.train_datasets}
         test_families = {self.family_by_dataset[name] for name in self.test_datasets}
         if train_families.intersection(test_families):
             raise ValueError("a physical family appears in both train and test")
-        if self.source_count != 4 or self.window_frame_count != 13:
-            raise ValueError("production requires four source times and thirteen-frame windows")
+        expected_window = 49 if self.experiment == EXPERIMENT31 else 13
+        expected_horizon = 48.0 if self.experiment == EXPERIMENT31 else 12.0
+        if self.source_count != 4 or self.window_frame_count != expected_window:
+            raise ValueError(
+                f"{self.experiment} requires four source times and "
+                f"{expected_window}-frame windows"
+            )
+        if self.maximum_source_frame_intervals != expected_horizon:
+            raise ValueError(
+                f"{self.experiment} integration horizon must equal {expected_horizon:g}"
+            )
         if self.seed_shape_xyz != (40, 40, 40) or self.assigned_seed_count != 64_000:
             raise ValueError("production seed grid must be exactly 40x40x40")
-        if len(self.scale_table) != 1_000:
-            raise ValueError("production scale table must contain exactly 1000 tuples")
-        scale_counts = np.bincount(
-            balanced_scale_assignment(
-                self.assigned_seed_count, len(self.scale_table), self.assignment_seed
-            ),
-            minlength=len(self.scale_table),
-        )
+        expected_scales = 2_000 if self.experiment == EXPERIMENT31 else 1_000
+        expected_assignments = 2 if self.experiment == EXPERIMENT31 else 1
+        if len(self.scale_table) != expected_scales:
+            raise ValueError(
+                f"production scale table must contain exactly {expected_scales} tuples"
+            )
+        if self.assignment_count_per_seed != expected_assignments:
+            raise ValueError(
+                f"{self.experiment} requires {expected_assignments} assignment(s) per center seed"
+            )
+        assignment = self.primitive_scale_assignment()
+        scale_counts = np.bincount(assignment, minlength=len(self.scale_table))
         if not np.all(scale_counts == 64):
             raise ValueError("production assignment must give every scale exactly 64 seeds")
+        expected_blocks = (
+            (
+                ScaleAssignmentBlock("legacy_2_1", 0, 1_000, 15068),
+                ScaleAssignmentBlock("expanded_3_1", 1_000, 1_000, 35068),
+            )
+            if self.experiment == EXPERIMENT31
+            else (ScaleAssignmentBlock("legacy_2_1", 0, 1_000, 15068),)
+        )
+        if self.effective_scale_blocks != expected_blocks:
+            raise ValueError("scale block IDs, ranges, or assignment seeds drifted")
+        if self.experiment == EXPERIMENT31:
+            assignment_config = _as_mapping(
+                self.config.get("scale_assignment"), name="scale_assignment"
+            )
+            legacy_assignment_hash = canonical_array_sha256(
+                np.ascontiguousarray(assignment[: self.assigned_seed_count])
+            )
+            if assignment_config.get("legacy_assignment_canonical_sha256") != (
+                legacy_assignment_hash
+            ):
+                raise ValueError(
+                    "3.1 legacy assignment canonical SHA-256 differs from the frozen 2.1 mapping"
+                )
         if self.assignment_seed != 15068 or self.library_seed != 15068:
             raise ValueError("production assignment and library seeds must both equal 15068")
+        expected_library_maximum = 128_000 if self.experiment == EXPERIMENT31 else 64_000
+        if self.maximum_library_templates != expected_library_maximum:
+            raise ValueError("maximum template population drifted")
         if self.pca_components != 161:
             raise ValueError("production Raw PCA width must equal 161")
         if self.bootstrap_seed != 25068 or self.bootstrap_replicates != 5000:
@@ -367,6 +546,219 @@ def _sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _validate_verify_marker_outputs(
+    marker_path: Path,
+    marker: Mapping[str, Any],
+    *,
+    expected_names: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    if marker_path.name != expected_names[-1]:
+        raise ValueError(f"verification marker must be named {expected_names[-1]}")
+    root = marker_path.parent
+    entries = list(root.iterdir())
+    if any(not entry.is_file() for entry in entries) or {
+        entry.name for entry in entries
+    } != set(expected_names):
+        raise ValueError("verification marker directory has an unexpected file set")
+    rows = marker.get("outputs")
+    if not isinstance(rows, list) or len(rows) != len(expected_names) - 1:
+        raise ValueError("verification marker output audit is incomplete")
+    expected_evidence = expected_names[:-1]
+    if [str(row.get("path")) for row in rows] != list(expected_evidence):
+        raise ValueError("verification marker output order or names changed")
+    for row, name in zip(rows, expected_evidence, strict=True):
+        path = root / name
+        if (
+            int(row.get("size_bytes", -1)) != path.stat().st_size
+            or row.get("sha256") != sha256_file(path)
+        ):
+            raise ValueError(f"verification evidence hash/size changed: {name}")
+    if marker.get("outputs_content_sha256") != canonical_json_sha256(rows):
+        raise ValueError("verification marker output-list SHA-256 changed")
+    return [dict(row) for row in rows]
+
+
+def validate_phase31_synthetic_pass(
+    plan: Phase21Plan,
+    marker_path: str | Path,
+    *,
+    verify_config_path: str | Path,
+    current_git_commit: str,
+) -> dict[str, Any]:
+    """Validate Phase A completely before any real-flow path is opened."""
+
+    if plan.experiment != EXPERIMENT31:
+        raise ValueError("synthetic-pass marker is defined only for mainExp 3.1")
+    source = Path(marker_path).resolve()
+    marker = json.loads(source.read_text(encoding="utf-8"))
+    verify_path = Path(verify_config_path).resolve()
+    expected = {
+        "schema": "pathline_template_matching.long_arc_synthetic_pass.v1",
+        "experiment": "Verify_LongArcHorizon_1.1",
+        "phase": "synthetic",
+        "status": "synthetic_gate_passed_train_only_coverage_not_run",
+        "git_commit": current_git_commit,
+        "worktree_clean": True,
+        "main_config_sha256": plan.config_sha256,
+        "verify_config_sha256": sha256_file(verify_path),
+        "dataset_registry_sha256": plan.dataset_registry_sha256,
+        "train_only_coverage_gate_run": False,
+        "final_verify_pass": False,
+    }
+    drift = {
+        name: (marker.get(name), value)
+        for name, value in expected.items()
+        if marker.get(name) != value
+    }
+    if drift:
+        raise ValueError(f"invalid Phase A synthetic marker: {drift}")
+    names = (
+        "frozen_verify_config.yaml",
+        "frozen_main_config.yaml",
+        "synthetic_verification.json",
+        "scale_union_manifest.json",
+        "assignment_verification.json",
+        "environment_versions.json",
+        "SYNTHETIC_PASS.json",
+    )
+    output_rows = _validate_verify_marker_outputs(
+        source, marker, expected_names=names
+    )
+    if sha256_file(source.parent / "frozen_main_config.yaml") != plan.config_sha256:
+        raise ValueError("Phase A frozen main config differs from the current plan")
+    if sha256_file(source.parent / "frozen_verify_config.yaml") != sha256_file(
+        verify_path
+    ):
+        raise ValueError("Phase A frozen Verify config differs from the current file")
+    return {
+        "path": str(source),
+        "file_size": int(source.stat().st_size),
+        "file_sha256": sha256_file(source),
+        "git_commit": current_git_commit,
+        "main_config_sha256": plan.config_sha256,
+        "verify_config_sha256": sha256_file(verify_path),
+        "dataset_registry_sha256": plan.dataset_registry_sha256,
+        "outputs": output_rows,
+    }
+
+
+def validate_phase31_train_coverage_pass(
+    plan: Phase21Plan,
+    marker_path: str | Path,
+    *,
+    synthetic_pass_path: str | Path,
+    verify_config_path: str | Path,
+    current_git_commit: str,
+) -> dict[str, Any]:
+    """Validate Phase B and its recorded Phase A marker before test access."""
+
+    synthetic = validate_phase31_synthetic_pass(
+        plan,
+        synthetic_pass_path,
+        verify_config_path=verify_config_path,
+        current_git_commit=current_git_commit,
+    )
+    source = Path(marker_path).resolve()
+    marker = json.loads(source.read_text(encoding="utf-8"))
+    expected = {
+        "schema": "pathline_template_matching.long_arc_train_coverage_pass.v1",
+        "experiment": "Verify_LongArcHorizon_1.1",
+        "phase": "train_coverage",
+        "status": "passed",
+        "git_commit": current_git_commit,
+        "worktree_clean": True,
+        "main_config_sha256": plan.config_sha256,
+        "verify_config_sha256": synthetic["verify_config_sha256"],
+        "dataset_registry_sha256": plan.dataset_registry_sha256,
+        "synthetic_pass_file_sha256": synthetic["file_sha256"],
+        "final_verify_pass": True,
+    }
+    drift = {
+        name: (marker.get(name), value)
+        for name, value in expected.items()
+        if marker.get(name) != value
+    }
+    if drift:
+        raise ValueError(f"invalid Phase B train-coverage marker: {drift}")
+    names = (
+        "frozen_verify_config.yaml",
+        "frozen_main_config.yaml",
+        "train_cache_input_manifest.json",
+        "train_only_coverage_diagnostics.csv",
+        "train_only_coverage_summary.json",
+        "environment_versions.json",
+        "verification.json",
+        "TRAIN_COVERAGE_PASS.json",
+    )
+    output_rows = _validate_verify_marker_outputs(
+        source, marker, expected_names=names
+    )
+    if sha256_file(source.parent / "frozen_main_config.yaml") != plan.config_sha256:
+        raise ValueError("Phase B frozen main config differs from the current plan")
+    if sha256_file(source.parent / "frozen_verify_config.yaml") != synthetic[
+        "verify_config_sha256"
+    ]:
+        raise ValueError("Phase B frozen Verify config differs from the current file")
+    verification_path = source.parent / "verification.json"
+    verification = json.loads(verification_path.read_text(encoding="utf-8"))
+    portable_evidence_value = verification.get("train_portable_population_pass")
+    if not isinstance(portable_evidence_value, Mapping):
+        raise ValueError("Phase B verification lacks train portable-population evidence")
+    portable_evidence = dict(portable_evidence_value)
+    portable_marker_path = Path(str(portable_evidence.get("path", ""))).resolve()
+    portable_marker_sha = str(portable_evidence.get("file_sha256", ""))
+    if (
+        portable_evidence.get("access_scope") != "train-only"
+        or int(portable_evidence.get("file_size", -1)) < 1
+        or not portable_marker_path.is_file()
+        or portable_marker_path.stat().st_size
+        != int(portable_evidence["file_size"])
+        or sha256_file(portable_marker_path) != portable_marker_sha
+        or marker.get("train_portable_population_pass_file_sha256")
+        != portable_marker_sha
+        or verification.get("train_portable_population_pass_file_sha256")
+        != portable_marker_sha
+    ):
+        raise ValueError("Phase B train portable-population evidence changed")
+    cache_input = json.loads(
+        (source.parent / "train_cache_input_manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    if cache_input.get("train_portable_population_pass") != portable_evidence:
+        raise ValueError(
+            "Phase B input manifest and verification portable evidence differ"
+        )
+    if (
+        verification.get("status") != "passed"
+        or verification.get("final_verify_pass") is not True
+        or verification.get("train_only") is not True
+        or verification.get("no_test_dataset_access") is not True
+        or verification.get("synthetic_pass_file_sha256")
+        != synthetic["file_sha256"]
+        or verification.get("git_commit") != current_git_commit
+        or verification.get("main_config_sha256") != plan.config_sha256
+        or verification.get("verify_config_sha256")
+        != synthetic["verify_config_sha256"]
+    ):
+        raise ValueError("Phase B verification.json does not prove the frozen pass")
+    if marker.get("verification_file_sha256") != sha256_file(verification_path):
+        raise ValueError("Phase B marker verification.json SHA-256 changed")
+    return {
+        "path": str(source),
+        "file_size": int(source.stat().st_size),
+        "file_sha256": sha256_file(source),
+        "git_commit": current_git_commit,
+        "main_config_sha256": plan.config_sha256,
+        "verify_config_sha256": synthetic["verify_config_sha256"],
+        "dataset_registry_sha256": plan.dataset_registry_sha256,
+        "synthetic_pass_file_sha256": synthetic["file_sha256"],
+        "synthetic_pass": synthetic,
+        "train_portable_population_pass": portable_evidence,
+        "outputs": output_rows,
+    }
+
+
 def _as_mapping(value: Any, *, name: str) -> dict[str, Any]:
     if not isinstance(value, Mapping):
         raise ValueError(f"{name} must be a mapping")
@@ -382,18 +774,23 @@ def _as_string_tuple(value: Any, *, name: str) -> tuple[str, ...]:
     return result
 
 
-def load_phase21_plan(config_path: str | Path) -> Phase21Plan:
-    """Strictly parse and validate ``mainExp_TemplateMatching_2.1``."""
+def _load_phase_plan(
+    config_path: str | Path, *, expected_experiment: str
+) -> Phase21Plan:
+    """Strictly parse a supported raw-reintegration experiment config."""
 
     path = Path(config_path).resolve()
     payload = path.read_bytes()
     parsed = yaml.safe_load(payload)
     config = _as_mapping(parsed, name="config")
-    _require(config.get("experiment") == EXPERIMENT, "wrong experiment config")
-    _require(
-        config.get("phase") == "development_raw_reintegration",
-        "wrong mainExp_TemplateMatching_2.1 phase",
+    _require(expected_experiment in SUPPORTED_EXPERIMENTS, "unsupported experiment profile")
+    _require(config.get("experiment") == expected_experiment, "wrong experiment config")
+    expected_phase = (
+        "development_raw_reintegration_long_arc_horizon"
+        if expected_experiment == EXPERIMENT31
+        else "development_raw_reintegration"
     )
+    _require(config.get("phase") == expected_phase, f"wrong {expected_experiment} phase")
     registry_entry = config.get("dataset_registry")
     _require(isinstance(registry_entry, str) and registry_entry, "dataset_registry is missing")
     raw_registry_path = Path(registry_entry)
@@ -438,29 +835,174 @@ def load_phase21_plan(config_path: str | Path) -> Phase21Plan:
 
     shape = tuple(int(value) for value in seed_grid.get("shape_xyz", ()))
     _require(len(shape) == 3 and min(shape) >= 2, "seed_grid.shape_xyz must have three values >=2")
-    _require(
-        int(seed_grid.get("assigned_seed_count_per_source_time", -1))
-        == int(np.prod(shape, dtype=np.int64)),
-        "assigned seed count disagrees with seed grid shape",
-    )
+    shape_count = int(np.prod(shape, dtype=np.int64))
+    if expected_experiment == EXPERIMENT31:
+        _require(
+            int(seed_grid.get("unique_center_seed_count_per_source_time", -1))
+            == shape_count
+            and int(seed_grid.get("assignment_blocks_per_center_seed", -1)) == 2
+            and int(seed_grid.get("assigned_primitive_count_per_source_time", -1))
+            == 2 * shape_count
+            and seed_grid.get("identical_center_coordinates_shared_by_both_blocks")
+            is True
+            and float(seed_grid.get("maximum_dx_grid_scale", np.nan)) == 2.5,
+            "3.1 center-seed and two-block primitive counts drifted",
+        )
+    else:
+        _require(
+            int(seed_grid.get("assigned_seed_count_per_source_time", -1))
+            == shape_count,
+            "assigned seed count disagrees with seed grid shape",
+        )
     _require(
         seed_grid.get("seed_index_order") == "z_outer_y_middle_x_inner",
         "unsupported seed-index order",
     )
 
-    dx = _as_mapping(scale_protocol.get("dx_grid_scale"), name="dx_grid_scale").get("values")
-    ds = _as_mapping(scale_protocol.get("ds_frame_scale"), name="ds_frame_scale").get("values")
-    arc = _as_mapping(
-        scale_protocol.get("arc_length_grid_scale"), name="arc_length_grid_scale"
-    ).get("values")
-    scales = build_arc_length_scale_table(dx, ds, arc)
+    if expected_experiment == EXPERIMENT:
+        dx = _as_mapping(
+            scale_protocol.get("dx_grid_scale"), name="dx_grid_scale"
+        ).get("values")
+        ds = _as_mapping(
+            scale_protocol.get("ds_frame_scale"), name="ds_frame_scale"
+        ).get("values")
+        arc = _as_mapping(
+            scale_protocol.get("arc_length_grid_scale"), name="arc_length_grid_scale"
+        ).get("values")
+        scales = build_arc_length_scale_table(dx, ds, arc)
+        scale_blocks = (
+            ScaleAssignmentBlock("legacy_2_1", 0, 1_000, 15068),
+        )
+        _require(
+            scale_protocol.get("cartesian_order")
+            == "dx_outer_ds_middle_arc_inner",
+            "scale Cartesian order drifted",
+        )
+    else:
+        raw_blocks = scale_protocol.get("blocks")
+        _require(
+            isinstance(raw_blocks, list) and len(raw_blocks) == 2,
+            "3.1 scale_protocol.blocks must contain exactly two blocks",
+        )
+        union_blocks: list[dict[str, object]] = []
+        block_ids: list[str] = []
+        block_starts: list[int] = []
+        for ordinal, raw_value in enumerate(raw_blocks):
+            block = _as_mapping(raw_value, name=f"scale_protocol.blocks[{ordinal}]")
+            block_id = str(block.get("id", ""))
+            start = int(block.get("scale_id_start", -1))
+            block_ids.append(block_id)
+            block_starts.append(start)
+            union_blocks.append(
+                {
+                    "scale_id_start": start,
+                    "dx_grid_scale": _as_mapping(
+                        block.get("dx_grid_scale"),
+                        name=f"scale_protocol.blocks[{ordinal}].dx_grid_scale",
+                    ).get("values"),
+                    "ds_frame_scale": _as_mapping(
+                        block.get("ds_frame_scale"),
+                        name=f"scale_protocol.blocks[{ordinal}].ds_frame_scale",
+                    ).get("values"),
+                    "arc_length_grid_scale": _as_mapping(
+                        block.get("arc_length_grid_scale"),
+                        name=f"scale_protocol.blocks[{ordinal}].arc_length_grid_scale",
+                    ).get("values"),
+                }
+            )
+        _require(
+            block_ids == ["legacy_2_1", "expanded_3_1"]
+            and block_starts == [0, 1_000],
+            "3.1 scale block order or ID ranges drifted",
+        )
+        _require(
+            scale_protocol.get("block_order")
+            == ["legacy_2_1", "expanded_3_1"],
+            "3.1 scale_protocol.block_order drifted",
+        )
+        scales = build_arc_length_scale_union(union_blocks)
+        expected_scales = build_arc_length_scale_union(
+            (
+                {
+                    "scale_id_start": 0,
+                    "dx_grid_scale": LEGACY_DX_VALUES,
+                    "ds_frame_scale": LEGACY_DS_VALUES,
+                    "arc_length_grid_scale": LEGACY_ARC_VALUES,
+                },
+                {
+                    "scale_id_start": 1_000,
+                    "dx_grid_scale": EXPANDED_DX_VALUES,
+                    "ds_frame_scale": EXPANDED_DS_VALUES,
+                    "arc_length_grid_scale": EXPANDED_ARC_VALUES,
+                },
+            )
+        )
+        for field in (
+            "scale_id",
+            "dx_grid_scale",
+            "ds_frame_scale",
+            "arc_length_grid_scale",
+        ):
+            _require(
+                np.array_equal(getattr(scales, field), getattr(expected_scales, field)),
+                f"3.1 explicit {field} values drifted",
+            )
+        scale_blocks = ()
     _require(
         int(scale_protocol.get("expected_unique_tuple_count", -1)) == len(scales),
         "scale tuple count disagrees with explicit config values",
     )
     _require(
-        scale_protocol.get("cartesian_order") == "dx_outer_ds_middle_arc_inner",
-        "scale Cartesian order drifted",
+        int(scale_protocol.get("decimal_places", -1)) == 12,
+        "scale decimal-place contract drifted",
+    )
+
+    if expected_experiment == EXPERIMENT31:
+        assignment_values = scale_assignment.get("blocks")
+        _require(
+            isinstance(assignment_values, list) and len(assignment_values) == 2,
+            "3.1 scale_assignment.blocks must contain exactly two blocks",
+        )
+        assignment_by_id: dict[str, int] = {}
+        for ordinal, raw_value in enumerate(assignment_values):
+            item = _as_mapping(raw_value, name=f"scale_assignment.blocks[{ordinal}]")
+            block_id = str(item.get("id", ""))
+            seed = item.get("seed")
+            _require(
+                block_id not in assignment_by_id
+                and isinstance(seed, int)
+                and not isinstance(seed, bool),
+                "3.1 assignment block IDs and seeds must be unique integers",
+            )
+            assignment_by_id[block_id] = int(seed)
+        _require(
+            list(assignment_by_id) == ["legacy_2_1", "expanded_3_1"]
+            and assignment_by_id
+            == {"legacy_2_1": 15068, "expanded_3_1": 35068},
+            "3.1 assignment block order or seeds drifted",
+        )
+        scale_blocks = (
+            ScaleAssignmentBlock("legacy_2_1", 0, 1_000, 15068),
+            ScaleAssignmentBlock("expanded_3_1", 1_000, 1_000, 35068),
+        )
+        assignment_seed = 15068
+        assignment_count_per_seed = int(
+            scale_assignment.get("assignment_count_per_seed", -1)
+        )
+    else:
+        assignment_seed = int(scale_assignment.get("seed", -1))
+        assignment_count_per_seed = int(
+            scale_assignment.get("assignment_count_per_seed", -1)
+        )
+
+    horizon = float(source_times.get("maximum_future_horizon_frames", np.nan))
+    _require(
+        np.isfinite(horizon)
+        and horizon > 0.0
+        and int(source_loading.get("derived_window_frame_count", -1))
+        == int(horizon) + 1
+        and float(int(horizon)) == horizon,
+        "source horizon and portable window frame count disagree",
     )
 
     descriptor_config = IndependentFMT3DConfig()
@@ -499,7 +1041,7 @@ def load_phase21_plan(config_path: str | Path) -> Phase21Plan:
         window_frame_count=int(source_loading.get("derived_window_frame_count", -1)),
         seed_shape_xyz=shape,
         scale_table=scales,
-        assignment_seed=int(scale_assignment.get("seed", -1)),
+        assignment_seed=assignment_seed,
         library_seed=int(library.get("sampling_random_seed", -1)),
         pca_components=pca_width,
         bootstrap_seed=int(bootstrap.get("seed", -1)),
@@ -507,10 +1049,17 @@ def load_phase21_plan(config_path: str | Path) -> Phase21Plan:
         descriptor_config=descriptor_config,
         method_ids=method_ids,
         required_outputs=tuple(str(value) for value in config.get("required_outputs", ())),
+        maximum_source_frame_intervals=horizon,
+        assignment_count_per_seed=assignment_count_per_seed,
+        scale_blocks=scale_blocks,
+        maximum_library_templates=int(
+            library.get("maximum_global_template_count", -1)
+        ),
     )
     plan.validate_production_contract()
     _require(
-        int(source_times.get("minimum_required_frame_count", -1)) >= 16,
+        int(source_times.get("minimum_required_frame_count", -1))
+        >= plan.window_frame_count + plan.source_count - 1,
         "minimum source frame count drifted",
     )
     _require(source_times.get("selection_dependencies") == ["time_axis_length_only"],
@@ -550,7 +1099,55 @@ def load_phase21_plan(config_path: str | Path) -> Phase21Plan:
              "visualization PNG DPI drifted")
     _require(float(visualization.get("panel_alignment_tolerance_points", -1)) == 1.5,
              "visualization panel-alignment tolerance drifted")
+    if expected_experiment == EXPERIMENT31:
+        expected_exports = [
+            "scene_npz",
+            "svg_with_editable_text_and_rasterized_3d_marks",
+            "pdf_with_editable_text_and_rasterized_3d_marks",
+            "png_360dpi",
+            "panel_alignment_json",
+        ]
+        _require(
+            visualization.get("scale_blocks")
+            == ["legacy_2_1", "expanded_3_1"]
+            and visualization.get("figure_unit")
+            == "one_test_dataset_by_one_scale_block"
+            and int(visualization.get("expected_figure_count", -1)) == 4
+            and visualization.get("visualization_manifest_unique_key")
+            == ["dataset", "scale_block_id"]
+            and visualization.get(
+                "cross_block_aggregation_majority_vote_or_overplotting"
+            )
+            == "forbidden",
+            "3.1 dataset-by-scale-block visualization contract drifted",
+        )
+        _require(
+            visualization.get("exports") == expected_exports
+            and visualization.get("global_manifest")
+            == "visualization_manifest_json"
+            and visualization.get("global_manifest_file_sha256_source")
+            == "final_result_manifest"
+            and visualization.get("visualization_manifest_required_file_fields")
+            == ["relative_path", "export_kind", "size_bytes", "sha256"]
+            and visualization.get(
+                "every_required_export_must_have_file_sha256"
+            )
+            is True,
+            "3.1 visualization export evidence contract drifted",
+        )
     return plan
+
+
+def load_phase21_plan(config_path: str | Path) -> Phase21Plan:
+    """Strictly parse and validate ``mainExp_TemplateMatching_2.1``."""
+
+    return _load_phase_plan(config_path, expected_experiment=EXPERIMENT)
+
+
+def load_phase31_plan(config_path: str | Path) -> Phase21Plan:
+    """Strictly parse and validate ``mainExp_TemplateMatching_3.1``."""
+
+    return _load_phase_plan(config_path, expected_experiment=EXPERIMENT31)
 
 
 def balanced_scale_assignment(count: int, scale_count: int, seed: int) -> np.ndarray:
@@ -601,6 +1198,19 @@ def _atomic_json(path: Path, value: Any) -> str:
     return _sha256_bytes(payload)
 
 
+def _fsync_parent_directory(path: Path) -> None:
+    """Persist a completed rename on POSIX; Windows has no directory fd contract."""
+
+    if os.name == "nt":
+        return
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+    descriptor = os.open(path.parent, flags)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
 def _atomic_bytes(path: Path, payload: bytes) -> None:
     if path.exists():
         raise FileExistsError(f"immutable artifact already exists: {path}")
@@ -611,6 +1221,7 @@ def _atomic_bytes(path: Path, payload: bytes) -> None:
         destination.flush()
         os.fsync(destination.fileno())
     os.replace(temporary, path)
+    _fsync_parent_directory(path)
 
 
 def _atomic_npz(path: Path, arrays: Mapping[str, Any]) -> str:
@@ -623,6 +1234,7 @@ def _atomic_npz(path: Path, arrays: Mapping[str, Any]) -> str:
         destination.flush()
         os.fsync(destination.fileno())
     os.replace(temporary, path)
+    _fsync_parent_directory(path)
     return sha256_file(path)
 
 
@@ -639,6 +1251,7 @@ def _atomic_csv(path: Path, rows: Iterable[Mapping[str, Any]], fieldnames: Seque
         destination.flush()
         os.fsync(destination.fileno())
     os.replace(temporary, path)
+    _fsync_parent_directory(path)
     return sha256_file(path)
 
 
@@ -818,18 +1431,35 @@ def build_phase21_cache_slice(
     vector_field = UnsteadyVectorField3D.from_window(window)
     minimum_spacing = float(np.min(vector_field.grid_interval))
     maximum_dx = float(np.max(plan.scale_table.dx_grid_scale) * minimum_spacing)
-    seeds = generate_phase21_seeds(vector_field, plan.seed_shape_xyz, maximum_dx)
-    if len(seeds) != plan.assigned_seed_count:
-        raise RuntimeError("seed generator changed the assigned population")
-    assignment = balanced_scale_assignment(
-        len(seeds), len(plan.scale_table), plan.assignment_seed
+    center_seeds = generate_phase21_seeds(
+        vector_field, plan.seed_shape_xyz, maximum_dx
     )
+    if len(center_seeds) != plan.assigned_seed_count:
+        raise RuntimeError("seed generator changed the assigned population")
+    seeds = plan.repeated_center_seeds(center_seeds)
+    assignment = plan.primitive_scale_assignment()
+    if len(seeds) != plan.assigned_primitive_count or assignment.shape != (
+        plan.assigned_primitive_count,
+    ):
+        raise RuntimeError("block assignment changed the primitive population")
 
-    reference_labels, ivd_values, ivd_threshold, ivd_mask = ivd_p95_reference_at_seeds(
+    center_reference_labels, center_ivd_values, ivd_threshold, ivd_mask = (
+        ivd_p95_reference_at_seeds(
         window.velocity[0],
         window.spacing_xyz,
         window.coordinates_xyz,
-        seeds,
+        center_seeds,
+        )
+    )
+    reference_labels = np.ascontiguousarray(
+        np.concatenate(
+            [center_reference_labels for _ in plan.effective_scale_blocks]
+        ),
+        dtype=np.bool_,
+    )
+    ivd_values = np.ascontiguousarray(
+        np.concatenate([center_ivd_values for _ in plan.effective_scale_blocks]),
+        dtype=np.float32,
     )
     # Preserve the exact IVD volume used for the p95 labels so later figures can
     # reconstruct the reference isosurface from this immutable cache alone.
@@ -843,6 +1473,7 @@ def build_phase21_cache_slice(
         plan.scale_table,
         assignment,
         chunk_size=integration_chunk_size,
+        maximum_source_frame_intervals=plan.maximum_source_frame_intervals,
     )
     valid_seed_index = result.valid_seed_indices.astype(np.int64, copy=False)
     valid_primitives = result.primitives
@@ -881,11 +1512,40 @@ def build_phase21_cache_slice(
             result.line_reached_target, dtype=np.bool_
         ),
     }
+    if plan.experiment == EXPERIMENT31:
+        # ``result.valid_seed_indices`` indexes the 128k block-major assigned
+        # primitive rows.  It is not the shared 40^3 center-seed identity.
+        # Store both identities explicitly so downstream matching and figures
+        # cannot silently confuse the second block with new spatial seeds.
+        valid_assigned_row_index = np.ascontiguousarray(
+            valid_seed_index, dtype=np.int64
+        )
+        valid_center_seed_index = np.ascontiguousarray(
+            valid_assigned_row_index % plan.assigned_seed_count, dtype=np.int64
+        )
+        valid_scale_block_index = np.ascontiguousarray(
+            valid_assigned_row_index // plan.assigned_seed_count, dtype=np.int8
+        )
+        expected_block_index = np.empty(len(valid_scale_id), dtype=np.int8)
+        for block_index, block in enumerate(plan.effective_scale_blocks):
+            within = (valid_scale_id >= block.scale_id_start) & (
+                valid_scale_id < block.scale_id_stop
+            )
+            expected_block_index[within] = block_index
+        if not np.array_equal(valid_scale_block_index, expected_block_index):
+            raise RuntimeError("3.1 valid row/block/scale identity is inconsistent")
+        cache_arrays.update(
+            {
+                "valid_assigned_row_index": valid_assigned_row_index,
+                "valid_center_seed_index": valid_center_seed_index,
+                "valid_scale_block_index": valid_scale_block_index,
+            }
+        )
     array_hashes = {
         name: canonical_array_sha256(values) for name, values in cache_arrays.items()
     }
     metadata = {
-        "schema": "pathline_template_matching.phase21_cache.v2",
+        "schema": plan.cache_schema,
         "experiment": plan.experiment,
         "config_sha256": plan.config_sha256,
         "dataset_registry_path": str(plan.dataset_registry_path),
@@ -923,6 +1583,47 @@ def build_phase21_cache_slice(
         "combined_array_sha256": canonical_json_sha256(array_hashes),
         "window_provenance": _json_safe(resolved.provenance),
     }
+    if plan.experiment == EXPERIMENT31:
+        block_rows = []
+        for ordinal, block in enumerate(plan.effective_scale_blocks):
+            start = ordinal * plan.assigned_seed_count
+            stop = start + plan.assigned_seed_count
+            block_assignment = np.ascontiguousarray(assignment[start:stop])
+            block_rows.append(
+                {
+                    "id": block.block_id,
+                    "scale_id_start": int(block.scale_id_start),
+                    "scale_id_stop_exclusive": int(block.scale_id_stop),
+                    "assignment_seed": int(block.assignment_seed),
+                    "primitive_row_start": int(start),
+                    "primitive_row_stop_exclusive": int(stop),
+                    "assignment_sha256": canonical_array_sha256(block_assignment),
+                }
+            )
+        metadata.update(
+            {
+                "unique_center_seed_count": int(len(center_seeds)),
+                "assigned_primitive_count": int(len(seeds)),
+                "assignment_count_per_seed": int(plan.assignment_count_per_seed),
+                "center_seed_repetition_order": "block_major_then_center_seed_index",
+                "valid_seed_index_semantics": (
+                    "legacy_alias_of_valid_assigned_row_index_not_center_seed_index"
+                ),
+                "valid_identity_fields": [
+                    "valid_assigned_row_index",
+                    "valid_center_seed_index",
+                    "valid_scale_block_index",
+                ],
+                "scale_block_ids_by_index": [
+                    block.block_id for block in plan.effective_scale_blocks
+                ],
+                "center_seed_xyz_sha256": canonical_array_sha256(center_seeds),
+                "maximum_source_frame_intervals": float(
+                    plan.maximum_source_frame_intervals
+                ),
+                "scale_assignment_blocks": block_rows,
+            }
+        )
     cache = Path(cache_path)
     cache_sha = _atomic_npz(
         cache,
@@ -994,6 +1695,20 @@ def build_phase21_cache_slice(
         "minimum_count_per_scale": int(np.bincount(assignment).min()),
         "maximum_count_per_scale": int(np.bincount(assignment).max()),
     }
+    if plan.experiment == EXPERIMENT31:
+        assignment_row.update(
+            {
+                "unique_center_seed_count": int(len(center_seeds)),
+                "assigned_primitive_count": int(len(seeds)),
+                "assignment_count_per_seed": int(plan.assignment_count_per_seed),
+                "center_seed_repetition_order": "block_major_then_center_seed_index",
+                "center_seed_xyz_sha256": canonical_array_sha256(center_seeds),
+                "maximum_source_frame_intervals": float(
+                    plan.maximum_source_frame_intervals
+                ),
+                "blocks": metadata["scale_assignment_blocks"],
+            }
+        )
     label_row = {
         "dataset": dataset,
         "split": split,
@@ -1026,6 +1741,18 @@ def build_phase21_cache_slice(
         "portable_builder_git_commit": provenance.get("builder_git_commit"),
         "cache_builder_git_commit": cache_builder_git_commit,
     }
+    if plan.experiment == EXPERIMENT31:
+        identity = {
+            "experiment": plan.experiment,
+            "maximum_source_frame_intervals": float(
+                plan.maximum_source_frame_intervals
+            ),
+            "assignment_count_per_seed": int(plan.assignment_count_per_seed),
+            "unique_center_seed_count": int(len(center_seeds)),
+        }
+        cache_row.update(identity)
+        label_row.update(identity)
+        primitive_row.update(identity)
 
     codes = assignment.astype(np.int64) * 2 + reference_labels.astype(np.int64)
     assigned_counts = np.bincount(codes, minlength=2 * len(plan.scale_table))
@@ -1057,6 +1784,20 @@ def build_phase21_cache_slice(
                     "invalid_count": assigned_count - valid_count,
                 }
             )
+            if plan.experiment == EXPERIMENT31:
+                block_index = next(
+                    index
+                    for index, block in enumerate(plan.effective_scale_blocks)
+                    if block.scale_id_start <= scale_id < block.scale_id_stop
+                )
+                audit_rows[-1].update(
+                    {
+                        "scale_block_index": int(block_index),
+                        "scale_block_id": plan.effective_scale_blocks[
+                            block_index
+                        ].block_id,
+                    }
+                )
     return CacheBuildSummary(
         cache_row=cache_row,
         raw_input_row=raw_input_row,
@@ -1068,11 +1809,16 @@ def build_phase21_cache_slice(
     )
 
 
-def _manifest_payload(kind: str, rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+def _manifest_payload(
+    kind: str,
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    experiment: str = EXPERIMENT,
+) -> dict[str, Any]:
     safe_rows = [_json_safe(dict(row)) for row in rows]
     return {
         "schema": f"pathline_template_matching.{kind}.v1",
-        "experiment": EXPERIMENT,
+        "experiment": experiment,
         "row_count": len(safe_rows),
         "rows": safe_rows,
         "rows_content_sha256": canonical_json_sha256(safe_rows),
@@ -1080,6 +1826,85 @@ def _manifest_payload(kind: str, rows: Sequence[Mapping[str, Any]]) -> dict[str,
 
 
 def _scale_manifest(plan: Phase21Plan) -> dict[str, Any]:
+    if plan.experiment == EXPERIMENT31:
+        rows = []
+        for block in plan.effective_scale_blocks:
+            for index in range(block.scale_id_start, block.scale_id_stop):
+                local = index - block.scale_id_start
+                rows.append(
+                    {
+                        "scale_id": int(index),
+                        "block_id": block.block_id,
+                        "block_local_scale_id": int(local),
+                        "dx_index": int(local // 100),
+                        "ds_index": int((local // 10) % 10),
+                        "arc_index": int(local % 10),
+                        "dx_grid_scale": f"{plan.scale_table.dx_grid_scale[index]:.12f}",
+                        "ds_frame_scale": f"{plan.scale_table.ds_frame_scale[index]:.12f}",
+                        "arc_length_grid_scale": (
+                            f"{plan.scale_table.arc_length_grid_scale[index]:.12f}"
+                        ),
+                    }
+                )
+        legacy_block = plan.effective_scale_blocks[0]
+        expanded_block = plan.effective_scale_blocks[1]
+        legacy_rows = rows[
+            legacy_block.scale_id_start : legacy_block.scale_id_stop
+        ]
+        expanded_rows = rows[
+            expanded_block.scale_id_start : expanded_block.scale_id_stop
+        ]
+        legacy_projection = [
+            {
+                "scale_id": row["scale_id"],
+                "dx_grid_scale": row["dx_grid_scale"],
+                "ds_frame_scale": row["ds_frame_scale"],
+                "arc_length_grid_scale": row["arc_length_grid_scale"],
+            }
+            for row in legacy_rows
+        ]
+        legacy_subset_hash = canonical_json_sha256(legacy_projection)
+        provenance_value = plan.config.get("provenance")
+        if provenance_value is None and plan.config.get("profile") == "tiny_test_only":
+            expected_legacy_hash = legacy_subset_hash
+        else:
+            provenance = _as_mapping(provenance_value, name="provenance")
+            expected_legacy_hash = provenance.get(
+                "parent_scale_manifest_rows_content_sha256"
+            )
+        if legacy_subset_hash != expected_legacy_hash:
+            raise ValueError(
+                "3.1 legacy scale projection differs from the frozen 2.1 rows hash"
+            )
+        return {
+            "schema": "pathline_template_matching.phase31_scale_manifest.v1",
+            "experiment": plan.experiment,
+            "config_sha256": plan.config_sha256,
+            "layout": "ordered_union_of_two_10x10x10_cartesian_blocks",
+            "block_order": [block.block_id for block in plan.effective_scale_blocks],
+            "block_scale_id_ranges": [
+                {
+                    "id": block.block_id,
+                    "start": int(block.scale_id_start),
+                    "stop_exclusive": int(block.scale_id_stop),
+                }
+                for block in plan.effective_scale_blocks
+            ],
+            "block_local_order": "dx_outer_ds_middle_arc_inner",
+            "block_local_scale_id_formula": "((dx_index * 10) + ds_index) * 10 + arc_index",
+            "legacy_2_1_scale_ids_preserved": True,
+            "legacy_rows_content_sha256": canonical_json_sha256(legacy_rows),
+            "legacy_scale_subset_sha256": legacy_subset_hash,
+            "parent_scale_manifest_rows_content_sha256": expected_legacy_hash,
+            "expanded_rows_content_sha256": canonical_json_sha256(expanded_rows),
+            "maximum_source_frame_intervals": float(
+                plan.maximum_source_frame_intervals
+            ),
+            "decimal_places": 12,
+            "scale_count": len(rows),
+            "rows": rows,
+            "rows_content_sha256": canonical_json_sha256(rows),
+        }
     rows = [
         {
             "scale_id": int(index),
@@ -1168,24 +1993,35 @@ def build_phase21_caches(
         raw_by_key[key] = row
 
     manifest_files = {
-        "cache_manifest.json": _manifest_payload("phase21_cache_manifest", cache_rows),
+        "cache_manifest.json": _manifest_payload(
+            f"{plan.artifact_tag}_cache_manifest",
+            cache_rows,
+            experiment=plan.experiment,
+        ),
         "raw_input_manifest.json": _manifest_payload(
-            "phase21_raw_input_manifest", list(raw_by_key.values())
+            f"{plan.artifact_tag}_raw_input_manifest",
+            list(raw_by_key.values()),
+            experiment=plan.experiment,
         ),
         "derived_window_manifest.json": _manifest_payload(
-            "phase21_derived_window_manifest",
+            f"{plan.artifact_tag}_derived_window_manifest",
             [summary.derived_window_row for summary in summaries],
+            experiment=plan.experiment,
         ),
         "seed_and_scale_assignment_manifest.json": _manifest_payload(
-            "phase21_seed_assignment_manifest",
+            f"{plan.artifact_tag}_seed_assignment_manifest",
             [summary.assignment_row for summary in summaries],
+            experiment=plan.experiment,
         ),
         "label_manifest.json": _manifest_payload(
-            "phase21_label_manifest", [summary.label_row for summary in summaries]
+            f"{plan.artifact_tag}_label_manifest",
+            [summary.label_row for summary in summaries],
+            experiment=plan.experiment,
         ),
         "primitive_manifest.json": _manifest_payload(
-            "phase21_primitive_manifest",
+            f"{plan.artifact_tag}_primitive_manifest",
             [summary.primitive_row for summary in summaries],
+            experiment=plan.experiment,
         ),
     }
     manifest_hashes = {
@@ -1207,9 +2043,14 @@ def build_phase21_caches(
         "valid_count",
         "invalid_count",
     )
+    if plan.experiment == EXPERIMENT31:
+        audit_fields = audit_fields[:5] + (
+            "scale_block_index",
+            "scale_block_id",
+        ) + audit_fields[5:]
     audit_sha = _atomic_csv(root / "audit_counts.csv", audit_rows, audit_fields)
     input_manifest = {
-        "schema": "pathline_template_matching.phase21_input_manifest.v1",
+        "schema": f"pathline_template_matching.{plan.artifact_tag}_input_manifest.v1",
         "experiment": plan.experiment,
         "config_sha256": plan.config_sha256,
         "dataset_registry_path": str(plan.dataset_registry_path),
@@ -1225,6 +2066,21 @@ def build_phase21_caches(
             for row in cache_rows
         },
     }
+    if plan.experiment == EXPERIMENT31:
+        input_manifest.update(
+            {
+                "maximum_source_frame_intervals": float(
+                    plan.maximum_source_frame_intervals
+                ),
+                "assignment_count_per_seed": int(plan.assignment_count_per_seed),
+                "unique_center_seed_count_per_source_time": int(
+                    plan.assigned_seed_count
+                ),
+                "assigned_primitive_count_per_source_time": int(
+                    plan.assigned_primitive_count
+                ),
+            }
+        )
     _atomic_json(root / "input_manifest.json", input_manifest)
     return cache_rows
 
@@ -1233,7 +2089,7 @@ def _load_cache(path: Path, *, expected_sha256: str | None = None) -> dict[str, 
     if expected_sha256 is not None and sha256_file(path) != expected_sha256:
         raise ValueError(f"cache file SHA-256 mismatch: {path}")
     with np.load(path, allow_pickle=False) as archive:
-        required = {
+        base_required = {
             "raw_features",
             "fmt_features",
             "valid_labels",
@@ -1252,16 +2108,29 @@ def _load_cache(path: Path, *, expected_sha256: str | None = None) -> dict[str, 
             "line_reached_target",
             "metadata_json",
         }
-        if set(archive.files) != required:
+        phase31_identity = {
+            "valid_assigned_row_index",
+            "valid_center_seed_index",
+            "valid_scale_block_index",
+        }
+        actual = set(archive.files)
+        if actual not in (base_required, base_required | phase31_identity):
             raise ValueError(
-                f"cache keys disagree for {path}: missing={sorted(required-set(archive.files))}, "
-                f"extra={sorted(set(archive.files)-required)}"
+                f"cache keys disagree for {path}: "
+                f"base_missing={sorted(base_required-actual)}, "
+                f"extra={sorted(actual-base_required-phase31_identity)}"
             )
-        result = {name: np.asarray(archive[name]) for name in required - {"metadata_json"}}
+        result = {
+            name: np.asarray(archive[name]) for name in actual - {"metadata_json"}
+        }
         metadata_scalar = np.asarray(archive["metadata_json"])
         if metadata_scalar.ndim != 0:
             raise ValueError(f"cache metadata_json is not scalar: {path}")
         result["metadata"] = json.loads(str(metadata_scalar.item()))
+    is_phase31 = result["metadata"].get("experiment") == EXPERIMENT31
+    has_phase31_identity = phase31_identity.issubset(result)
+    if is_phase31 != has_phase31_identity:
+        raise ValueError("cache experiment/3.1 valid-row identity fields disagree")
     count = len(result["valid_labels"])
     if result["raw_features"].shape != (count, 672):
         raise ValueError(f"Raw cache feature shape changed: {path}")
@@ -1269,6 +2138,8 @@ def _load_cache(path: Path, *, expected_sha256: str | None = None) -> dict[str, 
         raise ValueError(f"FMT cache feature shape changed: {path}")
     if result["valid_seed_index"].shape != (count,) or result["valid_scale_id"].shape != (count,):
         raise ValueError(f"valid-row metadata shape changed: {path}")
+    if is_phase31 and any(result[name].shape != (count,) for name in phase31_identity):
+        raise ValueError(f"3.1 valid-row identity shape changed: {path}")
     if not np.isfinite(result["raw_features"]).all() or not np.isfinite(
         result["fmt_features"]
     ).all():
@@ -1299,7 +2170,7 @@ def recover_phase21_cache_summary(
     metadata = dict(cache["metadata"])
     split = plan.split_for(dataset)
     expected_metadata = {
-        "schema": "pathline_template_matching.phase21_cache.v2",
+        "schema": plan.cache_schema,
         "experiment": plan.experiment,
         "config_sha256": plan.config_sha256,
         "descriptor_id": plan.descriptor_config.descriptor_id,
@@ -1339,27 +2210,36 @@ def recover_phase21_cache_summary(
                 character not in "0123456789abcdef" for character in value
             ):
                 raise ValueError(f"existing cache has invalid portable provenance {field}")
-    assigned_count = plan.assigned_seed_count
+    assigned_count = plan.assigned_primitive_count
+    stored_array_names = [
+        "raw_features",
+        "fmt_features",
+        "valid_labels",
+        "valid_seed_index",
+        "valid_scale_id",
+        "center_sample_time",
+        "seeds_xyz",
+        "reference_labels_all",
+        "ivd_values_all",
+        "ivd_volume",
+        "scale_assignment",
+        "valid_mask",
+        "line_steps",
+        "line_travel",
+        "line_end_time",
+        "line_reached_target",
+    ]
+    if plan.experiment == EXPERIMENT31:
+        stored_array_names.extend(
+            (
+                "valid_assigned_row_index",
+                "valid_center_seed_index",
+                "valid_scale_block_index",
+            )
+        )
     stored_arrays = {
         name: np.asarray(cache[name])
-        for name in (
-            "raw_features",
-            "fmt_features",
-            "valid_labels",
-            "valid_seed_index",
-            "valid_scale_id",
-            "center_sample_time",
-            "seeds_xyz",
-            "reference_labels_all",
-            "ivd_values_all",
-            "ivd_volume",
-            "scale_assignment",
-            "valid_mask",
-            "line_steps",
-            "line_travel",
-            "line_end_time",
-            "line_reached_target",
-        )
+        for name in stored_array_names
     }
     valid_count = len(stored_arrays["valid_labels"])
     loaded_shape = metadata.get("loaded_shape_TZYXC")
@@ -1384,6 +2264,23 @@ def recover_phase21_cache_summary(
         "line_end_time": (np.dtype(np.float32), (assigned_count, 7)),
         "line_reached_target": (np.dtype(np.bool_), (assigned_count, 7)),
     }
+    if plan.experiment == EXPERIMENT31:
+        expected_contract.update(
+            {
+                "valid_assigned_row_index": (
+                    np.dtype(np.int64),
+                    (valid_count,),
+                ),
+                "valid_center_seed_index": (
+                    np.dtype(np.int64),
+                    (valid_count,),
+                ),
+                "valid_scale_block_index": (
+                    np.dtype(np.int8),
+                    (valid_count,),
+                ),
+            }
+        )
     contract_drift = {
         name: {
             "actual_dtype": str(stored_arrays[name].dtype),
@@ -1430,11 +2327,106 @@ def recover_phase21_cache_summary(
         assignment.min() < 0 or assignment.max() >= len(plan.scale_table)
     ):
         raise ValueError("existing cache scale assignment is outside the frozen table")
-    if not np.array_equal(
-        assignment,
-        balanced_scale_assignment(assigned_count, len(plan.scale_table), plan.assignment_seed),
-    ):
-        raise ValueError("existing cache scale assignment differs from frozen PCG64 assignment")
+    expected_assignment = plan.primitive_scale_assignment()
+    if not np.array_equal(assignment, expected_assignment):
+        raise ValueError(
+            "existing cache scale assignment differs from the frozen block PCG64 assignment"
+        )
+    if plan.experiment == EXPERIMENT31:
+        center_count = plan.assigned_seed_count
+        valid_assigned_row_index = stored_arrays["valid_assigned_row_index"]
+        valid_center_seed_index = stored_arrays["valid_center_seed_index"]
+        valid_scale_block_index = stored_arrays["valid_scale_block_index"]
+        if not np.array_equal(valid_assigned_row_index, valid_seed_index):
+            raise ValueError(
+                "existing cache valid_seed_index is not the documented assigned-row alias"
+            )
+        if not np.array_equal(
+            valid_center_seed_index, valid_assigned_row_index % center_count
+        ):
+            raise ValueError(
+                "existing cache center-seed identity disagrees with assigned rows"
+            )
+        if not np.array_equal(
+            valid_scale_block_index,
+            valid_assigned_row_index // center_count,
+        ):
+            raise ValueError(
+                "existing cache scale-block identity disagrees with assigned rows"
+            )
+        if valid_scale_block_index.size and (
+            valid_scale_block_index.min() < 0
+            or valid_scale_block_index.max() >= len(plan.effective_scale_blocks)
+        ):
+            raise ValueError("existing cache scale-block index is outside the plan")
+        for block_index, block in enumerate(plan.effective_scale_blocks):
+            within = valid_scale_block_index == block_index
+            if np.any(
+                (valid_scale_id[within] < block.scale_id_start)
+                | (valid_scale_id[within] >= block.scale_id_stop)
+            ):
+                raise ValueError(
+                    "existing cache scale IDs disagree with valid scale-block identity"
+                )
+        center_seeds = np.ascontiguousarray(seeds[:center_count])
+        center_labels = np.ascontiguousarray(labels[:center_count])
+        center_ivd = np.ascontiguousarray(
+            stored_arrays["ivd_values_all"][:center_count]
+        )
+        expected_block_rows = []
+        for ordinal, block in enumerate(plan.effective_scale_blocks):
+            start = ordinal * center_count
+            stop = start + center_count
+            if not np.array_equal(seeds[start:stop], center_seeds):
+                raise ValueError("existing cache center seed rows differ between blocks")
+            if not np.array_equal(labels[start:stop], center_labels):
+                raise ValueError("existing cache reference labels differ between blocks")
+            if not np.array_equal(
+                stored_arrays["ivd_values_all"][start:stop], center_ivd
+            ):
+                raise ValueError("existing cache seed IVD values differ between blocks")
+            expected_block_rows.append(
+                {
+                    "id": block.block_id,
+                    "scale_id_start": int(block.scale_id_start),
+                    "scale_id_stop_exclusive": int(block.scale_id_stop),
+                    "assignment_seed": int(block.assignment_seed),
+                    "primitive_row_start": int(start),
+                    "primitive_row_stop_exclusive": int(stop),
+                    "assignment_sha256": canonical_array_sha256(
+                        np.ascontiguousarray(assignment[start:stop])
+                    ),
+                }
+            )
+        expected_phase31_identity = {
+            "unique_center_seed_count": center_count,
+            "assigned_primitive_count": assigned_count,
+            "assignment_count_per_seed": 2,
+            "center_seed_repetition_order": "block_major_then_center_seed_index",
+            "valid_seed_index_semantics": (
+                "legacy_alias_of_valid_assigned_row_index_not_center_seed_index"
+            ),
+            "valid_identity_fields": [
+                "valid_assigned_row_index",
+                "valid_center_seed_index",
+                "valid_scale_block_index",
+            ],
+            "scale_block_ids_by_index": [
+                block.block_id for block in plan.effective_scale_blocks
+            ],
+            "center_seed_xyz_sha256": canonical_array_sha256(center_seeds),
+            "maximum_source_frame_intervals": 48.0,
+            "scale_assignment_blocks": expected_block_rows,
+        }
+        phase31_drift = {
+            key: (metadata.get(key), value)
+            for key, value in expected_phase31_identity.items()
+            if metadata.get(key) != value
+        }
+        if phase31_drift:
+            raise ValueError(
+                f"existing cache 3.1 block/horizon identity changed: {phase31_drift}"
+            )
     if int(metadata.get("assigned_count", -1)) != assigned_count:
         raise ValueError("existing cache metadata assigned_count changed")
     if int(metadata.get("valid_count", -1)) != valid_count:
@@ -1526,6 +2518,20 @@ def recover_phase21_cache_summary(
         "minimum_count_per_scale": int(counts.min()),
         "maximum_count_per_scale": int(counts.max()),
     }
+    if plan.experiment == EXPERIMENT31:
+        assignment_row.update(
+            {
+                "unique_center_seed_count": int(plan.assigned_seed_count),
+                "assigned_primitive_count": assigned_count,
+                "assignment_count_per_seed": int(plan.assignment_count_per_seed),
+                "center_seed_repetition_order": "block_major_then_center_seed_index",
+                "center_seed_xyz_sha256": metadata["center_seed_xyz_sha256"],
+                "maximum_source_frame_intervals": float(
+                    plan.maximum_source_frame_intervals
+                ),
+                "blocks": metadata["scale_assignment_blocks"],
+            }
+        )
     label_row = {
         "dataset": dataset,
         "split": split,
@@ -1558,6 +2564,18 @@ def recover_phase21_cache_summary(
         "portable_builder_git_commit": provenance.get("builder_git_commit"),
         "cache_builder_git_commit": cache_builder_git_commit,
     }
+    if plan.experiment == EXPERIMENT31:
+        identity = {
+            "experiment": plan.experiment,
+            "maximum_source_frame_intervals": float(
+                plan.maximum_source_frame_intervals
+            ),
+            "assignment_count_per_seed": int(plan.assignment_count_per_seed),
+            "unique_center_seed_count": int(plan.assigned_seed_count),
+        }
+        cache_row.update(identity)
+        label_row.update(identity)
+        primitive_row.update(identity)
     codes = assignment.astype(np.int64) * 2 + labels.astype(np.int64)
     assigned_counts = np.bincount(codes, minlength=2 * len(plan.scale_table))
     valid_counts = np.bincount(codes[valid], minlength=2 * len(plan.scale_table))
@@ -1584,6 +2602,20 @@ def recover_phase21_cache_summary(
                     "invalid_count": int(assigned_counts[code] - valid_counts[code]),
                 }
             )
+            if plan.experiment == EXPERIMENT31:
+                block_index = next(
+                    index
+                    for index, block in enumerate(plan.effective_scale_blocks)
+                    if block.scale_id_start <= scale_id < block.scale_id_stop
+                )
+                audit_rows[-1].update(
+                    {
+                        "scale_block_index": int(block_index),
+                        "scale_block_id": plan.effective_scale_blocks[
+                            block_index
+                        ].block_id,
+                    }
+                )
     return CacheBuildSummary(
         cache_row=cache_row,
         raw_input_row=raw_input_row,
@@ -1612,6 +2644,7 @@ def _validate_cache_provenance(
 ) -> None:
     metadata = cache["metadata"]
     expected = {
+        "schema": plan.cache_schema,
         "experiment": plan.experiment,
         "config_sha256": plan.config_sha256,
         "dataset": str(cache_row["dataset"]),
@@ -1623,6 +2656,14 @@ def _validate_cache_provenance(
         "portable_builder_git_commit": cache_row.get("portable_builder_git_commit"),
         "cache_builder_git_commit": cache_row.get("cache_builder_git_commit"),
     }
+    if plan.experiment == EXPERIMENT31:
+        expected.update(
+            {
+                "maximum_source_frame_intervals": 48.0,
+                "assignment_count_per_seed": 2,
+                "assigned_primitive_count": plan.assigned_primitive_count,
+            }
+        )
     drift = {
         key: (metadata.get(key), value)
         for key, value in expected.items()
@@ -1675,6 +2716,15 @@ def _select_library_and_fit_pca(
         "seed_index": [],
         "scale_id": [],
     }
+    if plan.experiment == EXPERIMENT31:
+        selected.update(
+            {
+                "assigned_row_index": [],
+                "center_seed_index": [],
+                "scale_block_index": [],
+                "scale_block_id": [],
+            }
+        )
     library_audit: list[dict[str, Any]] = []
     generator = np.random.Generator(np.random.PCG64(plan.library_seed))
 
@@ -1694,6 +2744,16 @@ def _select_library_and_fit_pca(
         _validate_cache_provenance(plan, cache, row)
         labels = np.asarray(cache["valid_labels"], dtype=bool)
         seed_index = np.asarray(cache["valid_seed_index"], dtype=np.int64)
+        if plan.experiment == EXPERIMENT31:
+            assigned_row_index = np.asarray(
+                cache["valid_assigned_row_index"], dtype=np.int64
+            )
+            center_seed_index = np.asarray(
+                cache["valid_center_seed_index"], dtype=np.int64
+            )
+            scale_block_index = np.asarray(
+                cache["valid_scale_block_index"], dtype=np.int8
+            )
         scale_id = np.asarray(cache["valid_scale_id"], dtype=np.int32)
         candidate_raw = np.asarray(cache["raw_features"], dtype=np.float32)
         for start in range(0, len(candidate_raw), 8192):
@@ -1735,6 +2795,18 @@ def _select_library_and_fit_pca(
                     selected["source_index"].append(int(row["source_index"]))
                     selected["seed_index"].append(int(seed_index[draw_row]))
                     selected["scale_id"].append(current_scale)
+                    if plan.experiment == EXPERIMENT31:
+                        block_index = int(scale_block_index[draw_row])
+                        selected["assigned_row_index"].append(
+                            int(assigned_row_index[draw_row])
+                        )
+                        selected["center_seed_index"].append(
+                            int(center_seed_index[draw_row])
+                        )
+                        selected["scale_block_index"].append(block_index)
+                        selected["scale_block_id"].append(
+                            plan.effective_scale_blocks[block_index].block_id
+                        )
             library_audit.append(
                 {
                     "dataset": str(row["dataset"]),
@@ -1758,6 +2830,44 @@ def _select_library_and_fit_pca(
                     "skip_reason": "" if both_nonempty else "one_or_both_classes_empty",
                 }
             )
+            if plan.experiment == EXPERIMENT31:
+                block_index = next(
+                    index
+                    for index, block in enumerate(plan.effective_scale_blocks)
+                    if block.scale_id_start <= current_scale < block.scale_id_stop
+                )
+                library_audit[-1].update(
+                    {
+                        "scale_block_index": block_index,
+                        "scale_block_id": plan.effective_scale_blocks[
+                            block_index
+                        ].block_id,
+                        "selected_negative_assigned_row_index": (
+                            None
+                            if chosen_rows[0] is None
+                            else int(
+                                assigned_row_index[int(chosen_rows[0])]
+                            )
+                        ),
+                        "selected_positive_assigned_row_index": (
+                            None
+                            if chosen_rows[1] is None
+                            else int(
+                                assigned_row_index[int(chosen_rows[1])]
+                            )
+                        ),
+                        "selected_negative_center_seed_index": (
+                            None
+                            if chosen_rows[0] is None
+                            else int(center_seed_index[int(chosen_rows[0])])
+                        ),
+                        "selected_positive_center_seed_index": (
+                            None
+                            if chosen_rows[1] is None
+                            else int(center_seed_index[int(chosen_rows[1])])
+                        ),
+                    }
+                )
 
     if total_count < 2 or total_positive == 0 or total_positive == total_count:
         raise ValueError("valid train candidates must contain both reference classes")
@@ -1794,10 +2904,30 @@ def _select_library_and_fit_pca(
         "seed_index": np.asarray(selected["seed_index"], dtype=np.int64),
         "scale_id": np.asarray(selected["scale_id"], dtype=np.int32),
     }
+    if plan.experiment == EXPERIMENT31:
+        library.update(
+            {
+                "assigned_row_index": np.asarray(
+                    selected["assigned_row_index"], dtype=np.int64
+                ),
+                "center_seed_index": np.asarray(
+                    selected["center_seed_index"], dtype=np.int64
+                ),
+                "scale_block_index": np.asarray(
+                    selected["scale_block_index"], dtype=np.int8
+                ),
+                "scale_block_id": np.asarray(
+                    selected["scale_block_id"], dtype=np.str_
+                ),
+            }
+        )
     if len(library["labels"]) < 2 or np.unique(library["labels"]).size != 2:
         raise ValueError("balanced library did not retain both classes")
-    if len(library["labels"]) > 64_000 and plan.experiment == EXPERIMENT:
-        raise ValueError("selected library exceeds the frozen maximum of 64000")
+    if len(library["labels"]) > plan.maximum_library_templates:
+        raise ValueError(
+            "selected library exceeds the frozen maximum of "
+            f"{plan.maximum_library_templates}"
+        )
     library["pca_features"] = pca.transform(library["raw_features"])
     return pca, library, float(total_positive / total_count), library_audit
 
@@ -1914,9 +3044,13 @@ def _metric_row(
 def cache_summary_payload(summary: CacheBuildSummary) -> dict[str, Any]:
     """Return the canonical publish payload for one cache shard."""
 
+    experiment = str(summary.cache_row.get("experiment", EXPERIMENT))
+    if experiment not in SUPPORTED_EXPERIMENTS:
+        raise ValueError(f"unsupported cache summary experiment {experiment}")
+    artifact_tag = "phase31" if experiment == EXPERIMENT31 else "phase21"
     payload: dict[str, Any] = {
-        "schema": "pathline_template_matching.phase21_cache_sidecar.v1",
-        "experiment": EXPERIMENT,
+        "schema": f"pathline_template_matching.{artifact_tag}_cache_sidecar.v1",
+        "experiment": experiment,
         "cache_row": summary.cache_row,
         "raw_input_row": summary.raw_input_row,
         "derived_window_row": summary.derived_window_row,
@@ -1946,9 +3080,15 @@ def load_cache_summary_sidecar(path: str | Path) -> CacheBuildSummary:
     expected = payload.pop("content_sha256", None)
     if expected != canonical_json_sha256(payload):
         raise ValueError(f"cache sidecar content SHA-256 mismatch: {source}")
-    if payload.get("schema") != "pathline_template_matching.phase21_cache_sidecar.v1":
+    experiment = payload.get("experiment")
+    expected_schema = (
+        "pathline_template_matching.phase31_cache_sidecar.v1"
+        if experiment == EXPERIMENT31
+        else "pathline_template_matching.phase21_cache_sidecar.v1"
+    )
+    if payload.get("schema") != expected_schema:
         raise ValueError(f"unsupported cache sidecar schema: {source}")
-    if payload.get("experiment") != EXPERIMENT:
+    if experiment not in SUPPORTED_EXPERIMENTS:
         raise ValueError(f"cache sidecar experiment mismatch: {source}")
     return CacheBuildSummary(
         cache_row=dict(payload["cache_row"]),
@@ -1982,6 +3122,8 @@ def discover_phase21_cache_sidecars(
             raise ValueError(f"duplicate cache sidecar for {key}")
         if str(row.get("split")) != plan.split_for(key[0]):
             raise ValueError(f"cache sidecar split mismatch for {key}")
+        if str(row.get("experiment", EXPERIMENT)) != plan.experiment:
+            raise ValueError(f"cache sidecar experiment mismatch for {key}")
         found[key] = summary
     missing = sorted(set(expected_keys) - set(found))
     extra = sorted(set(found) - set(expected_keys))
@@ -1990,12 +3132,607 @@ def discover_phase21_cache_sidecars(
     return [found[key] for key in expected_keys]
 
 
+def authorize_phase31_portable_population_marker_path(
+    plan: Phase21Plan, marker_path: str | Path, *, access_scope: str
+) -> Path:
+    """Authorize a marker lexically before any sidecar-supplied path is opened."""
+
+    scope_directory = {"train-only": "train_only", "all": "all"}.get(
+        access_scope
+    )
+    marker_name = {
+        "train-only": "TRAIN_PORTABLES_PASS.json",
+        "all": "ALL_PORTABLES_PASS.json",
+    }.get(access_scope)
+    if scope_directory is None or marker_name is None:
+        raise ValueError("portable-population marker scope is invalid")
+    trusted_root = Path(
+        os.path.abspath(
+            Path(plan.output_root)
+            / "verification"
+            / "portable_population"
+            / scope_directory
+        )
+    )
+    lexical_path = Path(os.path.abspath(Path(marker_path)))
+    try:
+        lexical_path.relative_to(trusted_root)
+    except ValueError as error:
+        raise ValueError(
+            "portable-population marker path is outside the frozen output root"
+        ) from error
+    if lexical_path.name != marker_name:
+        raise ValueError(f"portable-population marker must be named {marker_name}")
+    return lexical_path
+
+
+def validate_phase31_cache_portable_population_evidence(
+    plan: Phase21Plan,
+    cache_rows: Sequence[Mapping[str, Any]],
+    *,
+    usage: str,
+    expected_git_commit: str,
+    synthetic_pass_file_sha256: str,
+    train_coverage_pass_file_sha256: str | None = None,
+    authorized_marker_paths_by_scope: Mapping[str, str | Path] | None = None,
+) -> list[dict[str, Any]]:
+    """Authenticate portable-population markers without opening a cache NPZ."""
+
+    if plan.experiment != EXPERIMENT31:
+        raise ValueError("portable-population cache evidence is restricted to 3.1")
+    if usage == "train-coverage":
+        expected_scope_by_split = {"train": "train-only"}
+        expected_datasets = plan.train_datasets
+    elif usage == "evaluation":
+        expected_scope_by_split = {"train": "train-only", "test": "all"}
+        expected_datasets = plan.datasets
+    else:
+        raise ValueError("portable-population evidence usage is invalid")
+    expected_keys = {
+        (dataset, ordinal)
+        for dataset in expected_datasets
+        for ordinal in range(plan.source_count)
+    }
+    rows = [dict(row) for row in cache_rows]
+    found_keys: set[tuple[str, int]] = set()
+    identities_by_split: dict[str, set[tuple[str, int, str, str]]] = {
+        split: set() for split in expected_scope_by_split
+    }
+    commits_by_split: dict[str, set[str]] = {
+        split: set() for split in expected_scope_by_split
+    }
+    for row in rows:
+        dataset = str(row.get("dataset", ""))
+        split = str(row.get("split", ""))
+        ordinal = int(row.get("source_ordinal", -1))
+        key = (dataset, ordinal)
+        if key not in expected_keys or key in found_keys:
+            raise ValueError(
+                "portable-population evidence cache population is incomplete or duplicated"
+            )
+        found_keys.add(key)
+        if split not in expected_scope_by_split or plan.split_for(dataset) != split:
+            raise ValueError("portable-population evidence cache split changed")
+        row_provenance = {
+            "config_sha256": plan.config_sha256,
+            "dataset_registry_sha256": plan.dataset_registry_sha256,
+            "portable_builder_git_commit": expected_git_commit,
+            "cache_builder_git_commit": expected_git_commit,
+        }
+        drift = {
+            name: (row.get(name), value)
+            for name, value in row_provenance.items()
+            if row.get(name) != value
+        }
+        if drift:
+            raise ValueError(
+                f"portable-population cache sidecar provenance changed: {drift}"
+            )
+        scope = str(row.get("portable_population_scope", ""))
+        if scope != expected_scope_by_split[split]:
+            raise ValueError(
+                f"{split} caches must carry one {expected_scope_by_split[split]} "
+                "portable-population marker"
+            )
+        path = str(row.get("portable_population_pass_path", ""))
+        size = int(row.get("portable_population_pass_file_size", -1))
+        file_sha = str(row.get("portable_population_pass_file_sha256", ""))
+        rows_sha = str(row.get("portable_population_rows_content_sha256", ""))
+        if (
+            not path
+            or size < 1
+            or len(file_sha) != 64
+            or any(character not in "0123456789abcdef" for character in file_sha)
+            or len(rows_sha) != 64
+            or any(character not in "0123456789abcdef" for character in rows_sha)
+        ):
+            raise ValueError("portable-population marker identity is invalid")
+        identities_by_split[split].add((path, size, file_sha, rows_sha))
+        commits_by_split[split].add(str(row.get("cache_builder_git_commit", "")))
+    if found_keys != expected_keys or len(rows) != len(expected_keys):
+        raise ValueError("portable-population evidence does not cover the exact cache set")
+    if any(len(values) != 1 for values in identities_by_split.values()):
+        raise ValueError(
+            "portable-population marker path/size/file-SHA/rows-SHA must be "
+            "singleton within each split"
+        )
+    if any(len(values) != 1 for values in commits_by_split.values()):
+        raise ValueError("cache builder Git commit must be singleton within each split")
+
+    evidence = []
+    for split, scope in expected_scope_by_split.items():
+        path_text, expected_size, expected_file_sha, expected_rows_sha = next(
+            iter(identities_by_split[split])
+        )
+        lexical_path = Path(os.path.abspath(Path(path_text)))
+        if authorized_marker_paths_by_scope is None:
+            marker_path = authorize_phase31_portable_population_marker_path(
+                plan, lexical_path, access_scope=scope
+            )
+        else:
+            authorized_value = authorized_marker_paths_by_scope.get(scope)
+            if authorized_value is None:
+                raise ValueError(f"no authorized {scope} marker path was supplied")
+            marker_path = Path(os.path.abspath(Path(authorized_value)))
+            if lexical_path != marker_path:
+                raise ValueError(
+                    "cache sidecars point to a marker other than the authorized path"
+                )
+            expected_name = (
+                "TRAIN_PORTABLES_PASS.json"
+                if scope == "train-only"
+                else "ALL_PORTABLES_PASS.json"
+            )
+            if marker_path.name != expected_name:
+                raise ValueError(f"authorized marker must be named {expected_name}")
+        if (
+            not marker_path.is_file()
+            or marker_path.stat().st_size != expected_size
+            or sha256_file(marker_path) != expected_file_sha
+        ):
+            raise ValueError(
+                f"{split} portable-population marker file size/hash changed"
+            )
+        marker = json.loads(marker_path.read_text(encoding="utf-8"))
+        expected_dataset_count = (
+            len(plan.train_datasets) if scope == "train-only" else len(plan.datasets)
+        )
+        marker_rows = marker.get("rows")
+        if (
+            not isinstance(marker_rows, list)
+            or len(marker_rows) != expected_dataset_count * plan.source_count
+            or canonical_json_sha256(marker_rows) != expected_rows_sha
+        ):
+            raise ValueError(
+                f"{split} portable-population marker row evidence changed"
+            )
+        expected_marker = {
+            "schema": "pathline_template_matching.phase31_portable_population_pass.v1",
+            "experiment": plan.experiment,
+            "status": "passed",
+            "access_scope": scope,
+            "git_commit": expected_git_commit,
+            "worktree_clean": True,
+            "config_sha256": plan.config_sha256,
+            "dataset_registry_sha256": plan.dataset_registry_sha256,
+            "dataset_count": expected_dataset_count,
+            "window_count": expected_dataset_count * plan.source_count,
+            "rows_content_sha256": expected_rows_sha,
+            "synthetic_pass_file_sha256": synthetic_pass_file_sha256,
+        }
+        if scope == "all":
+            expected_marker["train_coverage_pass_file_sha256"] = (
+                train_coverage_pass_file_sha256
+            )
+        drift = {
+            name: (marker.get(name), value)
+            for name, value in expected_marker.items()
+            if marker.get(name) != value
+        }
+        if drift:
+            raise ValueError(
+                f"{split} portable-population marker content changed: {drift}"
+            )
+        evidence.append(
+            {
+                "split": split,
+                "access_scope": scope,
+                "path": str(marker_path),
+                "file_size": expected_size,
+                "file_sha256": expected_file_sha,
+                "rows_content_sha256": expected_rows_sha,
+                "git_commit": expected_marker["git_commit"],
+                "synthetic_pass_file_sha256": synthetic_pass_file_sha256,
+                "train_coverage_pass_file_sha256": (
+                    train_coverage_pass_file_sha256 if scope == "all" else None
+                ),
+                "dataset_count": expected_dataset_count,
+                "window_count": expected_dataset_count * plan.source_count,
+            }
+        )
+    if usage == "evaluation" and (
+        len(evidence) != 2
+        or {row["access_scope"] for row in evidence} != {"train-only", "all"}
+        or len({row["file_sha256"] for row in evidence}) != 2
+    ):
+        raise ValueError(
+            "strict 3.1 evaluation requires two distinct portable-population markers"
+        )
+    return evidence
+
+
+def audit_phase31_train_coverage(
+    plan: Phase21Plan,
+    cache_rows: Sequence[Mapping[str, Any]],
+    output_dir: str | Path,
+    *,
+    verify_cache_hashes: bool = True,
+    expected_git_commit: str,
+    synthetic_pass_file_sha256: str,
+    authorized_portable_population_marker_path: str | Path,
+) -> dict[str, Any]:
+    """Run the immutable, train-only feasibility gate for 3.1.
+
+    The gate intentionally stops before Principal Component Analysis (PCA),
+    template matching, query prediction, or test metrics.  It accepts exactly
+    the frozen 8x4 train-cache population and refuses every row outside the
+    train split before opening any cache path.
+    """
+
+    if plan.experiment != EXPERIMENT31:
+        raise ValueError("train-only long-arc coverage is restricted to mainExp 3.1")
+    plan.validate_production_contract()
+    rows = [dict(row) for row in cache_rows]
+    expected_keys = {
+        (dataset, ordinal)
+        for dataset in plan.train_datasets
+        for ordinal in range(plan.source_count)
+    }
+    found: dict[tuple[str, int], dict[str, Any]] = {}
+    forbidden_names = set(plan.test_datasets)
+    for row in rows:
+        dataset = str(row.get("dataset", ""))
+        split = str(row.get("split", ""))
+        ordinal = int(row.get("source_ordinal", -1))
+        if dataset in forbidden_names or dataset not in plan.train_datasets:
+            raise ValueError(
+                f"train-only coverage refuses non-train dataset row: {dataset!r}"
+            )
+        if split != "train":
+            raise ValueError("train-only coverage refuses a non-train cache row")
+        path_text = str(row.get("path", ""))
+        if not path_text:
+            raise ValueError("train-only coverage cache row has no path")
+        if any(name.lower() in path_text.lower() for name in forbidden_names):
+            raise ValueError("train-only coverage refuses a test-named cache path")
+        key = (dataset, ordinal)
+        if key in found:
+            raise ValueError(f"duplicate train coverage cache row: {key}")
+        found[key] = row
+    if set(found) != expected_keys or len(rows) != 32:
+        raise ValueError(
+            "train-only coverage requires exactly the frozen 8x4 train caches: "
+            f"missing={sorted(expected_keys-set(found))}, "
+            f"extra={sorted(set(found)-expected_keys)}, count={len(rows)}"
+        )
+    portable_population_evidence = (
+        validate_phase31_cache_portable_population_evidence(
+            plan,
+            rows,
+            usage="train-coverage",
+            expected_git_commit=expected_git_commit,
+            synthetic_pass_file_sha256=synthetic_pass_file_sha256,
+            authorized_marker_paths_by_scope={
+                "train-only": authorized_portable_population_marker_path
+            },
+        )[0]
+    )
+
+    root = Path(output_dir).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    diagnostic_path = root / "train_only_coverage_diagnostics.csv"
+    summary_path = root / "train_only_coverage_summary.json"
+    if diagnostic_path.exists() or summary_path.exists():
+        raise FileExistsError("train-only coverage outputs are immutable")
+
+    diagnostic_rows: list[dict[str, Any]] = []
+    selected_by_block = {
+        block.block_id: {"negative": 0, "positive": 0}
+        for block in plan.effective_scale_blocks
+    }
+    expanded_arc_valid = np.zeros(10, dtype=np.int64)
+    cache_evidence: list[dict[str, Any]] = []
+    for dataset in plan.train_datasets:
+        for ordinal in range(plan.source_count):
+            row = found[(dataset, ordinal)]
+            path = Path(str(row["path"])).resolve()
+            expected_sha = str(row.get("file_sha256", ""))
+            if verify_cache_hashes and (
+                len(expected_sha) != 64 or sha256_file(path) != expected_sha
+            ):
+                raise ValueError(f"train coverage cache SHA-256 mismatch: {path}")
+            # Coverage consumes only the assigned scale, validity, and train
+            # reference arrays.  Raw/FMT feature members are deliberately not
+            # decompressed, because descriptor fitting/matching is forbidden
+            # in this feasibility phase.  The complete immutable NPZ is still
+            # authenticated by its file SHA-256 above.
+            with np.load(path, allow_pickle=False) as archive:
+                required = {
+                    "metadata_json",
+                    "scale_assignment",
+                    "valid_mask",
+                    "reference_labels_all",
+                }
+                if not required.issubset(archive.files):
+                    raise ValueError(
+                        f"train coverage cache misses required arrays: {path}"
+                    )
+                metadata_scalar = np.asarray(archive["metadata_json"])
+                if metadata_scalar.ndim != 0:
+                    raise ValueError("train coverage cache metadata is not scalar")
+                metadata = json.loads(str(metadata_scalar.item()))
+                assignment = np.asarray(archive["scale_assignment"])
+                valid = np.asarray(archive["valid_mask"])
+                labels = np.asarray(archive["reference_labels_all"])
+            cache_identity = {"metadata": metadata}
+            _validate_cache_provenance(plan, cache_identity, row)
+            if metadata.get("split") != "train":
+                raise ValueError("train-only coverage opened a non-train cache")
+            expected_shape = (plan.assigned_primitive_count,)
+            if (
+                assignment.dtype != np.int32
+                or valid.dtype != np.bool_
+                or labels.dtype != np.bool_
+                or assignment.shape != expected_shape
+                or valid.shape != expected_shape
+                or labels.shape != expected_shape
+            ):
+                raise ValueError("train coverage cache array contract changed")
+            stored_hashes = metadata.get("array_sha256")
+            if not isinstance(stored_hashes, Mapping):
+                raise ValueError("train coverage cache has no canonical array hashes")
+            for name, values in (
+                ("scale_assignment", assignment),
+                ("valid_mask", valid),
+                ("reference_labels_all", labels),
+            ):
+                if stored_hashes.get(name) != canonical_array_sha256(values):
+                    raise ValueError(f"train coverage cache {name} SHA-256 changed")
+            if not np.array_equal(assignment, plan.primitive_scale_assignment()):
+                raise ValueError("train coverage scale assignment differs from plan")
+            block_index_all = np.arange(len(assignment), dtype=np.int64) // int(
+                plan.assigned_seed_count
+            )
+            for block_index, block in enumerate(plan.effective_scale_blocks):
+                block_mask = block_index_all == block_index
+                if int(block_mask.sum()) != plan.assigned_seed_count:
+                    raise ValueError("train cache assignment block population changed")
+                for scale_id in range(block.scale_id_start, block.scale_id_stop):
+                    assigned_mask = block_mask & (assignment == scale_id)
+                    valid_mask = assigned_mask & valid
+                    assigned_count = int(assigned_mask.sum())
+                    valid_count = int(valid_mask.sum())
+                    positive_count = int((valid_mask & labels).sum())
+                    negative_count = valid_count - positive_count
+                    if assigned_count != 64:
+                        raise ValueError(
+                            "train coverage assignment is not exactly 64 rows per tuple"
+                        )
+                    eligible = positive_count > 0 and negative_count > 0
+                    if eligible:
+                        selected_by_block[block.block_id]["negative"] += 1
+                        selected_by_block[block.block_id]["positive"] += 1
+                    if block.block_id == "expanded_3_1":
+                        expanded_arc_valid[(scale_id - block.scale_id_start) % 10] += (
+                            valid_count
+                        )
+                    diagnostic_rows.append(
+                        {
+                            "dataset": dataset,
+                            "physical_family": plan.family_by_dataset[dataset],
+                            "source_ordinal": ordinal,
+                            "source_index": int(row["source_index"]),
+                            "scale_block_index": block_index,
+                            "scale_block_id": block.block_id,
+                            "scale_id": scale_id,
+                            "dx_grid_scale": float(
+                                plan.scale_table.dx_grid_scale[scale_id]
+                            ),
+                            "ds_frame_scale": float(
+                                plan.scale_table.ds_frame_scale[scale_id]
+                            ),
+                            "arc_length_grid_scale": float(
+                                plan.scale_table.arc_length_grid_scale[scale_id]
+                            ),
+                            "assigned_count": assigned_count,
+                            "valid_count": valid_count,
+                            "invalid_count": assigned_count - valid_count,
+                            "coverage": valid_count / assigned_count,
+                            "valid_negative_candidate_count": negative_count,
+                            "valid_positive_candidate_count": positive_count,
+                            "frozen_library_stratum_two_class_nonempty": eligible,
+                            "selected_negative_template_count": int(eligible),
+                            "selected_positive_template_count": int(eligible),
+                        }
+                    )
+            cache_evidence.append(
+                {
+                    "dataset": dataset,
+                    "source_ordinal": ordinal,
+                    "source_index": int(row["source_index"]),
+                    "path": str(path),
+                    "file_sha256": sha256_file(path),
+                    "cache_builder_git_commit": row.get(
+                        "cache_builder_git_commit"
+                    ),
+                }
+            )
+
+    expected_diagnostic_count = 8 * 4 * 2 * 1_000
+    if len(diagnostic_rows) != expected_diagnostic_count:
+        raise RuntimeError("train coverage did not preserve every required stratum")
+    fields = (
+        "dataset",
+        "physical_family",
+        "source_ordinal",
+        "source_index",
+        "scale_block_index",
+        "scale_block_id",
+        "scale_id",
+        "dx_grid_scale",
+        "ds_frame_scale",
+        "arc_length_grid_scale",
+        "assigned_count",
+        "valid_count",
+        "invalid_count",
+        "coverage",
+        "valid_negative_candidate_count",
+        "valid_positive_candidate_count",
+        "frozen_library_stratum_two_class_nonempty",
+        "selected_negative_template_count",
+        "selected_positive_template_count",
+    )
+    diagnostic_sha = _atomic_csv(diagnostic_path, diagnostic_rows, fields)
+    expanded_block_counts = selected_by_block["expanded_3_1"]
+    pass_conditions = {
+        "every_expanded_arc_level_has_valid_train_primitive": bool(
+            np.all(expanded_arc_valid > 0)
+        ),
+        "expanded_block_has_selected_positive_template": (
+            expanded_block_counts["positive"] > 0
+        ),
+        "expanded_block_has_selected_negative_template": (
+            expanded_block_counts["negative"] > 0
+        ),
+        "every_dataset_source_block_scale_stratum_reported": (
+            len(diagnostic_rows) == expected_diagnostic_count
+        ),
+        "one_authenticated_train_portable_population_marker": True,
+        "no_test_dataset_opened": True,
+    }
+    summary: dict[str, Any] = {
+        "schema": "pathline_template_matching.phase31_train_only_coverage.v1",
+        "experiment": "Verify_LongArcHorizon_1.1",
+        "parent_experiment": plan.experiment,
+        "status": "pass" if all(pass_conditions.values()) else "fail",
+        "config_sha256": plan.config_sha256,
+        "dataset_registry_sha256": plan.dataset_registry_sha256,
+        "maximum_source_frame_intervals": 48.0,
+        "opened_dataset_split": "train_only",
+        "train_datasets": list(plan.train_datasets),
+        "forbidden_test_datasets": list(plan.test_datasets),
+        "cache_count": len(cache_evidence),
+        "cache_evidence": cache_evidence,
+        "cache_evidence_content_sha256": canonical_json_sha256(cache_evidence),
+        "train_portable_population_pass": portable_population_evidence,
+        "diagnostic_row_count": len(diagnostic_rows),
+        "diagnostics_file": str(diagnostic_path),
+        "diagnostics_file_sha256": diagnostic_sha,
+        "expanded_arc_level_valid_counts": [
+            {
+                "arc_index": index,
+                "arc_length_grid_scale": float(EXPANDED_ARC_VALUES[index]),
+                "valid_train_count": int(count),
+            }
+            for index, count in enumerate(expanded_arc_valid)
+        ],
+        "globally_selected_template_counts_by_block": selected_by_block,
+        "library_rule": (
+            "one_negative_and_one_positive_only_for_each_two_class_nonempty_"
+            "dataset_source_scale_stratum"
+        ),
+        "pass_conditions": pass_conditions,
+        "prohibited_operations_performed": [],
+    }
+    summary["summary_content_sha256"] = canonical_json_sha256(summary)
+    _atomic_json(summary_path, summary)
+    return summary
+
+
+def _phase31_evaluation_gate_evidence(
+    plan: Phase21Plan,
+    evidence: Mapping[str, Any] | None,
+    *,
+    evaluator_git_commit: str,
+    strict_protocol: bool,
+) -> dict[str, Any] | None:
+    """Normalize the two authenticated Verify gates for result provenance."""
+
+    if plan.experiment != EXPERIMENT31:
+        if evidence is not None:
+            raise ValueError("Verify gate evidence is defined only for mainExp 3.1")
+        return None
+    if evidence is None:
+        if strict_protocol:
+            raise ValueError("strict mainExp 3.1 evaluation requires Verify gate evidence")
+        return None
+    coverage = dict(evidence)
+    synthetic_value = coverage.get("synthetic_pass")
+    if not isinstance(synthetic_value, Mapping):
+        raise ValueError("Phase B evidence does not retain authenticated Phase A evidence")
+    synthetic = dict(synthetic_value)
+    expected = {
+        "git_commit": evaluator_git_commit,
+        "main_config_sha256": plan.config_sha256,
+        "dataset_registry_sha256": plan.dataset_registry_sha256,
+    }
+    for gate_name, gate in (("synthetic_pass", synthetic), ("train_coverage_pass", coverage)):
+        drift = {
+            name: (gate.get(name), value)
+            for name, value in expected.items()
+            if gate.get(name) != value
+        }
+        if drift:
+            raise ValueError(f"{gate_name} evaluation evidence changed: {drift}")
+        for name in ("path", "file_size", "file_sha256", "verify_config_sha256", "outputs"):
+            if name not in gate:
+                raise ValueError(f"{gate_name} evaluation evidence lacks {name}")
+        if len(str(gate["file_sha256"])) != 64 or int(gate["file_size"]) <= 0:
+            raise ValueError(f"{gate_name} marker file evidence is invalid")
+        if not isinstance(gate["outputs"], list) or not gate["outputs"]:
+            raise ValueError(f"{gate_name} output evidence is invalid")
+    if coverage.get("synthetic_pass_file_sha256") != synthetic["file_sha256"]:
+        raise ValueError("Phase B evidence points to a different Phase A marker")
+    if coverage["verify_config_sha256"] != synthetic["verify_config_sha256"]:
+        raise ValueError("Phase A and Phase B Verify config SHA-256 differ")
+    return {
+        "synthetic_pass": {
+            name: synthetic[name]
+            for name in (
+                "path",
+                "file_size",
+                "file_sha256",
+                "git_commit",
+                "main_config_sha256",
+                "verify_config_sha256",
+                "dataset_registry_sha256",
+                "outputs",
+            )
+        },
+        "train_coverage_pass": {
+            name: coverage[name]
+            for name in (
+                "path",
+                "file_size",
+                "file_sha256",
+                "git_commit",
+                "main_config_sha256",
+                "verify_config_sha256",
+                "dataset_registry_sha256",
+                "synthetic_pass_file_sha256",
+                "outputs",
+            )
+        },
+    }
+
+
 def _freeze_cache_evidence(
     plan: Phase21Plan,
     root: Path,
     summaries: Sequence[CacheBuildSummary],
     *,
     evaluator_git_commit: str,
+    verification_gate_evidence: Mapping[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Freeze manifests from completed array shards before query evaluation."""
 
@@ -2012,24 +3749,35 @@ def _freeze_cache_evidence(
             raise ValueError(f"raw provenance changed across sidecars: {key}")
         raw_by_key[key] = row
     manifests = {
-        "cache_manifest.json": _manifest_payload("phase21_cache_manifest", cache_rows),
+        "cache_manifest.json": _manifest_payload(
+            f"{plan.artifact_tag}_cache_manifest",
+            cache_rows,
+            experiment=plan.experiment,
+        ),
         "raw_input_manifest.json": _manifest_payload(
-            "phase21_raw_input_manifest", list(raw_by_key.values())
+            f"{plan.artifact_tag}_raw_input_manifest",
+            list(raw_by_key.values()),
+            experiment=plan.experiment,
         ),
         "derived_window_manifest.json": _manifest_payload(
-            "phase21_derived_window_manifest",
+            f"{plan.artifact_tag}_derived_window_manifest",
             [summary.derived_window_row for summary in summaries],
+            experiment=plan.experiment,
         ),
         "seed_and_scale_assignment_manifest.json": _manifest_payload(
-            "phase21_seed_assignment_manifest",
+            f"{plan.artifact_tag}_seed_assignment_manifest",
             [summary.assignment_row for summary in summaries],
+            experiment=plan.experiment,
         ),
         "label_manifest.json": _manifest_payload(
-            "phase21_label_manifest", [summary.label_row for summary in summaries]
+            f"{plan.artifact_tag}_label_manifest",
+            [summary.label_row for summary in summaries],
+            experiment=plan.experiment,
         ),
         "primitive_manifest.json": _manifest_payload(
-            "phase21_primitive_manifest",
+            f"{plan.artifact_tag}_primitive_manifest",
             [summary.primitive_row for summary in summaries],
+            experiment=plan.experiment,
         ),
     }
     manifest_hashes = {name: _atomic_json(root / name, value) for name, value in manifests.items()}
@@ -2048,13 +3796,18 @@ def _freeze_cache_evidence(
         "valid_count",
         "invalid_count",
     )
+    if plan.experiment == EXPERIMENT31:
+        audit_fields = audit_fields[:5] + (
+            "scale_block_index",
+            "scale_block_id",
+        ) + audit_fields[5:]
     audit_sha = _atomic_csv(
         root / "audit_counts.csv",
         (row for summary in summaries for row in summary.audit_rows),
         audit_fields,
     )
     input_manifest = {
-        "schema": "pathline_template_matching.phase21_input_manifest.v1",
+        "schema": f"pathline_template_matching.{plan.artifact_tag}_input_manifest.v1",
         "experiment": plan.experiment,
         "config_sha256": plan.config_sha256,
         "dataset_registry_path": str(plan.dataset_registry_path),
@@ -2091,6 +3844,45 @@ def _freeze_cache_evidence(
             str(row["path"]): str(row["file_sha256"]) for row in cache_rows
         },
     }
+    if plan.experiment == EXPERIMENT31:
+        portable_population_passes = sorted(
+            {
+                (
+                    str(row["portable_population_scope"]),
+                    str(row["portable_population_pass_path"]),
+                    int(row["portable_population_pass_file_size"]),
+                    str(row["portable_population_pass_file_sha256"]),
+                    str(row["portable_population_rows_content_sha256"]),
+                )
+                for row in cache_rows
+                if "portable_population_scope" in row
+            }
+        )
+        input_manifest.update(
+            {
+                "maximum_source_frame_intervals": float(
+                    plan.maximum_source_frame_intervals
+                ),
+                "assignment_count_per_seed": int(plan.assignment_count_per_seed),
+                "unique_center_seed_count_per_source_time": int(
+                    plan.assigned_seed_count
+                ),
+                "assigned_primitive_count_per_source_time": int(
+                    plan.assigned_primitive_count
+                ),
+                "verification_gates": verification_gate_evidence,
+                "portable_population_passes": [
+                    {
+                        "access_scope": scope,
+                        "path": path,
+                        "file_size": size,
+                        "file_sha256": file_sha,
+                        "rows_content_sha256": rows_sha,
+                    }
+                    for scope, path, size, file_sha, rows_sha in portable_population_passes
+                ],
+            }
+        )
     _atomic_json(root / "input_manifest.json", input_manifest)
     return cache_rows
 
@@ -2118,7 +3910,9 @@ def _initialize_evaluation_run(
     _atomic_json(
         root / "run_start.json",
         {
-            "schema": "pathline_template_matching.phase21_run_state.v1",
+            "schema": (
+                f"pathline_template_matching.{plan.artifact_tag}_run_state.v1"
+            ),
             "experiment": plan.experiment,
             "status": "inputs_not_yet_frozen",
             "config_sha256": plan.config_sha256,
@@ -2129,13 +3923,24 @@ def _initialize_evaluation_run(
     return root
 
 
-def _query_csv_header() -> tuple[str, ...]:
+def _query_csv_header(plan: Phase21Plan | None = None) -> tuple[str, ...]:
+    phase31 = plan is not None and plan.experiment == EXPERIMENT31
+    identity = (
+        (
+            "query_assigned_row_index",
+            "query_center_seed_index",
+            "query_scale_block_index",
+            "query_scale_block_id",
+        )
+        if phase31
+        else ("query_seed_index",)
+    )
     common = (
         "query_dataset",
         "query_physical_family",
         "query_source_ordinal",
         "query_source_index",
-        "query_seed_index",
+    ) + identity + (
         "query_seed_x",
         "query_seed_y",
         "query_seed_z",
@@ -2149,6 +3954,16 @@ def _query_csv_header() -> tuple[str, ...]:
     )
     method_columns: list[str] = []
     for stem in ("raw", "pca", "fmt"):
+        method_identity = (
+            (
+                f"{stem}_match_assigned_row_index",
+                f"{stem}_match_center_seed_index",
+                f"{stem}_match_scale_block_index",
+                f"{stem}_match_scale_block_id",
+            )
+            if phase31
+            else (f"{stem}_match_seed_index",)
+        )
         method_columns.extend(
             (
                 f"{stem}_prediction",
@@ -2160,7 +3975,9 @@ def _query_csv_header() -> tuple[str, ...]:
                 f"{stem}_match_physical_family",
                 f"{stem}_match_source_ordinal",
                 f"{stem}_match_source_index",
-                f"{stem}_match_seed_index",
+            )
+            + method_identity
+            + (
                 f"{stem}_match_scale_id",
                 f"{stem}_match_label",
             )
@@ -2183,6 +4000,16 @@ def _write_query_rows(
     valid_scale_id = np.asarray(cache["valid_scale_id"], dtype=np.int32)
     all_seeds = np.asarray(cache["seeds_xyz"], dtype=np.float32)
     labels = np.asarray(cache["valid_labels"], dtype=bool)
+    if plan.experiment == EXPERIMENT31:
+        assigned_row_index = np.asarray(
+            cache["valid_assigned_row_index"], dtype=np.int64
+        )
+        center_seed_index = np.asarray(
+            cache["valid_center_seed_index"], dtype=np.int64
+        )
+        scale_block_index = np.asarray(
+            cache["valid_scale_block_index"], dtype=np.int8
+        )
     stems = {METHOD_RAW: "raw", METHOD_PCA: "pca", METHOD_FMT: "fmt"}
     for query_index in range(len(labels)):
         seed_id = int(valid_seed_index[query_index])
@@ -2192,7 +4019,6 @@ def _write_query_rows(
             "query_physical_family": plan.family_by_dataset[str(cache_row["dataset"])],
             "query_source_ordinal": int(cache_row["source_ordinal"]),
             "query_source_index": int(cache_row["source_index"]),
-            "query_seed_index": seed_id,
             "query_seed_x": float(all_seeds[seed_id, 0]),
             "query_seed_y": float(all_seeds[seed_id, 1]),
             "query_seed_z": float(all_seeds[seed_id, 2]),
@@ -2206,6 +4032,24 @@ def _write_query_rows(
             "prior_prediction": prior_prediction,
             "prior_score": prior_score,
         }
+        if plan.experiment == EXPERIMENT31:
+            block_index = int(scale_block_index[query_index])
+            row.update(
+                {
+                    "query_assigned_row_index": int(
+                        assigned_row_index[query_index]
+                    ),
+                    "query_center_seed_index": int(
+                        center_seed_index[query_index]
+                    ),
+                    "query_scale_block_index": block_index,
+                    "query_scale_block_id": plan.effective_scale_blocks[
+                        block_index
+                    ].block_id,
+                }
+            )
+        else:
+            row["query_seed_index"] = seed_id
         for method, stem in stems.items():
             result = matches[method]
             match_index = int(result.nearest_indices[query_index])
@@ -2232,11 +4076,31 @@ def _write_query_rows(
                     f"{stem}_match_source_index": int(
                         library["source_index"][match_index]
                     ),
-                    f"{stem}_match_seed_index": int(library["seed_index"][match_index]),
                     f"{stem}_match_scale_id": int(library["scale_id"][match_index]),
                     f"{stem}_match_label": bool(library["labels"][match_index]),
                 }
             )
+            if plan.experiment == EXPERIMENT31:
+                row.update(
+                    {
+                        f"{stem}_match_assigned_row_index": int(
+                            library["assigned_row_index"][match_index]
+                        ),
+                        f"{stem}_match_center_seed_index": int(
+                            library["center_seed_index"][match_index]
+                        ),
+                        f"{stem}_match_scale_block_index": int(
+                            library["scale_block_index"][match_index]
+                        ),
+                        f"{stem}_match_scale_block_id": str(
+                            library["scale_block_id"][match_index]
+                        ),
+                    }
+                )
+            else:
+                row[f"{stem}_match_seed_index"] = int(
+                    library["seed_index"][match_index]
+                )
         writer.writerow({name: _csv_value(row.get(name)) for name in writer.fieldnames})
 
 
@@ -2435,7 +4299,7 @@ def _build_phase21_visualization_artifacts(
     git_commit: str,
     verify_cache_hashes: bool,
 ) -> dict[str, Any] | None:
-    """Build the two frozen source-ordinal-2 triptychs after all metrics exist."""
+    """Build fixed ordinal-2 triptychs after all numerical metrics exist."""
 
     visualization_config = plan.config.get("visualization")
     if not isinstance(visualization_config, Mapping):
@@ -2450,9 +4314,9 @@ def _build_phase21_visualization_artifacts(
 
     configured_ordinal = int(visualization_config.get("source_ordinal", -1))
     if configured_ordinal != FIXED_SOURCE_ORDINAL:
-        raise ValueError("phase-2.1 visualization source ordinal drifted")
+        raise ValueError("template-matching visualization source ordinal drifted")
     if visualization_config.get("metric_based_or_prediction_based_scene_selection") != "forbidden":
-        raise ValueError("phase-2.1 visualization must forbid metric-selected scenes")
+        raise ValueError("visualization must forbid metric-selected scenes")
 
     entries: list[dict[str, Any]] = []
     for dataset_index, dataset in enumerate(plan.test_datasets):
@@ -2474,72 +4338,288 @@ def _build_phase21_visualization_artifacts(
             ),
         )
         _validate_cache_provenance(plan, cache, cache_row)
-        mask = (query["dataset_index"] == dataset_index) & (
+        dataset_mask = (query["dataset_index"] == dataset_index) & (
             query["source_ordinal"] == FIXED_SOURCE_ORDINAL
         )
         cache_seed_index = np.asarray(cache["valid_seed_index"], dtype=np.int64)
         cache_scale_id = np.asarray(cache["valid_scale_id"], dtype=np.int32)
         cache_labels = np.asarray(cache["valid_labels"], dtype=np.bool_)
-        if not np.array_equal(query["valid_seed_index"][mask], cache_seed_index):
+        if not np.array_equal(
+            query["valid_seed_index"][dataset_mask], cache_seed_index
+        ):
             raise RuntimeError("visualization query seed order differs from the cache")
-        if not np.array_equal(query["scale_id"][mask], cache_scale_id):
+        if not np.array_equal(query["scale_id"][dataset_mask], cache_scale_id):
             raise RuntimeError("visualization query scale order differs from the cache")
-        if not np.array_equal(query["labels"][mask], cache_labels):
+        if not np.array_equal(query["labels"][dataset_mask], cache_labels):
             raise RuntimeError("visualization query labels differ from the cache")
-        prediction_contract = ordered_fmt_prediction(
-            np.asarray(fmt_prediction[mask], dtype=np.bool_),
-            cache_seed_index,
-            cache_scale_id,
+        work_items: list[tuple[int | None, ScaleAssignmentBlock]] = (
+            list(enumerate(plan.effective_scale_blocks))
+            if plan.experiment == EXPERIMENT31
+            else [(None, ScaleAssignmentBlock("legacy_2_1", 0, 1_000, 15068))]
         )
-        scene, scientific_audit = build_phase21_visualization_scene(
-            cache, prediction_contract
-        )
+        for block_index, block in work_items:
+            cache_mask = (cache_scale_id >= block.scale_id_start) & (
+                cache_scale_id < block.scale_id_stop
+            )
+            query_mask = dataset_mask & (
+                query["scale_id"] >= block.scale_id_start
+            ) & (query["scale_id"] < block.scale_id_stop)
+            if plan.experiment == EXPERIMENT31:
+                if not np.array_equal(
+                    query["assigned_row_index"][query_mask],
+                    np.asarray(cache["valid_assigned_row_index"])[cache_mask],
+                ) or not np.array_equal(
+                    query["center_seed_index"][query_mask],
+                    np.asarray(cache["valid_center_seed_index"])[cache_mask],
+                ):
+                    raise RuntimeError(
+                        "visualization query assigned/center identities differ from cache"
+                    )
+                if not np.all(
+                    query["scale_block_index"][query_mask] == block_index
+                ):
+                    raise RuntimeError("visualization query mixes scale blocks")
 
-        scene_stem = root / "scenes" / f"{dataset}_source_ordinal_2"
-        scene_path = scene_stem.with_suffix(".scene.npz")
-        scene_manifest_path = scene_stem.with_suffix(".scene.json")
-        scene_manifest = write_phase21_scene_artifact(
-            scene, scientific_audit, scene_path, scene_manifest_path
-        )
-        render_stem = root / "figures" / f"{dataset}_source_ordinal_2_triptych"
-        rendered = render_phase21_scene_artifact(
-            scene_path,
-            scene_manifest_path,
-            render_stem,
-            dpi=int(visualization_config.get("png_dpi", 360)),
-        )
-        relative = lambda path: str(Path(path).resolve().relative_to(root))
-        entry = {
-            "dataset": dataset,
-            "physical_family": plan.family_by_dataset[dataset],
-            "source_ordinal": FIXED_SOURCE_ORDINAL,
-            "source_index": int(cache_row["source_index"]),
-            "source_cache": str(cache_row["path"]),
-            "source_cache_sha256": str(cache_row["file_sha256"]),
-            "fmt_prediction_sha256": canonical_array_sha256(
-                np.asarray(fmt_prediction[mask], dtype=np.bool_)
-            ),
-            "scene_npz": relative(scene_path),
-            "scene_npz_sha256": str(scene_manifest["scene_npz_sha256"]),
-            "scene_manifest": relative(scene_manifest_path),
-            "scene_manifest_file_sha256": str(
-                scene_manifest["scene_manifest_file_sha256"]
-            ),
-            "png": relative(rendered.png_path),
-            "png_sha256": sha256_file(rendered.png_path),
-            "pdf": relative(rendered.pdf_path),
-            "pdf_sha256": sha256_file(rendered.pdf_path),
-            "render_metadata": relative(rendered.metadata_path),
-            "render_metadata_sha256": sha256_file(rendered.metadata_path),
-            "panel_alignment": relative(rendered.alignment_path),
-            "panel_alignment_sha256": sha256_file(rendered.alignment_path),
-            "query_count": int(mask.sum()),
-            "confusion_counts": dict(rendered.metadata["counts"]),
+            scene_cache: Mapping[str, Any] = cache
+            suffix = ""
+            if plan.experiment == EXPERIMENT31:
+                valid_array_names = (
+                    "raw_features",
+                    "fmt_features",
+                    "valid_labels",
+                    "valid_seed_index",
+                    "valid_scale_id",
+                    "center_sample_time",
+                    "valid_assigned_row_index",
+                    "valid_center_seed_index",
+                    "valid_scale_block_index",
+                )
+                scene_cache_dict = dict(cache)
+                for name in valid_array_names:
+                    scene_cache_dict[name] = np.ascontiguousarray(
+                        np.asarray(cache[name])[cache_mask]
+                    )
+                scene_metadata = dict(cache["metadata"])
+                scene_metadata.update(
+                    {
+                        "visualization_scale_block_index": int(block_index),
+                        "visualization_scale_block_id": block.block_id,
+                        "visualization_scale_id_start": block.scale_id_start,
+                        "visualization_scale_id_stop_exclusive": block.scale_id_stop,
+                    }
+                )
+                hashes = dict(scene_metadata.get("array_sha256", {}))
+                for name in (
+                    "raw_features",
+                    "valid_labels",
+                    "valid_seed_index",
+                    "valid_scale_id",
+                    "center_sample_time",
+                    "valid_assigned_row_index",
+                    "valid_center_seed_index",
+                    "valid_scale_block_index",
+                    "seeds_xyz",
+                    "ivd_volume",
+                ):
+                    hashes[name] = canonical_array_sha256(scene_cache_dict[name])
+                scene_metadata["array_sha256"] = hashes
+                scene_cache_dict["metadata"] = scene_metadata
+                scene_cache = scene_cache_dict
+                suffix = f"_{block.block_id}"
+
+            selected_seed_index = cache_seed_index[cache_mask]
+            selected_scale_id = cache_scale_id[cache_mask]
+            prediction_values = np.asarray(
+                fmt_prediction[query_mask], dtype=np.bool_
+            )
+            prediction_contract = ordered_fmt_prediction(
+                prediction_values,
+                selected_seed_index,
+                selected_scale_id,
+            )
+            scene, scientific_audit = build_phase21_visualization_scene(
+                scene_cache, prediction_contract
+            )
+            if plan.experiment == EXPERIMENT31:
+                scene["title"] = f"{scene['title']} | {block.block_id}"
+                scientific_audit["scale_block"] = {
+                    "scale_block_index": int(block_index),
+                    "scale_block_id": block.block_id,
+                    "scale_id_start": block.scale_id_start,
+                    "scale_id_stop_exclusive": block.scale_id_stop,
+                    "selection_normalization": (
+                        "within_block_cartesian_indices_dx_ds_arc_divided_by_9"
+                    ),
+                    "dx_grid_scale_values": [
+                        f"{value:.12f}"
+                        for value in np.unique(
+                            plan.scale_table.dx_grid_scale[
+                                block.scale_id_start : block.scale_id_stop
+                            ]
+                        )
+                    ],
+                    "ds_frame_scale_values": [
+                        f"{value:.12f}"
+                        for value in np.unique(
+                            plan.scale_table.ds_frame_scale[
+                                block.scale_id_start : block.scale_id_stop
+                            ]
+                        )
+                    ],
+                    "arc_length_grid_scale_values": [
+                        f"{value:.12f}"
+                        for value in np.unique(
+                            plan.scale_table.arc_length_grid_scale[
+                                block.scale_id_start : block.scale_id_stop
+                            ]
+                        )
+                    ],
+                }
+
+            scene_stem = root / "scenes" / f"{dataset}_source_ordinal_2{suffix}"
+            scene_path = scene_stem.with_suffix(".scene.npz")
+            scene_manifest_path = scene_stem.with_suffix(".scene.json")
+            scene_manifest = write_phase21_scene_artifact(
+                scene, scientific_audit, scene_path, scene_manifest_path
+            )
+            render_stem = (
+                root
+                / "figures"
+                / f"{dataset}_source_ordinal_2{suffix}_triptych"
+            )
+            rendered = render_phase21_scene_artifact(
+                scene_path,
+                scene_manifest_path,
+                render_stem,
+                dpi=int(visualization_config.get("png_dpi", 360)),
+            )
+            relative = lambda path: str(Path(path).resolve().relative_to(root))
+            entry = {
+                "dataset": dataset,
+                "physical_family": plan.family_by_dataset[dataset],
+                "source_ordinal": FIXED_SOURCE_ORDINAL,
+                "source_index": int(cache_row["source_index"]),
+                "source_cache": str(cache_row["path"]),
+                "source_cache_sha256": str(cache_row["file_sha256"]),
+                "fmt_prediction_sha256": canonical_array_sha256(
+                    prediction_values
+                ),
+                "scene_npz": relative(scene_path),
+                "scene_npz_sha256": str(scene_manifest["scene_npz_sha256"]),
+                "scene_manifest": relative(scene_manifest_path),
+                "scene_manifest_file_sha256": str(
+                    scene_manifest["scene_manifest_file_sha256"]
+                ),
+                "png": relative(rendered.png_path),
+                "png_sha256": sha256_file(rendered.png_path),
+                "pdf": relative(rendered.pdf_path),
+                "pdf_sha256": sha256_file(rendered.pdf_path),
+                "render_metadata": relative(rendered.metadata_path),
+                "render_metadata_sha256": sha256_file(rendered.metadata_path),
+                "panel_alignment": relative(rendered.alignment_path),
+                "panel_alignment_sha256": sha256_file(rendered.alignment_path),
+                "query_count": int(query_mask.sum()),
+                "confusion_counts": dict(rendered.metadata["counts"]),
+            }
+            if plan.experiment == EXPERIMENT31:
+                if rendered.svg_path is None:
+                    raise RuntimeError("3.1 triptych did not export required SVG")
+                required_exports = []
+                additional_audit_files = []
+                export_groups = (
+                    ("required", "scene_npz", scene_path),
+                    (
+                        "required",
+                        "svg_with_editable_text_and_rasterized_3d_marks",
+                        rendered.svg_path,
+                    ),
+                    (
+                        "required",
+                        "pdf_with_editable_text_and_rasterized_3d_marks",
+                        rendered.pdf_path,
+                    ),
+                    ("required", "png_360dpi", rendered.png_path),
+                    ("required", "panel_alignment_json", rendered.alignment_path),
+                    ("additional_audit", "scene_manifest_json", scene_manifest_path),
+                    ("additional_audit", "render_metadata_json", rendered.metadata_path),
+                )
+                for group, export_kind, export_path in export_groups:
+                    export_path = Path(export_path).resolve()
+                    if not export_path.is_file() or export_path.stat().st_size <= 0:
+                        raise RuntimeError(f"missing 3.1 visualization export: {export_path}")
+                    export_row = {
+                        "relative_path": str(export_path.relative_to(root)),
+                        "export_kind": export_kind,
+                        "size_bytes": int(export_path.stat().st_size),
+                        "sha256": sha256_file(export_path),
+                    }
+                    if export_row["sha256"] != sha256_file(export_path):
+                        raise RuntimeError(f"3.1 visualization export changed: {export_path}")
+                    if group == "required":
+                        required_exports.append(export_row)
+                    else:
+                        additional_audit_files.append(export_row)
+                entry.update(
+                    {
+                        "scale_block_index": int(block_index),
+                        "scale_block_id": block.block_id,
+                        "svg": relative(rendered.svg_path),
+                        "svg_sha256": sha256_file(rendered.svg_path),
+                        "required_exports": required_exports,
+                        "additional_audit_files": additional_audit_files,
+                    }
+                )
+            entries.append(entry)
+
+    if plan.experiment == EXPERIMENT31:
+        keys = [(entry["dataset"], entry["scale_block_id"]) for entry in entries]
+        if len(entries) != 4 or len(set(keys)) != 4:
+            raise RuntimeError(
+                "3.1 visualization must contain four unique dataset/block figures"
+            )
+        expected_export_kinds = {
+            "scene_npz",
+            "svg_with_editable_text_and_rasterized_3d_marks",
+            "pdf_with_editable_text_and_rasterized_3d_marks",
+            "png_360dpi",
+            "panel_alignment_json",
         }
-        entries.append(entry)
+        for entry in entries:
+            exports = entry["required_exports"]
+            if (
+                len(exports) != len(expected_export_kinds)
+                or {row["export_kind"] for row in exports} != expected_export_kinds
+            ):
+                raise RuntimeError("3.1 visualization required-export set is incomplete")
+            additional = entry["additional_audit_files"]
+            if (
+                len(additional) != 2
+                or {row["export_kind"] for row in additional}
+                != {"scene_manifest_json", "render_metadata_json"}
+            ):
+                raise RuntimeError("3.1 visualization additional audit set is incomplete")
+            for row in exports + additional:
+                if set(row) != {
+                    "relative_path",
+                    "export_kind",
+                    "size_bytes",
+                    "sha256",
+                }:
+                    raise RuntimeError("3.1 visualization export audit fields changed")
+                path = (root / row["relative_path"]).resolve()
+                if (
+                    not path.is_file()
+                    or int(row["size_bytes"]) != path.stat().st_size
+                    or row["sha256"] != sha256_file(path)
+                ):
+                    raise RuntimeError("3.1 visualization export failed final hash audit")
 
     manifest: dict[str, Any] = {
-        "schema": "pathline_template_matching.phase21_visualization_manifest.v1",
+        "schema": (
+            "pathline_template_matching.phase31_visualization_manifest.v1"
+            if plan.experiment == EXPERIMENT31
+            else "pathline_template_matching.phase21_visualization_manifest.v1"
+        ),
         "experiment": plan.experiment,
         "evidence_scope": "explanatory_exposed_development_only",
         "aggregate_performance_proof": False,
@@ -2550,6 +4630,25 @@ def _build_phase21_visualization_artifacts(
         "entry_count": len(entries),
         "entries": entries,
     }
+    if plan.experiment == EXPERIMENT31:
+        manifest.update(
+            {
+                "cross_block_aggregation_or_majority_vote": False,
+                "unique_key": ["dataset", "scale_block_id"],
+                "expected_figure_count": 4,
+                "required_export_file_fields": [
+                    "relative_path",
+                    "export_kind",
+                    "size_bytes",
+                    "sha256",
+                ],
+                "required_export_count_per_figure": 5,
+                "additional_audit_file_count_per_figure": 2,
+                "visualization_manifest_json_hash_location": (
+                    "result_manifest.json artifacts after this manifest is written"
+                ),
+            }
+        )
     manifest["manifest_content_sha256"] = canonical_json_sha256(manifest)
     _atomic_json(root / "visualization_manifest.json", manifest)
     return manifest
@@ -2566,9 +4665,16 @@ def evaluate_phase21_caches(
     verify_cache_hashes: bool = True,
     query_chunk_size: int = 1024,
     library_chunk_size: int = 8192,
+    phase31_verification_evidence: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Freeze cache evidence, fit train-only components, and evaluate test rows."""
 
+    verification_gate_evidence = _phase31_evaluation_gate_evidence(
+        plan,
+        phase31_verification_evidence,
+        evaluator_git_commit=git_commit,
+        strict_protocol=strict_protocol,
+    )
     root = _initialize_evaluation_run(
         plan, run_dir, git_commit=git_commit, strict_protocol=strict_protocol
     )
@@ -2600,8 +4706,25 @@ def evaluate_phase21_caches(
                 raise ValueError(
                     "portable staging, cache build, and evaluator must use one Git commit"
                 )
+        if plan.experiment == EXPERIMENT31:
+            validate_phase31_cache_portable_population_evidence(
+                plan,
+                [summary.cache_row for summary in cache_summaries],
+                usage="evaluation",
+                expected_git_commit=git_commit,
+                synthetic_pass_file_sha256=verification_gate_evidence[
+                    "synthetic_pass"
+                ]["file_sha256"],
+                train_coverage_pass_file_sha256=verification_gate_evidence[
+                    "train_coverage_pass"
+                ]["file_sha256"],
+            )
     cache_rows = _freeze_cache_evidence(
-        plan, root, cache_summaries, evaluator_git_commit=git_commit
+        plan,
+        root,
+        cache_summaries,
+        evaluator_git_commit=git_commit,
+        verification_gate_evidence=verification_gate_evidence,
     )
     # The input manifest must exist before this point: all subsequent cache
     # reads may expose test validity, labels, features, matches, or metrics.
@@ -2634,7 +4757,9 @@ def evaluate_phase21_caches(
         name: canonical_array_sha256(values) for name, values in library.items()
     }
     library_metadata = {
-        "schema": "pathline_template_matching.phase21_template_library.v1",
+        "schema": (
+            f"pathline_template_matching.{plan.artifact_tag}_template_library.v1"
+        ),
         "experiment": plan.experiment,
         "config_sha256": plan.config_sha256,
         "descriptor_id": plan.descriptor_config.descriptor_id,
@@ -2645,6 +4770,16 @@ def evaluate_phase21_caches(
         "array_sha256": library_array_hashes,
         "combined_array_sha256": canonical_json_sha256(library_array_hashes),
     }
+    if plan.experiment == EXPERIMENT31:
+        library_metadata.update(
+            {
+                "maximum_source_frame_intervals": 48.0,
+                "scale_count": len(plan.scale_table),
+                "assignment_count_per_seed": plan.assignment_count_per_seed,
+                "fit_rebuilt_from_full_phase31_train_population": True,
+                "phase21_selected_library_appended": False,
+            }
+        )
     library_path = root / "template_library.npz"
     library_file_sha = _atomic_npz(
         library_path,
@@ -2668,6 +4803,17 @@ def evaluate_phase21_caches(
         "selected_positive_seed_index",
         "skip_reason",
     )
+    if plan.experiment == EXPERIMENT31:
+        library_audit_fields = library_audit_fields[:4] + (
+            "scale_block_index",
+            "scale_block_id",
+        ) + library_audit_fields[4:-1] + (
+            "selected_negative_assigned_row_index",
+            "selected_positive_assigned_row_index",
+            "selected_negative_center_seed_index",
+            "selected_positive_center_seed_index",
+            "skip_reason",
+        )
     library_audit_sha = _atomic_csv(
         root / "template_library_audit.csv", library_audit, library_audit_fields
     )
@@ -2703,7 +4849,9 @@ def evaluate_phase21_caches(
     _atomic_json(
         root / "preprocessing_manifest.json",
         {
-            "schema": "pathline_template_matching.phase21_preprocessing.v1",
+            "schema": (
+                f"pathline_template_matching.{plan.artifact_tag}_preprocessing.v1"
+            ),
             "experiment": plan.experiment,
             "config_sha256": plan.config_sha256,
             "fit_population": "valid_train_candidates_for_pca_selected_library_for_scalers",
@@ -2727,6 +4875,14 @@ def evaluate_phase21_caches(
         "source_index": [],
         "scale_id": [],
     }
+    if plan.experiment == EXPERIMENT31:
+        query_blocks.update(
+            {
+                "assigned_row_index": [],
+                "center_seed_index": [],
+                "scale_block_index": [],
+            }
+        )
     prediction_blocks = {method: [] for method in METHODS}
     score_blocks = {method: [] for method in METHODS}
     assigned_time: dict[tuple[int, int], int] = {}
@@ -2737,7 +4893,7 @@ def evaluate_phase21_caches(
     query_temporary = query_path.with_name(f".{query_path.name}.{os.getpid()}.partial")
     if query_path.exists() or query_temporary.exists():
         raise FileExistsError("per-query evidence already exists")
-    header = _query_csv_header()
+    header = _query_csv_header(plan)
     ordered_test_rows = sorted(
         test_rows,
         key=lambda row: (
@@ -2802,6 +4958,22 @@ def evaluate_phase21_caches(
                 query_blocks["scale_id"].append(
                     np.asarray(cache["valid_scale_id"], dtype=np.int32)
                 )
+                if plan.experiment == EXPERIMENT31:
+                    query_blocks["assigned_row_index"].append(
+                        np.asarray(
+                            cache["valid_assigned_row_index"], dtype=np.int64
+                        )
+                    )
+                    query_blocks["center_seed_index"].append(
+                        np.asarray(
+                            cache["valid_center_seed_index"], dtype=np.int64
+                        )
+                    )
+                    query_blocks["scale_block_index"].append(
+                        np.asarray(
+                            cache["valid_scale_block_index"], dtype=np.int8
+                        )
+                    )
                 prediction_blocks[METHOD_PRIOR].append(
                     np.full(len(labels), prior_prediction, dtype=np.bool_)
                 )
@@ -2950,6 +5122,47 @@ def evaluate_phase21_caches(
             ("scale_id", "dx_grid_scale", "ds_frame_scale", "arc_length_grid_scale")
         ),
     )
+    if plan.experiment == EXPERIMENT31:
+        block_rows: list[dict[str, Any]] = []
+        for block_index, block in enumerate(plan.effective_scale_blocks):
+            mask = (query["scale_id"] >= block.scale_id_start) & (
+                query["scale_id"] < block.scale_id_stop
+            )
+            if "scale_block_index" in query and not np.all(
+                query["scale_block_index"][mask] == block_index
+            ):
+                raise RuntimeError(
+                    "query scale IDs disagree with explicit scale-block identity"
+                )
+            assigned = int(
+                assigned_scale[block.scale_id_start : block.scale_id_stop].sum()
+            )
+            for method in METHODS:
+                block_rows.append(
+                    _metric_row(
+                        method,
+                        query["labels"][mask],
+                        predictions[method][mask],
+                        scores[method][mask],
+                        assigned_count=assigned,
+                        scale_block_index=block_index,
+                        scale_block_id=block.block_id,
+                        scale_id_start=block.scale_id_start,
+                        scale_id_stop_exclusive=block.scale_id_stop,
+                    )
+                )
+        _atomic_csv(
+            root / "per_scale_block_metrics.csv",
+            block_rows,
+            _metrics_fieldnames(
+                (
+                    "scale_block_index",
+                    "scale_block_id",
+                    "scale_id_start",
+                    "scale_id_stop_exclusive",
+                )
+            ),
+        )
 
     pooled_rows = [
         _metric_row(
@@ -3020,16 +5233,34 @@ def evaluate_phase21_caches(
         "",
     ]
     if visualization_manifest is not None:
+        if plan.experiment == EXPERIMENT31:
+            triptych_description = (
+                "The four triptychs use the pre-frozen test source ordinal 2, "
+                "with one independent figure for each test-dataset and scale-block pair. "
+                "They provide spatial context and TP/FP/FN/TN error decomposition; "
+                "they are not aggregate performance evidence."
+            )
+            evidence_description = (
+                "See `visualization_manifest.json` for scene, PNG, PDF, SVG, "
+                "panel-alignment, and SHA-256 evidence."
+            )
+        else:
+            triptych_description = (
+                "The two triptychs use the pre-frozen test source ordinal 2. "
+                "They provide spatial context and TP/FP/FN/TN error decomposition; "
+                "they are not aggregate performance evidence."
+            )
+            evidence_description = (
+                "See `visualization_manifest.json` for scene, PNG, PDF, panel-alignment, "
+                "and SHA-256 evidence."
+            )
         report_lines.extend(
             (
                 "## Fixed explanatory triptychs",
                 "",
-                "The two triptychs use the pre-frozen test source ordinal 2. "
-                "They provide spatial context and TP/FP/FN/TN error decomposition; "
-                "they are not aggregate performance evidence.",
+                triptych_description,
                 "",
-                "See `visualization_manifest.json` for scene, PNG, PDF, panel-alignment, "
-                "and SHA-256 evidence.",
+                evidence_description,
                 "",
             )
         )
@@ -3050,6 +5281,8 @@ def evaluate_phase21_caches(
         "device": selected_device,
         "deterministic_execution": execution_contract,
     }
+    if plan.experiment == EXPERIMENT31:
+        environment["maximum_source_frame_intervals"] = 48.0
     _atomic_json(root / "environment_versions.json", environment)
     _atomic_bytes(
         root / "evaluation_summary.log",
@@ -3081,7 +5314,9 @@ def evaluate_phase21_caches(
             }
         )
     result_manifest: dict[str, Any] = {
-        "schema": "pathline_template_matching.phase21_result_manifest.v1",
+        "schema": (
+            f"pathline_template_matching.{plan.artifact_tag}_result_manifest.v1"
+        ),
         "experiment": plan.experiment,
         "status": "development_completed_confirmation_not_run",
         "conclusion_scope": "descriptive_exposed_development_only",
@@ -3104,13 +5339,56 @@ def evaluate_phase21_caches(
         "artifacts": artifact_rows,
         "artifacts_content_sha256": canonical_json_sha256(artifact_rows),
     }
+    if plan.experiment == EXPERIMENT31:
+        portable_population_passes = sorted(
+            {
+                (
+                    str(row["portable_population_scope"]),
+                    str(row["portable_population_pass_path"]),
+                    int(row["portable_population_pass_file_size"]),
+                    str(row["portable_population_pass_file_sha256"]),
+                    str(row["portable_population_rows_content_sha256"]),
+                )
+                for row in cache_rows
+                if "portable_population_scope" in row
+            }
+        )
+        result_manifest.update(
+            {
+                "maximum_source_frame_intervals": float(
+                    plan.maximum_source_frame_intervals
+                ),
+                "portable_window_frame_count": plan.window_frame_count,
+                "scale_count": len(plan.scale_table),
+                "assignment_count_per_seed": plan.assignment_count_per_seed,
+                "unique_center_seed_count_per_source_time": plan.assigned_seed_count,
+                "assigned_primitive_count_per_source_time": (
+                    plan.assigned_primitive_count
+                ),
+                "train_preprocessing_rebuilt": True,
+                "phase21_selected_library_appended": False,
+                "verification_gates": verification_gate_evidence,
+                "portable_population_passes": [
+                    {
+                        "access_scope": scope,
+                        "path": path,
+                        "file_size": size,
+                        "file_sha256": file_sha,
+                        "rows_content_sha256": rows_sha,
+                    }
+                    for scope, path, size, file_sha, rows_sha in portable_population_passes
+                ],
+            }
+        )
     result_manifest["manifest_content_sha256"] = canonical_json_sha256(result_manifest)
     _atomic_json(root / "result_manifest.json", result_manifest)
     result_file_sha = sha256_file(root / "result_manifest.json")
     _atomic_json(
         root / "RUN_COMPLETE.json",
         {
-            "schema": "pathline_template_matching.phase21_completion.v1",
+            "schema": (
+                f"pathline_template_matching.{plan.artifact_tag}_completion.v1"
+            ),
             "experiment": plan.experiment,
             "status": "development_completed_confirmation_not_run",
             "result_manifest_file_sha256": result_file_sha,
@@ -3138,9 +5416,15 @@ def run_phase21_from_resolvers(
     integration_chunk_size: int = 2048,
     encoding_chunk_size: int = 4096,
     verify_cache_hashes: bool = True,
+    phase31_verification_evidence: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Small-diagnostic convenience path; production should parallelize shards."""
 
+    if plan.experiment == EXPERIMENT31 and strict_protocol:
+        raise ValueError(
+            "strict mainExp 3.1 production must use the marker-gated parallel "
+            "build-slice/evaluate CLI; resolver execution is diagnostic-only"
+        )
     temporary_cache = Path(run_dir).resolve().with_name(
         f".{Path(run_dir).name}.cache.{os.getpid()}"
     )
@@ -3182,6 +5466,7 @@ def run_phase21_from_resolvers(
             device=device,
             strict_protocol=strict_protocol,
             verify_cache_hashes=verify_cache_hashes,
+            phase31_verification_evidence=phase31_verification_evidence,
         )
     finally:
         # Keep successful and failed scientific caches in production.  This

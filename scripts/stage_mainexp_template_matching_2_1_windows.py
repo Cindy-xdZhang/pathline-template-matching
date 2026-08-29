@@ -1,4 +1,4 @@
-"""Build immutable 13-frame portable windows for mainExp_TemplateMatching_2.1."""
+"""Build immutable portable windows for a frozen template-matching experiment."""
 
 from __future__ import annotations
 
@@ -30,6 +30,11 @@ from pathline_template_matching.portable_flow import (  # noqa: E402
     load_portable_flow_window,
     sha256_file,
     write_portable_flow_window,
+)
+from pathline_template_matching.phase21_pipeline import (  # noqa: E402
+    load_phase31_plan,
+    validate_phase31_synthetic_pass,
+    validate_phase31_train_coverage_pass,
 )
 
 
@@ -86,11 +91,14 @@ def _require_file_matches_commit(path: Path) -> None:
 
 def _source_indices(total_frames: int, future_intervals: int = 12) -> list[int]:
     total = int(total_frames)
-    maximum_start = total - int(future_intervals) - 1
-    if total < 16 or maximum_start < 3:
-        raise ValueError("dataset cannot provide four unique 12-frame future windows")
+    intervals = int(future_intervals)
+    maximum_start = total - intervals - 1
+    if intervals < 1 or maximum_start < 3:
+        raise ValueError(
+            f"dataset cannot provide four unique {intervals}-frame future windows"
+        )
     indices = [int(np.floor(k * maximum_start / 3.0)) for k in range(4)]
-    if len(set(indices)) != 4 or indices[-1] + future_intervals >= total:
+    if len(set(indices)) != 4 or indices[-1] + intervals >= total:
         raise AssertionError("source-index selection violated the frozen window contract")
     return indices
 
@@ -235,26 +243,60 @@ def stage_dataset(
     dataset: str,
     output_root: Path,
     resume: bool,
+    synthetic_pass: Path | None = None,
+    train_coverage_pass: Path | None = None,
+    verify_config_path: Path | None = None,
 ) -> dict[str, Any]:
     config = _load_yaml(config_path)
     registry = _load_yaml(registry_path)
-    if config.get("experiment") != "mainExp_TemplateMatching_2.1":
-        raise ValueError("staging script accepts only mainExp_TemplateMatching_2.1")
+    experiment = str(config.get("experiment", ""))
+    expected_frames = {
+        "mainExp_TemplateMatching_2.1": 13,
+        "mainExp_TemplateMatching_3.1": 49,
+    }
+    if experiment not in expected_frames:
+        raise ValueError("staging script accepts only frozen mainExp 2.1 or 3.1")
     rows, split_by_dataset = _dataset_maps(config, registry)
     if dataset not in rows:
         raise ValueError(f"unknown dataset {dataset!r}")
     row = rows[dataset]
-    source = _registered_source(row, environment)
     builder_git_commit = _git_commit_and_clean()
     _require_file_matches_commit(config_path)
     _require_file_matches_commit(registry_path)
+    if experiment == "mainExp_TemplateMatching_3.1":
+        if synthetic_pass is None or verify_config_path is None:
+            raise ValueError("3.1 portable staging requires --synthetic-pass")
+        plan = load_phase31_plan(config_path)
+        validate_phase31_synthetic_pass(
+            plan,
+            synthetic_pass,
+            verify_config_path=verify_config_path,
+            current_git_commit=builder_git_commit,
+        )
+        if dataset in plan.test_datasets:
+            if train_coverage_pass is None:
+                raise ValueError(
+                    "3.1 test portable staging requires --train-coverage-pass"
+                )
+            validate_phase31_train_coverage_pass(
+                plan,
+                train_coverage_pass,
+                synthetic_pass_path=synthetic_pass,
+                verify_config_path=verify_config_path,
+                current_git_commit=builder_git_commit,
+            )
+    # Raw-path existence, hashing, inspection, and loading all occur only after
+    # the relevant 3.1 verification markers have passed above.
+    source = _registered_source(row, environment)
     source_size, source_sha256 = _stable_source_identity(source)
     config_sha256 = sha256_file(config_path)
     registry_sha256 = sha256_file(registry_path)
     loading = config["source_loading"]
     frame_count = int(loading["derived_window_frame_count"])
-    if frame_count != 13:
-        raise ValueError("2.1 requires exactly 13 loaded frames")
+    if frame_count != expected_frames[experiment]:
+        raise ValueError(
+            f"{experiment} requires exactly {expected_frames[experiment]} loaded frames"
+        )
     max_spatial_dim = int(loading["max_spatial_dim"])
     fallback = loading["netcdf_coordinate_policy"]["dataset_overrides"].get(
         dataset, {}
@@ -290,7 +332,9 @@ def stage_dataset(
         }
     else:
         raise ValueError(f"unsupported source kind for {dataset}: {kind}")
-    selected_indices = _source_indices(total_frames)
+    selected_indices = _source_indices(
+        total_frames, future_intervals=frame_count - 1
+    )
 
     dataset_dir = output_root / dataset
     dataset_dir.mkdir(parents=True, exist_ok=True)
@@ -462,10 +506,18 @@ def stage_dataset(
     return manifest
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
+def main(
+    *,
+    default_config: Path | None = None,
+    expected_experiment: str = "mainExp_TemplateMatching_2.1",
+) -> None:
+    if default_config is None:
+        default_config = ROOT / "config/mainExp_TemplateMatching_2.1.yaml"
+    parser = argparse.ArgumentParser(
+        description=f"Build immutable portable windows for {expected_experiment}."
+    )
     parser.add_argument(
-        "--config", type=Path, default=ROOT / "config/mainExp_TemplateMatching_2.1.yaml"
+        "--config", type=Path, default=default_config
     )
     parser.add_argument(
         "--registry", type=Path, default=ROOT / "config/datasets.yaml"
@@ -474,13 +526,46 @@ def main() -> None:
     parser.add_argument("--dataset", action="append", required=True)
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument(
+        "--access-scope", choices=("train-only", "test-only", "all")
+    )
+    parser.add_argument("--synthetic-pass", type=Path)
+    parser.add_argument("--train-coverage-pass", type=Path)
+    parser.add_argument(
+        "--verify-config",
+        type=Path,
+        default=ROOT / "config/Verify_LongArcHorizon_1.1.yaml",
+    )
     args = parser.parse_args()
     config = _load_yaml(args.config)
+    if config.get("experiment") != expected_experiment:
+        raise ValueError(
+            f"entry point requires {expected_experiment}, got {config.get('experiment')}"
+        )
     registry = _load_yaml(args.registry)
     rows, _ = _dataset_maps(config, registry)
-    datasets = list(rows) if args.dataset == ["all"] else args.dataset
+    train = [str(value) for value in config["split"]["train_datasets"]]
+    test = [str(value) for value in config["split"]["test_datasets"]]
+    if expected_experiment == "mainExp_TemplateMatching_3.1":
+        if args.access_scope is None:
+            raise ValueError("3.1 staging requires explicit --access-scope")
+        authorized = {
+            "train-only": train,
+            "test-only": test,
+            "all": train + test,
+        }[args.access_scope]
+    else:
+        authorized = train + test
+        if args.access_scope not in (None, "all"):
+            raise ValueError("2.1 staging supports only the complete dataset scope")
+    datasets = list(authorized) if args.dataset == ["all"] else args.dataset
     if len(set(datasets)) != len(datasets):
         raise ValueError("--dataset values must be unique")
+    unauthorized = sorted(set(datasets) - set(authorized))
+    if unauthorized:
+        raise ValueError(
+            f"datasets are outside --access-scope {args.access_scope}: {unauthorized}"
+        )
     for dataset in datasets:
         stage_dataset(
             config_path=args.config,
@@ -489,6 +574,9 @@ def main() -> None:
             dataset=dataset,
             output_root=args.output_root,
             resume=args.resume,
+            synthetic_pass=args.synthetic_pass,
+            train_coverage_pass=args.train_coverage_pass,
+            verify_config_path=args.verify_config,
         )
 
 

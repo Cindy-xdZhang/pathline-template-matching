@@ -1,0 +1,257 @@
+experiment: Verify_LongArcHorizon_1.1
+status: frozen_pre_run_not_run
+purpose: verify_mainExp_TemplateMatching_3.1_H48_numeric_union_assignment_and_train_only_coverage_contracts
+parent_experiment: mainExp_TemplateMatching_3.1
+main_config: config/mainExp_TemplateMatching_3.1.yaml
+
+evidence_scope:
+  level: component_and_train_only_technical_gate
+  performance_claim: forbidden
+  test_dataset_access: forbidden
+  test_driven_tuple_selection: forbidden
+  failure_cannot_modify_3_1_in_place: true
+
+scale_union_gate:
+  required_total_scale_count: 2000
+  required_block_order: [legacy_2_1, expanded_3_1]
+  required_block_scale_counts:
+    legacy_2_1: 1000
+    expanded_3_1: 1000
+  required_scale_id_ranges:
+    legacy_2_1: [0, 999]
+    expanded_3_1: [1000, 1999]
+  tuple_equality: exact_fixed_point_12_decimal_places
+  legacy_parent_config: config/mainExp_TemplateMatching_2.1.yaml
+  legacy_parent_config_sha256: 89b66176eb381eddc62d739dacafe86e681b60455f1ffb5e5f34ee9af8c81d1d
+  legacy_parent_scale_manifest_file_sha256: a407010a56540b4aecd5d81577bcca5b3812fc1e3429964ff1e46ac8707ee8de
+  legacy_parent_scale_manifest_rows_content_sha256: d3577011be68ee710d42f65d70ea7791428f71297471ff0468f4980fbfc558f3
+  legacy_projection_fields: [scale_id, dx_grid_scale, ds_frame_scale, arc_length_grid_scale]
+  required_legacy_scale_subset_sha256: d3577011be68ee710d42f65d70ea7791428f71297471ff0468f4980fbfc558f3
+  block_aware_legacy_hash_must_be_separate: true
+  legacy_requirement: all_parent_tuple_values_and_scale_ids_0_through_999_are_exactly_preserved
+  expanded_requirement: exactly_1000_unique_tuples_disjoint_from_the_legacy_block
+  union_requirement: exactly_2000_unique_tuples_with_contiguous_ids_0_through_1999
+  runtime_linspace_regeneration: forbidden
+
+assignment_gate:
+  unique_center_grid_shape_xyz: [40, 40, 40]
+  unique_center_count_per_source_time: 64000
+  coordinate_rule: one_shared_endpoint_inclusive_40_cubed_grid_for_both_blocks
+  coordinate_grid_shape_40_by_40_by_80_claim: forbidden
+  maximum_dx_grid_scale_for_shared_safe_margin: "2.500000000000"
+  assignment_count_per_center: 2
+  assigned_row_count_per_source_time: 128000
+  repeated_seed_index_requires_block_id: true
+  algorithm: deterministic_balanced_permutation_modulo_per_block
+  random_generator: numpy_Generator_PCG64
+  required_legacy_assignment_canonical_sha256: 21cdb937f57baf1a786a6a4622870e234074b684e5a5cda4c4271837631e0fee
+  legacy_assignment_hash_rule: project_each_source_legacy_block_to_the_scale_id_assignment_array_then_use_project_canonical_array_sha256
+  required_for_every_dataset_source_time: true
+  blocks:
+    - id: legacy_2_1
+      seed: 15068
+      scale_id_start: 0
+      exact_parent_seed_index_to_scale_id_mapping: required
+    - id: expanded_3_1
+      seed: 35068
+      scale_id_start: 1000
+      independence_from_legacy_assignment: required
+  expected_rows_per_scale_per_source_time_per_block: 64
+  imbalance_tolerance: 0
+  assignment_dependencies_forbidden: [coordinates, velocity, IVD, reference_class, validity]
+
+long_horizon_identity_gate:
+  maximum_future_horizon_frames: 48
+  derived_window_frame_count: 49
+  horizon_is_part_of_primitive_and_cache_identity: true
+  H12_parent_cache_acceptance: forbidden
+  minimum_dataset_frame_count_for_four_unique_sources: 52
+  source_index_formula: "source_index[k] = floor(k * (frame_count - 49) / 3), k in [0,1,2,3]"
+  required_unique_source_index_count: 4
+
+analytic_field:
+  evaluation: finite_dense_UnsteadyVectorField3D_using_the_production_integrator
+  expected_result_source: analytic_closed_form_oracle_only
+  dense_velocity_layout: "velocity[T,Z,Y,X,3]"
+  velocity_xyz: [0.01, 0.2, 0.01]
+  speed: "0.200499376558"
+  grid_shape_xyz: [21, 7, 3]
+  grid_bounds_xyz:
+    x: [-0.1, 0.1]
+    y: [-1.5, 1.5]
+    z: [-0.5, 0.5]
+  grid_spacing_xyz: [0.01, 0.5, 0.5]
+  minimum_grid_spacing: 0.01
+  source_frame_interval: 0.1
+  source_frame_count: 49
+  maximum_integration_time: 4.8
+  maximum_target_arc_length: 0.8
+  available_constant_velocity_arc_length_at_H48: "0.962397007477"
+  maximum_target_crossing_time: "3.990037344431"
+  maximum_dx_physical: 0.025
+  finite_domain_safety_requirement: all_seven_lines_and_the_complete_success_oracle_path_remain_inside_the_recorded_dense_domain
+  seed_count: 2000
+  one_seed_per_scale_tuple: true
+  line_count_per_primitive: 7
+  sampled_points_per_line: 32
+
+horizon_boundary_oracles:
+  implementation: finite_dense_UnsteadyVectorField3D_using_the_same_production_integrator
+  source_frame_interval: 0.1
+  source_frame_count: 49
+  target_arc_length: 0.48
+  cases:
+    - id: reaches_after_H12_before_H48
+      velocity_xyz: [0.0, 0.2, 0.0]
+      analytic_crossing_time: 2.4
+      expected_valid: true
+    - id: reaches_exactly_at_H48
+      velocity_xyz: [0.0, 0.1, 0.0]
+      analytic_crossing_time: 4.8
+      expected_valid: true
+    - id: requires_more_than_H48
+      velocity_xyz: [0.0, 0.08, 0.0]
+      analytic_crossing_time: 6.0
+      expected_valid: false
+  required_H12_contrast: all_three_targets_are_not_reached_at_1.2_time_units
+
+time_linear_velocity_oracle:
+  implementation: finite_dense_UnsteadyVectorField3D_using_the_same_production_integrator
+  velocity_xyz_formula: "[0.0, 0.05 + 0.05 * t, 0.0]"
+  source_frame_interval: 0.1
+  source_frame_count: 49
+  target_arc_length: 0.48
+  analytic_crossing_time: "3.494441010849"
+  analytic_endpoint_displacement_xyz: [0.0, 0.48, 0.0]
+  crossing_requirement: strictly_after_frame_12_and_before_frame_48
+  purpose: prove_temporal_interpolation_and_endpoint_in_the_13_to_49_frame_region
+
+synthetic_numeric_checks:
+  - all_2000_numeric_scale_tuples_are_unique_ordered_and_match_the_frozen_config
+  - all_legacy_tuple_values_and_ids_match_mainExp_TemplateMatching_2.1_exactly
+  - H48_and_the_49_frame_window_are_present_in_primitive_and_cache_identity
+  - every_constant_velocity_line_reaches_its_spatial_arc_target_before_or_at_H48
+  - every_output_line_has_32_uniform_arc_length_samples
+  - final_endpoint_is_linearly_truncated_at_the_exact_target_arc_length
+  - dx_ds_arc_and_horizon_metadata_match_the_frozen_physical_conversion
+  - complete_results_are_identical_under_external_batching_and_input_reordering
+  - zero_velocity_boundary_exit_and_H12_identity_mismatch_fail_closed
+  - a_slow_constant_velocity_target_reached_after_H12_but_before_H48_is_valid
+  - a_slow_constant_velocity_target_reached_exactly_at_H48_is_valid
+  - a_slow_constant_velocity_target_requiring_more_than_H48_is_invalid
+  - a_time_linear_velocity_oracle_crosses_after_frame_12_before_frame_48_at_the_analytic_endpoint
+
+tolerances:
+  spatial_absolute: 0.000002
+  time_absolute: 0.000002
+  exact_manifest_and_assignment_checks_use_tolerance: false
+
+train_only_coverage_diagnostic:
+  enabled: true
+  role: technical_feasibility_gate_not_scale_or_model_selection
+  train_datasets:
+    - cylinder3d
+    - halfcylinderRe640
+    - halfcylinderRe6400
+    - deltaWing_resampled
+    - deltaWing_LBM
+    - f22raptor
+    - channel
+    - boeing747
+  forbidden_datasets: [tangaroa, smokeBuoyancy]
+  source_times_per_dataset: 4
+  unique_centers_per_source_time: 64000
+  assignment_blocks_per_center: 2
+  assigned_rows_per_source_time: 128000
+  total_assigned_train_rows: 4096000
+  descriptor_matching_and_test_metrics: not_required_and_forbidden
+  label_use: train_only_IVD_p95_for_global_template_class_feasibility
+  report_every_dataset_source_block_scale_stratum: true
+  preserve_zero_valid_and_single_class_strata: true
+  required_reports:
+    - assigned_valid_invalid_coverage_for_every_train_dataset_source_block_scale
+    - aggregate_valid_count_for_every_expanded_arc_length_level
+    - positive_negative_candidate_counts_for_every_train_dataset_source_block_scale
+    - globally_selected_positive_negative_template_counts_for_each_block_under_the_frozen_library_rule
+  pass_conditions:
+    - every_expanded_3_1_arc_length_level_has_at_least_one_valid_train_primitive_aggregated_over_all_train_dx_ds_datasets_and_source_times
+    - expanded_3_1_block_has_at_least_one_selected_positive_train_template_globally
+    - expanded_3_1_block_has_at_least_one_selected_negative_train_template_globally
+    - every_required_tuple_and_stratum_is_reported_even_when_valid_count_is_zero
+    - no_test_dataset_file_manifest_cache_label_feature_validity_coverage_prediction_or_metric_was_opened
+  prohibited_uses:
+    - deleting_or_reweighting_any_3_1_tuple
+    - choosing_a_new_horizon_or_scale_value
+    - tuning_descriptor_library_normalization_distance_score_threshold_or_metric
+    - claiming_test_or_template_matching_performance
+  failure_action: mark_Verify_failed_block_3_1_main_evaluation_and_require_a_new_version_for_any_method_change
+
+execution:
+  platform: Ibex_from_committed_git_revision
+  storage_backend: WekaFS_mounted_at_ibex_user
+  output_root: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1
+  immutable_phase_order: [synthetic, train_coverage]
+  final_verify_pass_requires_both_phase_markers: true
+  phase_a_synthetic:
+    data_access: synthetic_finite_dense_fields_only
+    real_dataset_access: forbidden
+    run_directory_pattern: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/synthetic/slurm_JOBID_COMMIT12
+    existing_run_directory_action: fail
+    required_outputs:
+      - frozen_verify_config.yaml
+      - frozen_main_config.yaml
+      - synthetic_verification.json
+      - scale_union_manifest.json
+      - assignment_verification.json
+      - environment_versions.json
+      - SYNTHETIC_PASS.json
+    completion_marker: SYNTHETIC_PASS.json
+    completion_marker_write_order: last_after_all_phase_a_outputs_are_fsynced
+  interphase_train_portable_stage:
+    prerequisite: valid_SYNTHETIC_PASS_marker_and_recorded_file_sha256
+    action: stage_forty_nine_frame_train_windows_publish_window_files_before_each_dataset_manifest_then_load_and_hash_the_complete_population
+    train_dataset_count: 8
+    source_times_per_dataset: 4
+    portable_window_count: 32
+    completion_marker: TRAIN_PORTABLES_PASS.json
+    completion_marker_rule: written_only_after_all_8_manifests_and_32_windows_are_loaded_and_size_file_sha256_verified_from_the_exact_commit
+    test_window_or_cache_build: forbidden
+    slurm_jobs_must_be_registered: true
+  interphase_train_cache_build:
+    prerequisite: valid_SYNTHETIC_PASS_and_TRAIN_PORTABLES_PASS_markers_with_recorded_file_sha256
+    action: build_exactly_32_train_cache_shards
+    train_dataset_count: 8
+    source_times_per_dataset: 4
+    cache_shard_count: 32
+    cache_content: H48_two_assignment_blocks_128000_rows_per_source
+    test_window_or_cache_build: forbidden
+    slurm_jobs_must_be_registered: true
+  phase_b_train_coverage:
+    prerequisite: phase_a_marker_hash_and_all_32_train_cache_sidecars_pass_immutable_audit_and_carry_one_authenticated_TRAIN_PORTABLES_PASS_identity
+    input_scope: exactly_32_train_cache_shards_and_sidecars_carrying_train_portable_marker_evidence_plus_frozen_configs_and_phase_a_marker
+    raw_field_access: forbidden
+    test_dataset_or_cache_access: forbidden
+    phase_a_marker_sha256_must_be_recorded_in_final_verification: true
+    run_directory_pattern: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/train_coverage/slurm_JOBID_COMMIT12
+    existing_run_directory_action: fail
+    required_outputs:
+      - frozen_verify_config.yaml
+      - frozen_main_config.yaml
+      - train_cache_input_manifest.json
+      - train_only_coverage_diagnostics.csv
+      - train_only_coverage_summary.json
+      - environment_versions.json
+      - verification.json
+      - TRAIN_COVERAGE_PASS.json
+    completion_marker: TRAIN_COVERAGE_PASS.json
+    completion_marker_write_order: last_after_verification_json_and_all_phase_b_outputs_are_fsynced
+  final_status_rule: passed_only_when_both_markers_exist_both_phases_record_the_same_config_and_commit_hashes_and_phase_b_records_the_phase_a_marker_sha256
+
+pre_run_known_blockers:
+  - the verifier and 3.1 implementation tests must pass from the exact committed revision
+  - all eight train datasets must satisfy the forty-nine-frame and four-unique-source-index contract
+  - phase A must pass before any real train portable window is staged
+  - all eight train manifests and all 32 train portable windows must pass the complete load size and file SHA-256 preflight before any train cache job is submitted
+  - phase B must consume only the 32 immutable train caches and must record the phase A marker SHA-256
+  - test paths must remain unopened throughout both Verify phases and the interphase train-cache build
+  - no Verify_LongArcHorizon_1.1 result exists

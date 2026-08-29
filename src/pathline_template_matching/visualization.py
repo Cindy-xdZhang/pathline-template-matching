@@ -597,6 +597,7 @@ def render_template_matching_triptych(
     view: tuple[float, float] = DEFAULT_VIEW,
     dpi: int = DEFAULT_DPI,
     pdf_output_path: str | Path | None = None,
+    svg_output_path: str | Path | None = None,
     alignment_output_path: str | Path | None = None,
 ) -> tuple[Path, dict[str, object]]:
     """Render the audited triptych and return its PNG path and metadata.
@@ -625,6 +626,9 @@ def render_template_matching_triptych(
     pdf_path = None if pdf_output_path is None else Path(pdf_output_path)
     if pdf_path is not None and pdf_path.suffix.lower() != ".pdf":
         raise ValueError("pdf_output_path must end in .pdf")
+    svg_path = None if svg_output_path is None else Path(svg_output_path)
+    if svg_path is not None and svg_path.suffix.lower() != ".svg":
+        raise ValueError("svg_output_path must end in .svg")
     alignment_path = (
         None if alignment_output_path is None else Path(alignment_output_path)
     )
@@ -633,10 +637,12 @@ def render_template_matching_triptych(
     requested_paths = [path]
     if pdf_path is not None:
         requested_paths.append(pdf_path)
+    if svg_path is not None:
+        requested_paths.append(svg_path)
     if alignment_path is not None:
         requested_paths.append(alignment_path)
     if len({value.resolve() for value in requested_paths}) != len(requested_paths):
-        raise ValueError("PNG, PDF, and alignment outputs must use distinct paths")
+        raise ValueError("PNG, PDF, SVG, and alignment outputs must use distinct paths")
     existing = [value for value in requested_paths if value.exists()]
     if existing:
         raise FileExistsError(f"refusing to overwrite existing artifacts: {existing}")
@@ -702,6 +708,8 @@ def render_template_matching_triptych(
             figure.savefig(path, dpi=dpi, facecolor="white", edgecolor="none")
             if pdf_path is not None:
                 figure.savefig(pdf_path, facecolor="white", edgecolor="none")
+            if svg_path is not None:
+                figure.savefig(svg_path, facecolor="white", edgecolor="none")
         finally:
             plt.close(figure)
 
@@ -737,6 +745,7 @@ def render_template_matching_triptych(
         "source_ordinal": validated.source_ordinal,
         "image": str(path),
         "pdf": None if pdf_path is None else str(pdf_path),
+        "svg": None if svg_path is None else str(svg_path),
         "alignment_audit": (
             alignment_audit
             if alignment_path is None
@@ -787,6 +796,8 @@ def render_template_matching_triptych(
             "png_raster_dpi": dpi,
             "pdf_editable_text": True,
             "pdf_fonttype": 42,
+            "svg_editable_text": svg_path is not None,
+            "svg_fonttype": "none" if svg_path is not None else None,
             "three_dimensional_marks_rasterized": True,
             "canvas_bbox_inches_tight": False,
             "artifacts_are_non_overwriting": True,

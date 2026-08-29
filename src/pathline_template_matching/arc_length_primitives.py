@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from numbers import Real
-from typing import Sequence
+from typing import Mapping, Sequence
 
 import numpy as np
 from numba import njit, prange
@@ -141,6 +141,59 @@ def build_arc_length_scale_table(
             np.repeat(ds, SCALE_AXIS_COUNT), SCALE_AXIS_COUNT
         ),
         arc_length_grid_scale=np.tile(arc, SCALE_AXIS_COUNT**2),
+    )
+
+
+def build_arc_length_scale_union(
+    blocks: Sequence[Mapping[str, object]],
+) -> ArcLengthScaleTable:
+    """Build an explicit ordered union of frozen 10x10x10 Cartesian blocks.
+
+    This is intentionally additive: :func:`build_arc_length_scale_table` remains
+    the frozen 2.1 constructor.  Each union block must provide
+    ``scale_id_start`` and the three explicit ten-value axes; block starts must
+    exactly continue the preceding IDs.  No numeric values are synthesized.
+    """
+
+    items = list(blocks)
+    if not items:
+        raise ValueError("scale union must contain at least one block")
+    dx_parts: list[np.ndarray] = []
+    ds_parts: list[np.ndarray] = []
+    arc_parts: list[np.ndarray] = []
+    expected_start = 0
+    for ordinal, raw_block in enumerate(items):
+        if not isinstance(raw_block, Mapping):
+            raise ValueError(f"scale union block {ordinal} must be a mapping")
+        start = raw_block.get("scale_id_start")
+        if isinstance(start, (bool, np.bool_)) or not isinstance(start, Real):
+            raise ValueError(f"scale union block {ordinal} has no integer scale_id_start")
+        start_value = int(start)
+        if float(start) != float(start_value) or start_value != expected_start:
+            raise ValueError(
+                f"scale union block {ordinal} must start at {expected_start}, got {start}"
+            )
+        dx = _config_scale_axis(
+            raw_block.get("dx_grid_scale", ()), name=f"blocks[{ordinal}].dx_grid_scale"
+        )
+        ds = _config_scale_axis(
+            raw_block.get("ds_frame_scale", ()), name=f"blocks[{ordinal}].ds_frame_scale"
+        )
+        arc = _config_scale_axis(
+            raw_block.get("arc_length_grid_scale", ()),
+            name=f"blocks[{ordinal}].arc_length_grid_scale",
+        )
+        dx_parts.append(np.repeat(dx, SCALE_AXIS_COUNT**2))
+        ds_parts.append(
+            np.tile(np.repeat(ds, SCALE_AXIS_COUNT), SCALE_AXIS_COUNT)
+        )
+        arc_parts.append(np.tile(arc, SCALE_AXIS_COUNT**2))
+        expected_start += SCALE_AXIS_COUNT**3
+    return ArcLengthScaleTable(
+        scale_id=np.arange(expected_start, dtype=np.int32),
+        dx_grid_scale=np.concatenate(dx_parts),
+        ds_frame_scale=np.concatenate(ds_parts),
+        arc_length_grid_scale=np.concatenate(arc_parts),
     )
 
 
@@ -535,6 +588,7 @@ def integrate_arc_length_primitives_3d(
     scale_assignment: np.ndarray,
     *,
     chunk_size: int = 2048,
+    maximum_source_frame_intervals: float = MAX_SOURCE_FRAME_INTERVALS,
 ) -> ArcLengthPrimitiveResult:
     """Integrate one arc-length scale per seed and return 7x32 valid primitives.
 
@@ -542,8 +596,9 @@ def integrate_arc_length_primitives_3d(
     ``dx = dx_grid_scale * min(grid spacing)``,
     ``dt = ds_frame_scale * source frame interval``, and
     ``target arc = arc_length_grid_scale * min(grid spacing)``.
-    Integration ends after exactly 12 source-frame intervals; a final RK4 step
-    is clamped to that time.  The input field must contain the complete window.
+    Integration ends after ``maximum_source_frame_intervals`` (12 by default);
+    a final RK4 step is clamped to that time.  The input field must contain the
+    complete window.
     """
 
     if not isinstance(vector_field, UnsteadyVectorField3D):
@@ -569,11 +624,15 @@ def integrate_arc_length_primitives_3d(
     source_interval = float(vector_field.time_interval)
     if not np.isfinite(source_interval) or source_interval <= 0.0:
         raise ValueError("arc-length integration requires a positive source frame interval")
-    max_time = seed_time + MAX_SOURCE_FRAME_INTERVALS * source_interval
+    horizon = float(maximum_source_frame_intervals)
+    if not np.isfinite(horizon) or horizon <= 0.0:
+        raise ValueError("maximum_source_frame_intervals must be positive and finite")
+    max_time = seed_time + horizon * source_interval
     time_tolerance = max(1e-12, abs(max_time) * 1e-12)
     if max_time > vector_field.tmax + time_tolerance:
         raise ValueError(
-            "vector field does not contain 12 source-frame intervals after seed_time"
+            "vector field does not contain "
+            f"{horizon:g} source-frame intervals after seed_time"
         )
 
     minimum_spacing = float(np.min(vector_field.grid_interval))

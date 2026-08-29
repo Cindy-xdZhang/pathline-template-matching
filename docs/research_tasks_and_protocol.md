@@ -31,7 +31,7 @@
 
 1. 主开发评测按 physical family 做 leave-one-family-out，不允许随机拆 primitive 或空间 seed。
 2. 一个 source timeslice 及其全部 pathline future window 必须属于同一拆分。
-3. scale tuple 必须按对应实验版本的数值三元组判等，不能只按名称判等：1.x 使用 `(neighbor distance, integration step, integration steps)`；2.1 使用 `(neighbor distance dx, RK4 time step ds, target spatial arc length)`。
+3. scale tuple 必须按对应实验版本的数值三元组判等，不能只按名称判等：1.x 使用 `(neighbor distance, integration step, integration steps)`；2.1与3.1使用 `(neighbor distance dx, RK4 time step ds, target spatial arc length)`。3.1还必须把H48与block ID纳入完整primitive/cache身份；相同三元组不代表H12与H48 primitive相同。
 4. confirmation physical family 必须在完整方法、代码 commit 与 manifest 冻结后首次读取；冻结前不得读取 raw field、query feature、valid rate、标签或指标。
 5. 一旦查看 confirmation 标签或指标，该数据以后只能算已暴露 development 数据。修改方法后必须更换新 confirmation。
 6. 旧 FMT 的 10 个 flow 条目、Task5 development/confirmation cache 和所有已报告 scale tuple 对本项目都属于已暴露 development 资源；旧缓存中的 `confirmation` 只是历史目录名，不是本项目的 sealed confirmation。
@@ -40,7 +40,7 @@
 
 - 3D 主任务固定 7 条线：`center, x+, x−, y+, y−, z+, z−`。
 - 每条线最终固定 `L=32`；积分器输出 `(x,y,z,t)`，输入 descriptor 前只保留 `(x,y,z)`，时间通道仅用于物理时间和重采样审计。
-- 1.x 的相对 tuple 固定为 `(offset_grid_scale, dt_scale, integration_steps)`；2.1 的相对 tuple 改为 `(dx_grid_scale, ds_frame_scale, target_arc_length_grid_scale)`。逐数据集必须另存实际邻居距离、物理 RK4 时间步长、实际积分步数、累计空间弧长、终止时间、重采样方法和七条线的有效状态。
+- 1.x 的相对 tuple 固定为 `(offset_grid_scale, dt_scale, integration_steps)`；2.1与3.1的相对 tuple为 `(dx_grid_scale, ds_frame_scale, target_arc_length_grid_scale)`。3.1另以`block_id`区分重复seed-index rows，并将maximum future horizon 48纳入primitive/cache身份。逐数据集必须另存实际邻居距离、物理 RK4 时间步长、实际积分步数、累计空间弧长、终止时间、重采样方法和七条线的有效状态。
 - scale assignment 必须与空间位置和 IVD 标签独立；过滤出域 primitive 后还要报告每个 `scale × class` 的 assigned、valid 和 invalid 数量。
 - rounded index、物理时间插值和弧长插值是三个不同方法版本。替代方法先用 `Verify_...` 检验；若被主方法采用，必须再升级 `mainExp_...`。
 
@@ -131,3 +131,21 @@ Development 表格必须将 seen-scale 与 unseen-scale 分开，保留所有 fl
 - 这10个 flow 都已在 FMT 或1.2中暴露，因此2.1只能产生 exposed-development 描述，不是 sealed confirmation。首次读取 test predictions 前必须冻结 config、代码 commit、portable-window/input manifest，并先通过 `Verify_ArcLengthResampling_1.1`。
 
 2.1 的全部精确数值、哈希、输出和运行规则以 `config/mainExp_TemplateMatching_2.1.yaml` 为准。
+
+## 13. `mainExp_TemplateMatching_3.1` 的 H48 与 2000-tuple 双 block 扩展
+
+3.1 是新的 major iteration，不修改或覆盖2.1。改变包括：maximum future horizon从12增至48、派生窗口从13帧增至49帧、source-index公式改变、共享center安全边界按最大`dx=2.5`重建，并在同一center grid上为两个尺度block各生成一行primitive。Horizon `48`必须进入primitive/cache身份；数值相同的旧tuple也不能复用H12 cache。
+
+- 8 train/2 test complete-family拆分、whole-loaded-volume IVD-p95标签、七线forward RK4、32点等弧长重采样、independent FMT161、Raw672、train-only Raw-PCA161、prior、global exact Euclidean 1NN、指标、bootstrap与固定三联图定义继承2.1。
+- 每个49帧window的source index固定为`floor(k*(T-49)/3), k=0,1,2,3`，四个index必须唯一，因此`T>=52`。选择只依赖time-axis length。
+- `scale_protocol.blocks`按`[legacy_2_1, expanded_3_1]`排序。旧block逐值保留2.1的1000个tuples与IDs 0–999；新block为10×10×10，IDs 1000–1999，dx显式线性值范围`0.125–2.50`、RK4 ds显式线性值范围`0.05–0.50`、目标空间弧长显式线性值范围`13–80`。全部数值以config中的12位小数为准，运行时不得重建`linspace`。两个block必须各含1000个unique tuples、相互无三元组交集，union恰为2000。IDs 0–999投影为2.1相同四字段后的`legacy_scale_subset_sha256`必须等于2.1 canonical rows hash `d3577011be68ee710d42f65d70ea7791428f71297471ff0468f4980fbfc558f3`；带3.1 block字段的hash必须另存，不能冒充parent equality。
+- 每个source仍只有同一个endpoint-inclusive`40×40×40=64,000` center-coordinate grid，不是`40×40×80`。最大dx `2.5`决定共享安全margin。每个center在两个block各出现一行；重复`seed_index`必须用`block_id`区分。旧block使用`PCG64(15068)`并逐项保持2.1的seed-index到scale-ID mapping；每个source的legacy assignment按项目canonical-array规则计算后必须等于`21cdb937f57baf1a786a6a4622870e234074b684e5a5cda4c4271837631e0fee`。新block使用在读取test前冻结、与数据无关的独立`PCG64(35068)`。每block每scale恰有64 assigned rows，所以每source共128,000 rows，train/test/总assigned分别为4,096,000/1,024,000/5,120,000。
+- “旧mapping exact”不表示旧primitive rows与2.1相同：3.1的source times、49帧window、shared center domain和H48身份均可不同。2.1 portable windows、cache、PCA、scaler、prior、library、prediction和结果均不得冒充3.1产物。
+- 3.1的prior、PCA、三个feature scaler、library sampling和全部matching必须只从3.1 train population重新建立。Library仍按`dataset×source×scale×class`双类非空时正负各选1个，最大128,000 templates；test保留两个block的全部valid primitives及自然类分布。
+- 混合Windows/Ibex staging必须先发布window files、后发布各dataset manifest。在train cache提交前，`TRAIN_PORTABLES_PASS.json`必须证明同一commit下8个train manifests和32个windows均已实际加载并通过size/file SHA-256；Phase B通过且test windows生成后，`ALL_PORTABLES_PASS.json`必须同样证明10个manifests和40个windows，才可提交test cache。cache sidecar与最终result manifest必须记录对应portable population marker的path、size和SHA-256。
+- 3.1 evaluator可在冻结`input_manifest.json`的同一个单向自动步骤中解析immutable cache sidecars，但在manifest写完前不得报告任何sidecar值、不得用于方法或运行决策，也不得打开test NPZ arrays或计算labels、coverage、predictions和metrics。若该步骤中途失败，必须保留未完成run directory并禁止继续。该sidecar例外只服务于输入文件身份和hash冻结，不放宽任何选择或泄漏边界。
+- 3.1主评测前必须按不可变顺序通过`Verify_LongArcHorizon_1.1`的两个phases。Phase A `synthetic`不读真实流场，必须把有限49帧dense velocity volume送入与production相同的`UnsteadyVectorField3D`和primitive integrator；解析式只作expected oracle。除2000-tuple union、H48/49帧身份、弧长数值与双block assignment外，还必须验证目标在H12后H48前到达为valid、恰在H48到达为valid、超过H48才到达为invalid，以及time-linear velocity确实使用第13–49帧区间。Phase A最后写`SYNTHETIC_PASS.json`；只有marker及SHA-256有效后，才可构建恰好32个train caches。Phase B `train_coverage`只能读取这32个immutable train caches及sidecars、冻结configs和Phase A marker，必须报告所有`dataset×source×block×scale` strata，要求expanded block每个新增arc level汇总后至少1个valid train primitive，且expanded block全局至少产生1个positive和1个negative selected train template；最终`verification.json`必须记录Phase A marker SHA-256并最后写独立completion marker。两phase markers必须都存在，两阶段须记录同一configs与Git commit hashes，且Phase B须记录Phase A marker SHA-256。整个Verify及train-cache build不得打开任何Tangaroa/Smoke数据或据结果删改3.1 tuple；失败后修改方法必须新建版本。
+- 3.1三联图仍是required output，两个test dataset固定source ordinal `2`。每个`test dataset×scale block`必须单独出图，共4张；每图只使用该block的valid query primitive rows，三栏在图内必须使用完全相同的rows和顺序。每图240条展示中心线也必须在该block内仅按reference class与预注册几何规则选择120 positive+120 negative。禁止跨block叠画、聚合、多数投票或按性能选图；visualization manifest以`dataset+block`为唯一键。每图必须导出scene NPZ、含可编辑文字且3D marks栅格化的SVG主矢量文件、用于glyph/collision审计的PDF、360 dpi PNG预览及panel-alignment JSON；visualization manifest须为每图的5个必需导出逐文件记录relative path、export kind、size bytes与SHA-256。全局visualization manifest不自哈希，其文件SHA-256由最终result manifest记录；缺失或hash不符时不得完成主作业。
+- 这10个flow和2.1 test结果均已曝光，3.1只能产生exposed-development描述。任何来自2.1 test coverage或metric的设计动机都必须如实记录；formal confirmation需要新的、从未读取的physical families。
+
+3.1的全部显式数值、门禁、WekaFS输出和运行规则以`config/mainExp_TemplateMatching_3.1.yaml`及`config/Verify_LongArcHorizon_1.1.yaml`为准。当前状态为`frozen_pre_run_not_run`，尚无3.1性能结论。
