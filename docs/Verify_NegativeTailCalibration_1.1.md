@@ -1,6 +1,6 @@
 # `Verify_NegativeTailCalibration_1.1`
 
-状态：数值方法、候选集、单折认证与提前停止合同均已在读取本版本任何 outer 结果前冻结；实现已完成，Ibex outer-family 运行尚未开始。
+状态：首个 `half_cylinder` outer fold 已完整认证；未触发数学提前停止，按冻结合同继续其余四折。
 
 冻结配置：`config/Verify_NegativeTailCalibration_1.1.yaml`
 
@@ -119,3 +119,22 @@ AGGREGATE_COMPLETE.json
 Schema 分别使用 `pathline_template_matching.negative_tail_single_fold_authentication_report.v1`、`pathline_template_matching.negative_tail_early_stop_certificate.v1`、`pathline_template_matching.negative_tail_aggregate_manifest.v1` 与 `pathline_template_matching.negative_tail_aggregate_complete.v1`；completion 必须最后写入，且发布前后重验其余文件 size、SHA-256、自哈希与完整集合。
 
 单折报告禁止推断五折成功。`stop_version=true` 只允许在已认证部分结果已数学证明最终不可能满足冻结规则时出现：任一已完成 family F1 `<0.50`；已有两个 family F1 `<0.65`；或把全部未运行 family 的相关指标设为理论上限 1 后，五-family macro 仍低于门槛。否则必须继续其他 folds。完整成功判断只允许 `complete-five-fold` 模式在五个唯一 physical families 齐全时产生。
+
+## 11. 首折认证结果：继续，不作五折结论
+
+Ibex job `51058757` 使用 numerical commit `a076240b76dac8a598fc785916c48dc0edc65398`，outer family 为 `half_cylinder`。作业 `COMPLETED 0:0`，elapsed `00:11:51`；203/203 job 内测试在 151.720 秒内通过。数值 runner、label-free postvalidation、fresh-label single-fold aggregate 分别耗时 7:16.22、0:37.89、1:03.84，三段 MaxRSS 分别为 8,596,984、3,150,936、3,394,096 KiB；Slurm batch MaxRSS 为 13,432,572 KiB。
+
+认证选择为 `chirality_all35 / k=15 / sigma=1.0 / fixed top-5%`。`1,309,366` 个 query 全部具有 retrieval 与 calibration support，无 spatial imputation。
+
+| 指标 | `half_cylinder` family macro |
+|---|---:|
+| Accuracy | 0.949973 |
+| Average Precision | 0.572055 |
+| F1 | 0.537691 |
+| Balanced Accuracy | 0.742397 |
+| Precision | 0.575906 |
+| Recall | 0.507304 |
+
+独立下载复核通过精确 13 个 fold 文件、11 个 result artifacts、5 个 aggregate 文件、全部文件 SHA-256 与 JSON 自哈希。Result manifest SHA-256 为 `f64d675896cd83a24debb7d7902425ce04f75d7f07a497e79f102d01c8f5ddf9`；aggregate completion SHA-256 为 `1559a5bbf595cf6e4d696c773a57573ee0ca2b7a0d10362df1e0c8f39bfb13a6`。
+
+冻结的单-family 下限为 F1 0.50；本折为 0.537691，因此 `early_stop_certificate.json` 认证 `stop_version=false`。这不是“方法通过”：Average Precision、precision、recall 和 F1 仍低于完整五折目标，且剩余四折未知。唯一合法结论是继续运行其余四个 physical families。
