@@ -1,6 +1,6 @@
 # `Verify_NegativeTailCalibration_1.1`
 
-状态：首个 `half_cylinder` outer fold 已完整认证；未触发数学提前停止，按冻结合同继续其余四折。
+状态：完整五个 outer-family folds 已认证；冻结成功规则失败，本版本停止并进入结果可见前已冻结的 `Verify_PerScaleNegativeMetric_1.1`。
 
 冻结配置：`config/Verify_NegativeTailCalibration_1.1.yaml`
 
@@ -88,7 +88,7 @@ G(tail_anomaly × calibration_support) / G(calibration_support)
 - Held-out physical family 存在 distribution shift，因此不能宣称 conformal coverage。
 - Exact leave-one-out 增加约 `O(D sum_s n_s^2)` 的计算；若 Ibex profile 证明成本不可接受，必须另建版本使用预先冻结的 deterministic subsample，不能在 1.1 中静默近似。
 
-## 9. 实现门禁（尚无性能结果）
+## 9. 实现与部署门禁
 
 - 核心 calibrator：commit `e9380e4`，`src/pathline_template_matching/negative_tail_calibration.py`。
 - 认证 runner：初始实现 commit `907a371`，最终部署 hardening commit `bd3037c`；文件 SHA-256 `ab62453215a7ecf508aad50e94e244093d898c2baa148908c215e71ce994b6d5`。
@@ -98,9 +98,11 @@ G(tail_anomaly × calibration_support) / G(calibration_support)
 - Inner selection 由落盘的 3060 个候选、122,400 条 group 记录和 12 个 fit audit 重新认证；最终 selected summary 直接取自认证后的 CSV 数值，禁止混用内存副本。
 - Outer label gate 会重新加载完整 label-free outer scope，以认证后的 calibrator 重算 distance、tail、support、spatial score 与 prediction，并逐数组核对；完成后才允许读取 label member。
 - CPU 环境审计在 CUDA 可见但 requested device 为 CPU 时不会把 CPU device 传给 CUDA API；该边界已有独立回归测试。
-- 仍待 Ibex profile 验证的风险：12 次 inner fit 加 1 次 final fit 的 CPU wall time；128 GB 峰值内存目前只有 chunked 复杂度审计，没有真实 job 证据。
+- 完整五折 array wrapper：numerical commit `e9d4d3f11428bd2e13fc0fabf657be7c7e57db7c`；文件 SHA-256 `62283450f94fc9070452caa5defec27d12b980f1d881a6cacae7904a564ebb52`。每个 task 强制验证同一个 40 位 expected commit，防止共享 clone 在等待期间切换版本。
+- Complete-five-fold wrapper SHA-256 `ade47a71ce913d19986aaf1ddea9d0ce8f249b93225fe53e4fb5fb8a69a119b8`；以 `afterok` 依赖启动，聚合器拒绝混合 commit、config 或 input manifest。
+- Ibex jobs `51059479_[0-4]` 实测最长 wall time `00:12:50`、最高 batch MaxRSS `21,534,488K`；job `51059491` 的 fresh 五折聚合 wall time `00:02:59`、batch MaxRSS `12,076,244K`。因此 12 h / 128 GB 请求有充分余量。
 
-本节只记录实现证据，不包含、也不预判任何 outer F1。
+本节只记录实现与运行门禁；性能结果分别保留在第 11、12 节。
 
 ## 10. 首折认证与提前停止合同
 
@@ -138,3 +140,29 @@ Ibex job `51058757` 使用 numerical commit `a076240b76dac8a598fc785916c48dc0edc
 独立下载复核通过精确 13 个 fold 文件、11 个 result artifacts、5 个 aggregate 文件、全部文件 SHA-256 与 JSON 自哈希。Result manifest SHA-256 为 `f64d675896cd83a24debb7d7902425ce04f75d7f07a497e79f102d01c8f5ddf9`；aggregate completion SHA-256 为 `1559a5bbf595cf6e4d696c773a57573ee0ca2b7a0d10362df1e0c8f39bfb13a6`。
 
 冻结的单-family 下限为 F1 0.50；本折为 0.537691，因此 `early_stop_certificate.json` 认证 `stop_version=false`。这不是“方法通过”：Average Precision、precision、recall 和 F1 仍低于完整五折目标，且剩余四折未知。唯一合法结论是继续运行其余四个 physical families。
+
+## 12. 完整五折认证结果：停止本版本
+
+方案 A 使用同一 numerical commit `e9d4d3f11428bd2e13fc0fabf657be7c7e57db7c` 重跑全部五折。Ibex array `51059479_[0-4]` 的五个 task 均 `COMPLETED 0:0`；task `0–4` 依次为 `half_cylinder, delta_wing, f22_raptor, channel, boeing_747`，elapsed 分别为 `00:04:44, 00:04:52, 00:05:37, 00:12:38, 00:12:50`。带 `afterok:51059479` 的 complete-five-fold aggregator job `51059491` 于最后一折结束后一秒启动，并在 `00:02:59` 后 `COMPLETED 0:0`。
+
+聚合器对每折重新认证精确 13 个文件、11 个 result artifacts、完整 3060-candidate inner evidence、selected candidate、final calibrator 与 label-free outer prediction；只有这些全部通过后才打开 outer labels，并 fresh 重算 group metrics、family summary 与停止规则。全部 query 的 retrieval/calibration support 都为 100%，spatial imputation 与 unimputable fraction 均为 0，因此本次失败不是 coverage 或 fallback 缺失。
+
+| Outer family | Selected candidate | F1 | Average Precision | Balanced Accuracy | Precision | Recall |
+|---|---|---:|---:|---:|---:|---:|
+| `half_cylinder` | `chirality_all35 / k=15 / sigma=1 / top-5%` | 0.537691 | 0.572055 | 0.742397 | 0.575906 | 0.507304 |
+| `delta_wing` | `real_neighbor36 / k=31 / sigma=1 / top-5%` | 0.770469 | 0.889834 | 0.930098 | 0.693821 | 0.876126 |
+| `f22_raptor` | `real_neighbor36 / k=15 / sigma=0.5 / top-5%` | 0.513438 | 0.517664 | 0.759232 | 0.486965 | 0.545332 |
+| `channel` | `real_neighbor36 / k=5 / sigma=1 / top-5%` | 0.253965 | 0.188286 | 0.639626 | 0.210811 | 0.320059 |
+| `boeing_747` | `real_neighbor36 / k=1 / sigma=1 / top-5%` | 0.626794 | 0.711794 | 0.862038 | 0.554014 | 0.747191 |
+| **Family macro** | — | **0.540472** | **0.575927** | **0.786678** | **0.504303** | **0.599202** |
+
+五折 family-macro accuracy 为 `0.957953`、Area Under the Receiver Operating Characteristic Curve 为 `0.946831`；由于正类稀少，这两个高值不能替代 F1、Average Precision、precision 与 recall。冻结规则中只有 macro balanced accuracy `>=0.70` 通过；macro F1 `>=0.70`、4/5 family F1 `>=0.65`、minimum family F1 `>=0.50`、macro Average Precision/precision/recall `>=0.60` 均失败。实际只有 1/5 family F1 `>=0.65`，最低 `channel` F1 为 `0.253965`，因此 `all_success_conditions_pass=false`。
+
+首个旧 commit profile 与本次新 commit 的 `half_cylinder` 指标逐项相同，支持该折结果可重复；但完整五折显示明显的 physical-family heterogeneity：`delta_wing` 达到目标区间，而 `channel` 排序崩溃。稳定结论是负类尾概率校准修复了跨尺度 score 的可比性，但没有普遍修复同一尺度内的 FMT feature weighting/排序。本版本不能达到目标，下一步按结果可见前已冻结的顺序检验逐尺度 negative variance metric；不得根据这些 outer 指标修改其 `lambda=64`、候选集或停止规则。
+
+完整证据已下载到 `outputs/Verify_NegativeTailCalibration_1.1_jobs51059479_51059491_download`。本地验收精确通过 69 个结果文件、55 个 artifact identity、42 个 JSON 自哈希，总字节 `1,725,432,861`；独立从每折 `outer_group_metrics.csv` 按冻结 group 等权口径重算 family 与五折 macro，逐项一致。关键 SHA-256：
+
+- `AGGREGATE_COMPLETE.json`: `e826fce87b59fa1931509a601c3374aa4f03756c0ab21499963c80758a030db6`
+- `aggregate_manifest.json`: `2628da64a95ef02ed85cb8c9f8e759d2a0aac41faf52077ae54513409a998a8e`
+- `aggregate_summary.json`: `486435f0e491726b28180ddcfcf3dc5e67c1a3b909bc5cff78de6e99af26f094`
+- `outer_family_summary.csv`: `ea031d868d3c4dbacd7d8f87aa0c8fcda3c678a113a3aaa8a3784de9df4d6e81`
