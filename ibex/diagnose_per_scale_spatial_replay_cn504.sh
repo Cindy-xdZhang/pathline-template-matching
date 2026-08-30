@@ -20,9 +20,14 @@ FOLD_ARRAY_JOB_ID=51063738
 FAMILIES=(half_cylinder delta_wing f22_raptor channel boeing_747)
 
 EXPECTED_DIAGNOSTIC_COMMIT=${EXPECTED_DIAGNOSTIC_COMMIT:?EXPECTED_DIAGNOSTIC_COMMIT is required}
+DIAGNOSTIC_THREADS=${DIAGNOSTIC_THREADS:-1}
 if [[ ! "$EXPECTED_DIAGNOSTIC_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
   echo "EXPECTED_DIAGNOSTIC_COMMIT must be a lowercase 40-character Git commit" >&2
   exit 2
+fi
+if [[ ! "$DIAGNOSTIC_THREADS" =~ ^(1|32)$ ]]; then
+  echo "DIAGNOSTIC_THREADS must be 1 or 32" >&2
+  exit 7
 fi
 
 cd "$PROJECT_ROOT"
@@ -45,15 +50,16 @@ conda activate deepvortex
 export PYTHONUNBUFFERED=1
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONPATH="$PROJECT_ROOT/src:$PROJECT_ROOT${PYTHONPATH:+:$PYTHONPATH}"
-export OPENBLAS_NUM_THREADS=1
-export OMP_NUM_THREADS=1
-export MKL_NUM_THREADS=1
-export NUMEXPR_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS="$DIAGNOSTIC_THREADS"
+export OMP_NUM_THREADS="$DIAGNOSTIC_THREADS"
+export MKL_NUM_THREADS="$DIAGNOSTIC_THREADS"
+export NUMEXPR_NUM_THREADS="$DIAGNOSTIC_THREADS"
 
 echo "access_scope=outer_prediction_manifest_and_npz_only_no_labels_no_metrics"
 echo "diagnostic_commit=$ACTUAL_COMMIT"
 echo "fold_commit=$FOLD_COMMIT"
 echo "fold_array_job_id=$FOLD_ARRAY_JOB_ID"
+echo "diagnostic_threads=$DIAGNOSTIC_THREADS"
 hostname
 lscpu
 

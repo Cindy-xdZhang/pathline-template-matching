@@ -148,3 +148,9 @@ authenticated spatial score does not match tail transform
 ```
 
 这说明当前 fold artifact 尚未通过冻结的 fresh-replay 合同；它不说明逐尺度度量的性能好坏。五个 fold 目录及失败聚合目录必须原样保留，不覆盖、不删除，也不得把其中任何 outer metric 读出或接受为证据。后续工作限定为 label-free 诊断：只定位已认证 spatial score 与由 tail transform 重放所得 score 不一致的首个 identity、字段与数值来源；在诊断完成、修复另行版本化并重新认证以前，本版本保持“无 outer 性能结论”。
+
+### 8.1 Label-free 浮点可移植性诊断
+
+只读诊断 job `51064502` 在与失败聚合相同的 `cn504-17`（AMD EPYC 9655）上，只打开五折的 `outer_prediction_manifest.json` 与 `outer_predictions.npz`，未打开 outer labels、metrics、result 或 aggregate summary。它以1线程重放由已保存 tail anomaly 得到的 Gaussian spatial score：前四折逐位一致；原来在 AMD EPYC 7702 生成的 Boeing 折有78,874个 score 发生末位差，最大绝对差 `5.551115123125783e-16`、最大6 ULP，denominator最大5 ULP，但五折最终布尔 prediction 均为0个变化。
+
+结合 Intel Xeon Gold 6248 上 alternate-SIMD 的同类无标签复现，根因是 `np.exp` 生成 Gaussian kernel及后续 NumPy 运算在不同CPU/SIMD路径上的少量 ULP 差异，而当前认证错误地对连续 `float64` 数组要求 `np.array_equal`。这不是允许直接接受结果的理由：`51063753` 使用32线程环境，而 `51064502` 使用1线程且只重放 spatial transform。下一步必须在原32线程环境中完整重放 label-free query，分别量化 raw distance、tail probability/anomaly、spatial fields，并继续要求 identity、support、mode、imputation和最终 prediction逐位一致；在该诊断完成并冻结字段级认证边界前仍无性能结论。
