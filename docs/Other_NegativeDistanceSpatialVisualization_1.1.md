@@ -1,6 +1,6 @@
 # Other_NegativeDistanceSpatialVisualization_1.1：四个指定流场的当前候选分类三联图
 
-状态：**`frozen_pre_run_not_run`**。唯一配置为
+状态：**`completed_family_held_out_exposed_development_visualization`**。唯一配置为
 `config/Other_NegativeDistanceSpatialVisualization_1.1.yaml`，冻结 SHA-256
 为 `82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 
@@ -68,11 +68,48 @@ Accuracy/AP/F1/BA/precision/recall 为
 所以本版本不能利用图再次选择候选。图的目的只是显示空间错误结构；即使某一张
 图较好，也不能覆盖 Re640 等反例或冒充多 source 聚合证据。
 
-## 完成后必须补充
+## Ibex 运行与逐图结果
 
-- numerical Git commit、Ibex job ID、node 与实际资源；
-- scheduler stdout/stderr 路径和 SHA-256；
-- 八张逐图指标与父 `per_group_metrics.csv` 的一致性检查；
-- visualization/result manifest 与 `RUN_COMPLETE.json` SHA-256；
-- 八张 panel alignment、PDF 文字、collision audit 和逐图目视检查结果；
-- 本地下载路径。
+Ibex job `51045480` 在 commit
+`520dd9e7fdb2db5be017f0796f0d5f8f6735f8c8` 上完成，节点为
+`cn604-05`，使用16个CPU core与64 GB申请内存；elapsed `00:02:37`，
+batch MaxRSS `1,991,452 KiB`。job内163/163 tests通过，8张图共覆盖
+406,177个valid query rows。
+
+| Flow | Scale block | Valid / 64,000 | Coverage | Accuracy | Average Precision (AP) | F1 | Balanced accuracy | Area Under the Receiver Operating Characteristic Curve (AUROC) | Precision | Recall | TP / FP / TN / FN |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Re160 | `legacy_2_1` | 60,560 / 64,000 | 94.6250% | 0.9611 | 0.7133 | 0.6451 | 0.7889 | 0.9822 | 0.7064 | 0.5935 | 2,139 / 889 / 56,067 / 1,465 |
+| Re160 | `expanded_3_1` | 43,347 / 64,000 | 67.7297% | 0.9481 | 0.6677 | 0.5831 | 0.7363 | 0.9570 | 0.7256 | 0.4874 | 1,573 / 595 / 39,525 / 1,654 |
+| Re640 | `legacy_2_1` | 60,555 / 64,000 | 94.6172% | 0.9482 | 0.5406 | 0.5101 | 0.7297 | 0.9416 | 0.5396 | 0.4837 | 1,634 / 1,394 / 55,783 / 1,744 |
+| Re640 | `expanded_3_1` | 42,463 / 64,000 | 66.3484% | 0.9379 | 0.4072 | 0.4402 | 0.6867 | 0.9256 | 0.4882 | 0.4007 | 1,037 / 1,087 / 38,788 / 1,551 |
+| Re6400 | `legacy_2_1` | 62,313 / 64,000 | 97.3641% | 0.9545 | 0.6232 | 0.5513 | 0.7601 | 0.9719 | 0.5594 | 0.5435 | 1,743 / 1,373 / 57,733 / 1,464 |
+| Re6400 | `expanded_3_1` | 57,906 / 64,000 | 90.4781% | 0.9477 | 0.5665 | 0.4945 | 0.7263 | 0.9637 | 0.5117 | 0.4784 | 1,482 / 1,414 / 53,394 / 1,616 |
+| Boeing 747 | `legacy_2_1` | 61,432 / 64,000 | 95.9875% | 0.9669 | 0.7341 | 0.6642 | 0.8275 | 0.9771 | 0.6556 | 0.6731 | 2,014 / 1,058 / 57,382 / 978 |
+| Boeing 747 | `expanded_3_1` | 17,601 / 64,000 | 27.5016% | 0.9573 | 0.5112 | 0.4722 | 0.7940 | 0.9278 | 0.3814 | 0.6199 | 336 / 545 / 16,514 / 206 |
+
+八组指标逐项重算后均在 `1e-12` 容差内与固定父
+`per_group_metrics.csv` 一致。四个flow中，`legacy_2_1` 的F1均高于
+`expanded_3_1`；Boeing `legacy_2_1` 最好（F1 `0.6642`），Re640
+`expanded_3_1` 最低（F1 `0.4402`）。两个block的valid population不同，尤其
+Boeing expanded coverage只有`27.5016%`，因此该差异不能单独归因为尺度方法优劣。
+
+## 产物、哈希与图形QA
+
+- result / visualization / `RUN_COMPLETE.json` 文件SHA-256分别为
+  `14190a2ceba035f0cd1f4279eaeaaefe732e8f0519c4d24359b70fc4c931cde6`、
+  `cbf0875ecf71c8eb79dea62b9e75669a3f0891f97375d9ffdcdfa2297fbfe3e9`、
+  `88bc0e9e5c83265dbbfd431275789f760240cd93c7cf8f41bd10d6aacf4d3274`。
+- stdout / stderr SHA-256分别为
+  `cebd75037b5ec06294b4f0a1347259ffb082f6e8285fa1bd6b967da067064a0d`、
+  `1fc2d6eaa8467332753fcc0eb6dde6a63c7e07a8c6be9c520790e07341f6ab55`。
+- 本地下载后，62/62 manifest artifacts的size和SHA-256全部复核通过。
+- 科研图源码预检为18 PASS、3个预期WARN、0 FAIL；WARN仅对应360 dpi而非
+  600 dpi、没有TIFF以及本版本未声明期刊固定栏宽。
+- 8/8 panel alignment在strict模式通过；8/8 PDF的最小文字为7 pt，高于5 pt
+  门槛；collision audit为0 FAIL、95 WARN。逐张检查WARN后确认它们都是三维
+  坐标刻度与填充/栅格图层边界的预期相交，没有文字互相覆盖、被路径穿过或被
+  页面裁剪。8/8原始360 dpi PNG已逐张目视检查。
+- Ibex output：
+  `/ibex/user/zhanx0o/pathline-template-matching/Other_NegativeDistanceSpatialVisualization_1.1/runs/slurm_51045480_520dd9e7fdb2`。
+- 本地下载：
+  `outputs/Other_NegativeDistanceSpatialVisualization_1.1_download`。
