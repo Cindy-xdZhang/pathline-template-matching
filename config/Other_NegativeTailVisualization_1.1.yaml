@@ -1,0 +1,245 @@
+experiment: Other_NegativeTailVisualization_1.1
+category: Other
+status: frozen_pre_run_not_run
+purpose: audited_source2_triptychs_for_the_completed_negative_tail_classifier_on_four_requested_flows
+
+evidence_scope:
+  level: family_held_out_exposed_development_visualization_only
+  formal_confirmation: false
+  reason: >-
+    All four query flows and both fitted outer-fold classifiers have already
+    been exposed.  These fixed-source figures localize classifications and
+    errors but cannot establish unbiased cross-family generalization.
+  forbidden_claims:
+    - sealed_confirmation
+    - unbiased_model_selection
+    - aggregate_multisource_performance
+    - independent_per_primitive_classifier
+    - clustering
+
+parents:
+  family_held_out_scenes:
+    experiment: Other_MainExp31FamilyHeldOutVisualization_1.1
+    numerical_git_commit: 86be29698eb689c0e269fe987a5b6d5f125a67be
+    config_sha256: 6fec35d2f64a3b593a74e8b35674137b1665ce169491e3546384142514b46670
+    run_root: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1/runs/slurm_51029080_86be29698eb6
+    result_manifest: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1/runs/slurm_51029080_86be29698eb6/result_manifest.json
+    result_manifest_sha256: 57f03ba16ad8cfa0e1e0a9efd93f2dde7ae5866f173fad20055efb6939d4188e
+    result_manifest_content_sha256: 8cb1cbfbd6d3e0ee844d29d4858d6659b1d9808f30b01a848f4dc251aa0b82cf
+    visualization_manifest: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1/runs/slurm_51029080_86be29698eb6/visualization_manifest.json
+    visualization_manifest_sha256: 90bc9e1b0421b838a7b35066ce785b3f8866e6e6b8f4f6cda640cafabad241a2
+    visualization_manifest_content_sha256: 79ee91bf8f9e894aee9c5f2e1c4f7b1b5d11bc265bb5fbff60080ec28cda7474
+    run_complete: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1/runs/slurm_51029080_86be29698eb6/RUN_COMPLETE.json
+    run_complete_sha256: 63325cf51bd9a4322ef5ba6385d00aa063b30096134679d153aa6733ac28314b
+    reuse_rule: >-
+      Every scene array except prediction and metadata_json must be identical
+      to the authenticated parent scene.  Bounds, IVD mesh, reference labels,
+      240 reference-selected pathlines, row identity, and camera cannot change.
+
+  negative_tail_folds:
+    experiment: Verify_NegativeTailCalibration_1.1
+    numerical_git_commit: e9d4d3f11428bd2e13fc0fabf657be7c7e57db7c
+    config_sha256: 4b6f05dd852990364aa3465d1c990d79532e6c859ab27a219f3d95817868ce3b
+    array_job_id: 51059479
+    folds:
+      - outer_family: half_cylinder
+        task_id: 0
+        expected_inner_group_count: 40
+        run_root: /ibex/user/zhanx0o/pathline-template-matching/Verify_NegativeTailCalibration_1.1/runs/slurm_51059479_0_cpu_e9d4d3f11428_outer_half_cylinder
+        result_manifest_sha256: 90a53d546ba7bd19c9a1ad012e798dafe6685bb09b4a0e5209cd751ebc2271f3
+        result_manifest_content_sha256: 55a6ee1beca7cda2354f01c4b46a3e27f377cdc1b7d4eedc408e2e112defc00e
+        prediction_manifest_sha256: 4ecf407b350ec9abb3a78d8a89a09d3b196226d24ca0b510d57293c5eb34c702
+        prediction_manifest_content_sha256: 0e23d035561429b6adc9d83efe6376a7eb4abb7ce451c5797d5fbfb01cda93fa
+        predictions_sha256: c6f469220b0403acfeca7c68e1f87ad825922438021ace3c4e2ed918e2140ab8
+        predictions_size_bytes: 42640537
+        predictions_row_count: 1309366
+        selected_candidate_sha256: b5f6229cb7fa6e48bc3e1d050abbf0767dfc97f1be60a30af1796af20495ca1f
+        selected_candidate_content_sha256: 4b9e51888dd8b822406b8cb36a58d1f6de763fdd01d8afd68f058ac1f3446c1c
+        outer_group_metrics_sha256: a499b980974f69411f02aba0ffacc9a974cea963a9dcdca8237fb8ab552c5ee4
+        run_complete_sha256: c66a2e43cb05cd53b61aaf7980c60003817b0173d54ed0044ddd57d351396733
+        run_complete_content_sha256: 88bab943350ae7ac11b92e77ab49f174e0bdaaa99df165d373b936198fe77913
+        candidate:
+          candidate_id: representation=chirality_all35|k=15|sigma=1.0|fixed_top_fraction=0.05
+          representation: chirality_all35
+          k: 15
+          sigma: 1.0
+          decision_rule: fixed_top_fraction
+          decision_value: 0.05
+      - outer_family: boeing_747
+        task_id: 4
+        expected_inner_group_count: 56
+        run_root: /ibex/user/zhanx0o/pathline-template-matching/Verify_NegativeTailCalibration_1.1/runs/slurm_51059479_4_cpu_e9d4d3f11428_outer_boeing_747
+        result_manifest_sha256: 7060fb14d7f1b491ddbd2297de35abf7075b38f67971d4a4b95162b3d7bf893d
+        result_manifest_content_sha256: b7fe0e839423bca1699b39189ec50b0e85f99cd8eb6f7de34652da9dbbdf96cf
+        prediction_manifest_sha256: 5ebec214eab5f1c2e64a2255441dac472b42100c8bd52ba494a6195594821c47
+        prediction_manifest_content_sha256: df991e43d179baee9b810c487b0e40092bf455f30333bc811b0fd2537a2e8d91
+        predictions_sha256: dc44c7397eed918793b8762e8a9628c0a50b6feff3a0b01d3eab5cee0c975929
+        predictions_size_bytes: 10869343
+        predictions_row_count: 316358
+        selected_candidate_sha256: 97e46ad298ca216676b385818a49b29a9cdfc99124cbadc68872c9830e91c111
+        selected_candidate_content_sha256: f7094ed2cdae67cb0cc1babfb7572a60dfbbf0f6d983dcf3fd8efea9240f9bdd
+        outer_group_metrics_sha256: 9057c411bb1bec59d2a556a5ed486ceab08072c28b0d3baed56b2b87ecd58017
+        run_complete_sha256: 37be1fed59a5d83afe286fb958a421595fb958ed7d568c59681f622442a239e3
+        run_complete_content_sha256: 23af65bf470f1d6f28cd23428db33bbfd2f653820aa6620f396fbf5b72995e34
+        candidate:
+          candidate_id: representation=real_neighbor36|k=1|sigma=1.0|fixed_top_fraction=0.05
+          representation: real_neighbor36
+          k: 1
+          sigma: 1.0
+          decision_rule: fixed_top_fraction
+          decision_value: 0.05
+
+prediction_contract:
+  schema: pathline_template_matching.negative_tail_outer_prediction.v1
+  manifest_schema: pathline_template_matching.negative_tail_outer_prediction_manifest.v1
+  score_array: spatial_score
+  prediction_array: prediction
+  complete_array_count: 18
+  ordered_array_names:
+    - dataset
+    - source_ordinal
+    - source_index
+    - scale_id
+    - center_seed_index
+    - scale_block_index
+    - assigned_row_index
+    - raw_negative_distance
+    - tail_probability
+    - tail_anomaly
+    - spatial_score
+    - spatial_denominator
+    - retrieval_supported
+    - calibration_supported
+    - spatial_imputed
+    - spatial_unimputable
+    - calibration_mode
+    - prediction
+  ordered_join_identity:
+    - dataset
+    - source_ordinal
+    - scale_block
+    - center_seed_index
+    - assigned_row_index
+    - scale_id
+    - scale_block_index
+  duplicate_identity: fail
+  missing_parent_scene_rows: fail
+  extra_prediction_rows: fail
+  reordered_identity: fail
+  cross_fold_rows: fail
+
+query:
+  source_ordinal: 2
+  source_selection: fixed_before_prediction_and_metrics
+  assigned_count_per_dataset_block: 64000
+  complete_valid_rows_required: true
+  cross_block_aggregation_or_majority_vote: forbidden
+  datasets:
+    - id: cylinder3d
+      display_title: Half-cylinder Re160
+      outer_family: half_cylinder
+    - id: halfcylinderRe640
+      display_title: Half-cylinder Re640
+      outer_family: half_cylinder
+    - id: halfcylinderRe6400
+      display_title: Half-cylinder Re6400
+      outer_family: half_cylinder
+    - id: boeing747
+      display_title: Boeing 747
+      outer_family: boeing_747
+  scale_blocks:
+    - id: legacy_2_1
+      index: 0
+      scale_id_start: 0
+      scale_id_stop_exclusive: 1000
+    - id: expanded_3_1
+      index: 1
+      scale_id_start: 1000
+      scale_id_stop_exclusive: 2000
+
+metrics:
+  unit: dataset_source_ordinal_2_scale_block
+  use_all_valid_query_rows: true
+  invalid_rows_enter_only_coverage_denominator: true
+  score: spatial_score
+  required:
+    - coverage
+    - accuracy
+    - average_precision
+    - f1
+    - balanced_accuracy
+    - auroc
+    - precision
+    - recall
+    - true_positive
+    - false_positive
+    - true_negative
+    - false_negative
+  comparison_to_parent_outer_group_metrics:
+    required: exact_within_numeric_tolerance
+    absolute_tolerance: 1.0e-12
+
+figure_contract:
+  core_conclusion: >-
+    With the complete query physical family held out, the current NegativeTail
+    FMT-template classifier localizes IVD-p95 vortex regions, with flow- and
+    scale-block-specific false-positive and false-negative structure.
+  results_level_question: >-
+    Where do fixed source-ordinal-2 family-held-out predictions agree or
+    disagree with IVD-p95 across the four requested flows?
+  archetype: image_plate_plus_quantification
+  backend: python_matplotlib
+  figure_unit: one_dataset_by_one_scale_block
+  expected_figure_count: 8
+  final_size_inches: [21.0, 5.0]
+  panel_titles:
+    - IVD p95 + center pathlines
+    - FMT NegativeTail template classification
+    - TP / FP / FN / TN against IVD p95
+  panel_map:
+    a: unchanged_parent_IVD_p95_isosurface_plus_240_reference_selected_center_pathlines
+    b: fixed_outer_fold_negative_tail_classification_for_every_valid_query_row
+    c: exact_TP_FP_FN_TN_partition_for_the_same_rows_in_the_same_order
+  display_pathlines:
+    count: 240
+    negative_count: 120
+    positive_count: 120
+    selection: unchanged_from_parent_reference_only_deterministic_maximin
+    interpretation: balanced_explanatory_context_not_natural_class_prevalence
+  identical_rows_camera_and_bounds_across_panels: true
+  uncertainty: none_single_preregistered_source
+  png_dpi: 360
+  editable_svg_and_pdf_text: true
+  rasterized_3d_marks: true
+  required_exports:
+    - scene_npz
+    - scene_manifest_json
+    - svg_with_editable_text_and_rasterized_3d_marks
+    - pdf_with_editable_text_and_rasterized_3d_marks
+    - png_360dpi
+    - panel_alignment_json
+    - render_metadata_json
+  reviewer_risks:
+    - all_four_flows_and_fitted_outer_fold_classifiers_are_exposed_development
+    - fixed_top_5_percent_decision_is_transductive_within_each_dataset_source_block
+    - coverage_differs_across_scale_blocks
+    - 240_display_pathlines_are_balanced_context_not_the_natural_query_population
+    - a_single_fixed_source_has_no_confidence_interval_and_does_not_replace_multisource_statistics
+
+execution:
+  platform: Ibex_from_committed_clean_git_revision
+  device: cpu
+  output_root: /ibex/user/zhanx0o/pathline-template-matching/Other_NegativeTailVisualization_1.1
+  run_directory_pattern: /ibex/user/zhanx0o/pathline-template-matching/Other_NegativeTailVisualization_1.1/runs/slurm_JOBID_COMMIT12
+  existing_run_directory_action: fail
+  completion_marker: RUN_COMPLETE.json
+
+required_outputs:
+  - frozen_config.yaml
+  - input_manifest.json
+  - per_figure_metrics.csv
+  - main_table.md
+  - visualization_manifest.json
+  - environment_versions.json
+  - result_manifest.json
+  - RUN_COMPLETE.json

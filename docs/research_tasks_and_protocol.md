@@ -255,3 +255,17 @@ SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 - Final per-scale scaler、tail calibration 与 selected candidate 必须在任何 outer feature member 打开前关闭、原子发布并认证。Scaler NPZ/manifest 必须保存完整 2000-scale 的 counts、support、mode、mean、local/prior/shrunk variance、effective std、array SHA-256，并由 selected candidate 绑定 scaler 与 calibrator manifest SHA-256；prediction 认证后才允许读取 outer labels。
 
 唯一配置为 `config/Verify_PerScaleNegativeMetric_1.1.yaml`；冻结 SHA-256 为 `b469b909466dda941d122629ba43cf94e872faceed73c5f0970e3cf66697dd79`。冻结发生在任何 `Verify_NegativeTailCalibration_1.1` outer 结果可见前；本版本目前没有数值实现、Ibex run 或性能结论，也不是 formal confirmation。
+
+## 20. `Other_NegativeTailVisualization_1.1` 的四流场当前 NegativeTail 三联图
+
+本版本只为已完成的 `Verify_NegativeTailCalibration_1.1` 生成固定 source ordinal 2 的空间分类图，不重新拟合、选择 candidate、调阈值或按结果选图。
+
+- query 固定为 `cylinder3d` (Re160)、`halfcylinderRe640`、`halfcylinderRe6400` 与 `boeing747`；每个 dataset 对 `legacy_2_1` 和 `expanded_3_1` 分别出图，共八张。
+- half-cylinder outer fold 固定为 `chirality_all35, k=15, sigma=1, top-5%`；Boeing outer fold 固定为 `real_neighbor36, k=1, sigma=1, top-5%`。两折不是同一 representation 或同一 `k`，不得为统一图面表述而改写。
+- 父 scene 必须逐文件、逐数组认证 `Other_MainExp31FamilyHeldOutVisualization_1.1` job `51029080`。NegativeTail 每折必须认证精确13个文件、预测 NPZ 的18个固定数组及完整候选/校准证据闭环；inner `group_count` 分别冻结为40和56。
+- 父 scene 与 prediction 必须按 dataset、source、block、center seed、assigned row、scale ID 与 block index 精确且保序连接；duplicate、missing、extra 或 reorder 均失败。每图重算指标必须与父 `outer_group_metrics.csv` 在 `1e-12` 绝对误差内一致。
+- 三栏固定为：IVD-p95 与240条父中心 pathlines；FMT NegativeTail template classification；同一批 rows 的 TP/FP/FN/TN。第二栏不得称为 clustering。
+- 每图必须导出 scene NPZ/manifest、SVG、PDF、360 dpi PNG、panel-alignment JSON、render metadata 和 PDF 5 pt 文字审计；八图加六个全局文件构成70个 result artifacts。下载后还必须在本地通过严格面板对齐、PyMuPDF 碰撞审计和八张原始 PNG 目视检查才能交付。
+- 固定 top-5% 判决在每个 dataset/source/block 内是 transductive 的；全部流场与 fitted outer-fold classifier 已暴露，因此只是 `family-held-out exposed-development visualization`，不是 formal confirmation 或多 source 汇总证据。
+
+唯一配置为 `config/Other_NegativeTailVisualization_1.1.yaml`；冻结 SHA-256 为 `5a82a9d1af406043066316262e5dcefb1a0d559f6d66e82da16440a2066df131`。
