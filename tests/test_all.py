@@ -136,6 +136,7 @@ from test_negative_tail_calibration import (
 )
 from test_negative_tail_runner import (
     test_batched_tail_threshold_metrics_match_direct_predictions_with_ties,
+    test_cpu_environment_audit_does_not_query_cpu_as_cuda_device,
     test_final_calibration_authentication_rejects_structure_valid_content_tamper,
     test_negative_tail_plan_and_candidate_grid_are_exact_and_rank_free,
     test_negative_tail_query_path_never_calls_query_rank_and_is_membership_invariant,
@@ -143,6 +144,15 @@ from test_negative_tail_runner import (
     test_runner_final_fit_accepts_n_equals_k_and_uses_calibration_fallback,
     test_spatial_calibrated_tail_scores_match_independent_mask_normalized_gaussian,
     test_synthetic_negative_tail_artifact_prediction_and_label_pipeline_end_to_end,
+)
+from test_negative_tail_aggregate import (
+    test_negative_tail_aggregate_binds_expected_commit_and_refuses_overwrite,
+    test_negative_tail_aggregate_completion_is_last_and_withheld_after_output_tamper,
+    test_negative_tail_aggregate_complete_five_fold_applies_frozen_stop_rule,
+    test_negative_tail_aggregate_matches_runner_finite_group_macro_with_nan_patterns,
+    test_negative_tail_aggregate_rejects_missing_duplicate_and_mixed_provenance,
+    test_negative_tail_aggregate_single_fold_authenticates_full_chain_and_exact_files,
+    test_negative_tail_single_fold_certificate_stops_only_for_impossibility,
 )
 from test_one_class_spatial import (
     test_high_score_two_means_constant_or_insufficient_input_fails_closed,
@@ -277,6 +287,7 @@ TESTS = (
     test_local_only_exact_tail_probability_matches_independent_reference,
     test_retrieval_and_calibration_boundaries_use_frozen_fallback_chain,
     test_batched_tail_threshold_metrics_match_direct_predictions_with_ties,
+    test_cpu_environment_audit_does_not_query_cpu_as_cuda_device,
     test_final_calibration_authentication_rejects_structure_valid_content_tamper,
     test_negative_tail_plan_and_candidate_grid_are_exact_and_rank_free,
     test_negative_tail_query_path_never_calls_query_rank_and_is_membership_invariant,
@@ -284,6 +295,13 @@ TESTS = (
     test_runner_final_fit_accepts_n_equals_k_and_uses_calibration_fallback,
     test_spatial_calibrated_tail_scores_match_independent_mask_normalized_gaussian,
     test_synthetic_negative_tail_artifact_prediction_and_label_pipeline_end_to_end,
+    test_negative_tail_aggregate_single_fold_authenticates_full_chain_and_exact_files,
+    test_negative_tail_single_fold_certificate_stops_only_for_impossibility,
+    test_negative_tail_aggregate_complete_five_fold_applies_frozen_stop_rule,
+    test_negative_tail_aggregate_rejects_missing_duplicate_and_mixed_provenance,
+    test_negative_tail_aggregate_binds_expected_commit_and_refuses_overwrite,
+    test_negative_tail_aggregate_completion_is_last_and_withheld_after_output_tamper,
+    test_negative_tail_aggregate_matches_runner_finite_group_macro_with_nan_patterns,
     test_local_global_shrink_and_local_only_modes_are_reachable_without_labels,
     test_no_reference_keeps_n_equals_k_retrieved_but_calibration_unsupported,
     test_fit_and_query_are_invariant_to_distance_chunk_sizes_and_query_membership,

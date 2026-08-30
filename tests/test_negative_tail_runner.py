@@ -338,6 +338,35 @@ def test_negative_tail_plan_and_candidate_grid_are_exact_and_rank_free():
     assert runner.BLOCK_NAMES == ("legacy_2_1", "expanded_3_1")
 
 
+def test_cpu_environment_audit_does_not_query_cpu_as_cuda_device():
+    original_is_available = runner.torch.cuda.is_available
+    original_device_count = runner.torch.cuda.device_count
+    original_get_device_name = runner.torch.cuda.get_device_name
+    original_get_device_capability = runner.torch.cuda.get_device_capability
+    try:
+        runner.torch.cuda.is_available = lambda: True
+        runner.torch.cuda.device_count = lambda: 2
+
+        def reject_cpu_device(device):
+            raise AssertionError(f"unexpected CUDA device query: {device}")
+
+        runner.torch.cuda.get_device_name = reject_cpu_device
+        runner.torch.cuda.get_device_capability = reject_cpu_device
+        audit = runner._environment_audit("cpu")
+    finally:
+        runner.torch.cuda.is_available = original_is_available
+        runner.torch.cuda.device_count = original_device_count
+        runner.torch.cuda.get_device_name = original_get_device_name
+        runner.torch.cuda.get_device_capability = original_get_device_capability
+
+    assert audit["requested_device"] == "cpu"
+    assert audit["cuda_available"] is True
+    assert audit["cuda_device_count"] == 2
+    assert audit["cuda_device_query_skipped"] == "requested_device_is_not_cuda"
+    assert "cuda_device_name" not in audit
+    assert "cuda_device_capability" not in audit
+
+
 def test_negative_tail_query_path_never_calls_query_rank_and_is_membership_invariant():
     tree = ast.parse(Path(runner.__file__).read_text(encoding="utf-8"))
     called_names = {

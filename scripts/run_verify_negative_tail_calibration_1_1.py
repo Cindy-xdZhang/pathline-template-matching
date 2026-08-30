@@ -16,6 +16,7 @@ import hashlib
 import json
 import math
 import os
+import platform
 from dataclasses import dataclass, field
 from pathlib import Path
 import sys
@@ -53,7 +54,6 @@ from scripts.run_verify_scale_conditioned_retrieval_1_1 import (  # noqa: E402
     _atomic_npz,
     _classification_counts,
     _configure_execution,
-    _environment_audit,
     _git_identity,
     _json_safe,
     _json_safe_content_sha256,
@@ -98,6 +98,49 @@ PREDICTION_MANIFEST_SCHEMA = (
 SELECTED_SCHEMA = "pathline_template_matching.negative_tail_selected_candidate.v1"
 RESULT_SCHEMA = "pathline_template_matching.negative_tail_result.v1"
 COMPLETE_SCHEMA = "pathline_template_matching.negative_tail_run_complete.v1"
+
+
+def _environment_audit(device: str) -> dict[str, Any]:
+    """Record the requested backend without querying a CPU as a CUDA device."""
+
+    requested_device = torch.device(device)
+    cuda_available = torch.cuda.is_available()
+    audit: dict[str, Any] = {
+        "hostname": platform.node(),
+        "platform": platform.platform(),
+        "python": sys.version,
+        "numpy": np.__version__,
+        "torch": torch.__version__,
+        "requested_device": device,
+        "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
+        "slurm_array_task_id": os.environ.get("SLURM_ARRAY_TASK_ID"),
+        "slurm_job_gpus": os.environ.get("SLURM_JOB_GPUS"),
+        "cuda_available": cuda_available,
+        "deterministic_algorithms": torch.are_deterministic_algorithms_enabled(),
+        "float32_matmul_precision": torch.get_float32_matmul_precision(),
+    }
+    if cuda_available:
+        audit.update(
+            {
+                "cuda_version": torch.version.cuda,
+                "cuda_device_count": torch.cuda.device_count(),
+                "cublas_workspace_config": os.environ.get("CUBLAS_WORKSPACE_CONFIG"),
+                "cuda_matmul_allow_tf32": torch.backends.cuda.matmul.allow_tf32,
+                "cudnn_allow_tf32": torch.backends.cudnn.allow_tf32,
+            }
+        )
+        if requested_device.type == "cuda":
+            audit.update(
+                {
+                    "cuda_device_name": torch.cuda.get_device_name(requested_device),
+                    "cuda_device_capability": list(
+                        torch.cuda.get_device_capability(requested_device)
+                    ),
+                }
+            )
+        else:
+            audit["cuda_device_query_skipped"] = "requested_device_is_not_cuda"
+    return audit
 
 
 @dataclass(frozen=True)
