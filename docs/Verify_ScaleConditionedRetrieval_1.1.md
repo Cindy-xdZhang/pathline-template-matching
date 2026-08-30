@@ -137,6 +137,8 @@ python scripts/run_verify_scale_conditioned_retrieval_1_1.py \
 
 `RUN_COMPLETE.json` 必须最后写入。当前本地完整回归为 158/158 tests passed；CUDA 分支仍需由 Ibex job 验证。
 
+因同一账户的其他 FMT GPU array 占满 GPU QOS，允许在完全相同的配置、输入和 outer family 上运行一个 CPU profile 副本。CPU 与 GPU 结果必须分别记录设备和数值 commit，不能把不同设备产生的 outer folds 混入同一个五折 aggregate。CPU profile 只用于尽早取得首折机制证据和 wall time；正式五折仍须使用同一种设备完成。
+
 ## 8. 运行前的旧分数 oracle 上限诊断
 
 这项诊断只分析已暴露的 `Other_NegativeDistanceSpatial_1.1` 旧分数，不使用也不约束本验证尚未产生的 scale-conditioned 分数。证据为：
