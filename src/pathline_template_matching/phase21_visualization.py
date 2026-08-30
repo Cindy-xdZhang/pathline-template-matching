@@ -1,8 +1,10 @@
 """Audited fixed triptychs for ``mainExp_TemplateMatching_2.1``.
 
-This module is deliberately downstream of numerical evaluation.  It consumes
-one already validated source-ordinal-2 test cache and an ordered FMT exact-1NN
-assignment.  Display-pathline selection never receives predictions or metrics.
+This module is deliberately downstream of numerical evaluation.  By default it
+consumes one already validated source-ordinal-2 test cache and an ordered FMT
+exact-1NN assignment.  A versioned downstream experiment may explicitly pass a
+different allowed dataset set and source split; the default test-only contract
+does not change.  Display-pathline selection never receives predictions or metrics.
 Panels two and three retain every valid query seed; only the explanatory
 center-pathline overlay in panel one is reduced to a frozen 120-positive plus
 120-negative deterministic maximin sample.
@@ -43,10 +45,18 @@ SCALE_COUNT = SCALE_AXIS_SIZE**3
 TEST_DATASETS = ("tangaroa", "smokeBuoyancy")
 
 DATASET_TITLES = {
+    "cylinder3d": "Half-cylinder Re160",
+    "halfcylinderRe640": "Half-cylinder Re640",
+    "halfcylinderRe6400": "Half-cylinder Re6400",
+    "boeing747": "Boeing 747",
     "tangaroa": "Tangaroa",
     "smokeBuoyancy": "Smoke buoyancy",
 }
 DATASET_VIEWS = {
+    "cylinder3d": (22.0, -62.0),
+    "halfcylinderRe640": (22.0, -62.0),
+    "halfcylinderRe6400": (22.0, -62.0),
+    "boeing747": (21.0, -58.0),
     "tangaroa": (23.0, -62.0),
     "smokeBuoyancy": (22.0, -58.0),
 }
@@ -197,7 +207,12 @@ def _prediction_arrays(
 
 
 def validate_phase21_visualization_input(
-    cache: Mapping[str, Any], prediction: Mapping[str, Any]
+    cache: Mapping[str, Any],
+    prediction: Mapping[str, Any],
+    *,
+    allowed_datasets: tuple[str, ...] = TEST_DATASETS,
+    required_split: str = "test",
+    required_source_ordinal: int = FIXED_SOURCE_ORDINAL,
 ) -> ValidatedPhase21VisualizationInput:
     """Validate the fixed cache/prediction order and visualization fields."""
 
@@ -221,17 +236,27 @@ def validate_phase21_visualization_input(
         raise ValueError("cache metadata must be a mapping")
     metadata = dict(metadata_value)
     dataset = str(metadata.get("dataset", "")).strip()
-    if dataset not in TEST_DATASETS:
-        raise ValueError(f"2.1 triptychs are restricted to fixed test datasets: {dataset!r}")
+    allowed = tuple(str(value) for value in allowed_datasets)
+    if not allowed or len(set(allowed)) != len(allowed):
+        raise ValueError("allowed visualization datasets must be unique and non-empty")
+    if dataset not in allowed:
+        raise ValueError(
+            f"triptych dataset is outside the explicitly allowed set: {dataset!r}"
+        )
+    if dataset not in DATASET_TITLES or dataset not in DATASET_VIEWS:
+        raise ValueError(f"triptych display metadata is not registered: {dataset!r}")
     experiment = str(metadata.get("experiment", ""))
     if experiment not in SUPPORTED_EXPERIMENTS:
         raise ValueError("cache experiment is not a supported template-matching run")
-    if metadata.get("split") != "test":
-        raise ValueError("2.1 triptychs may only consume test-query caches")
-    source_ordinal = int(metadata.get("source_ordinal", -1))
-    if source_ordinal != FIXED_SOURCE_ORDINAL:
+    if not required_split or metadata.get("split") != required_split:
         raise ValueError(
-            f"2.1 triptychs require source ordinal {FIXED_SOURCE_ORDINAL}, "
+            f"triptych cache split must be {required_split!r}, "
+            f"got {metadata.get('split')!r}"
+        )
+    source_ordinal = int(metadata.get("source_ordinal", -1))
+    if source_ordinal != int(required_source_ordinal):
+        raise ValueError(
+            f"triptychs require source ordinal {int(required_source_ordinal)}, "
             f"got {source_ordinal}"
         )
     source_index = int(metadata.get("source_index", -1))
@@ -712,11 +737,27 @@ def _complete_ivd_mesh(
 
 
 def build_phase21_visualization_scene(
-    cache: Mapping[str, Any], prediction: Mapping[str, Any]
+    cache: Mapping[str, Any],
+    prediction: Mapping[str, Any],
+    *,
+    allowed_datasets: tuple[str, ...] = TEST_DATASETS,
+    required_split: str = "test",
+    required_source_ordinal: int = FIXED_SOURCE_ORDINAL,
+    regime: str = "exposed-development test",
+    analysis_experiment: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Build one fixed source-ordinal-2 scene without reading performance."""
 
-    validated = validate_phase21_visualization_input(cache, prediction)
+    display_regime = str(regime).strip()
+    if not display_regime:
+        raise ValueError("visualization regime must be non-empty")
+    validated = validate_phase21_visualization_input(
+        cache,
+        prediction,
+        allowed_datasets=allowed_datasets,
+        required_split=required_split,
+        required_source_ordinal=required_source_ordinal,
+    )
     mesh, bounds, ivd_audit = _complete_ivd_mesh(
         validated.ivd_volume, validated.metadata
     )
@@ -765,7 +806,7 @@ def build_phase21_visualization_scene(
     scene = {
         "dataset": validated.dataset,
         "title": DATASET_TITLES[validated.dataset],
-        "regime": "exposed-development test",
+        "regime": display_regime,
         "source_ordinal": validated.source_ordinal,
         "bounds": bounds,
         "seeds": validated.valid_seeds,
@@ -809,10 +850,14 @@ def build_phase21_visualization_scene(
         ),
         "experiment": validated.metadata.get("experiment"),
         "dataset": validated.dataset,
-        "split": "test",
+        "split": str(validated.metadata.get("split")),
         "source_ordinal": validated.source_ordinal,
         "source_index": validated.source_index,
-        "source_selection": "fixed before performance; never metric-selected",
+        "source_selection": (
+            "fixed before performance; never metric-selected"
+            if analysis_experiment is None
+            else "fixed before classification; never metric-selected"
+        ),
         "prediction_semantics": "FMT independent 161D global exact-1NN binary assignment",
         "query_count": int(len(validated.valid_labels)),
         "reference_positive_count": int(validated.valid_labels.sum()),
@@ -853,6 +898,14 @@ def build_phase21_visualization_scene(
         },
         "cache_metadata_sha256": canonical_json_sha256(validated.metadata),
     }
+    if analysis_experiment is not None:
+        audit.update(
+            {
+                "analysis_experiment": str(analysis_experiment),
+                "display_title": DATASET_TITLES[validated.dataset],
+                "regime": display_regime,
+            }
+        )
     if validated.metadata.get("experiment") == EXPERIMENT31:
         audit.update(
             {
@@ -1156,8 +1209,12 @@ def load_phase21_scene_artifact(
         raise ValueError("scene IVD mesh is invalid")
     scene = {
         "dataset": str(metadata["dataset"]),
-        "title": DATASET_TITLES[str(metadata["dataset"])],
-        "regime": "exposed-development test",
+        "title": str(
+            metadata.get(
+                "display_title", DATASET_TITLES[str(metadata["dataset"])]
+            )
+        ),
+        "regime": str(metadata.get("regime", "exposed-development test")),
         "source_ordinal": int(metadata["source_ordinal"]),
         "bounds": arrays["bounds"],
         "seeds": arrays["seeds"],
@@ -1265,6 +1322,18 @@ def render_phase21_scene_artifact(
         "alignment": alignment,
         "renderer": render_metadata,
     }
+    if "analysis_experiment" in artifact.metadata:
+        for name in (
+            "analysis_experiment",
+            "display_title",
+            "regime",
+            "fold_id",
+            "held_out_physical_family",
+            "library_contains_query_family",
+            "scale_block",
+        ):
+            if name in artifact.metadata:
+                metadata[name] = artifact.metadata[name]
     metadata["metadata_content_sha256"] = canonical_json_sha256(metadata)
     _write_json_no_overwrite(metadata_path, metadata)
     return RenderedTriptychArtifacts(

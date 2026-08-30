@@ -1,0 +1,210 @@
+experiment: Other_MainExp31FamilyHeldOutVisualization_1.1
+status: frozen_pre_run_not_run
+category: Other
+purpose: family_held_out_spatial_classification_visualization_for_four_requested_train_flows
+
+parent:
+  experiment: mainExp_TemplateMatching_3.1
+  numerical_git_commit: 260a07ad380d64fc300cabe8926244e92d8ba04a
+  config: config/mainExp_TemplateMatching_3.1.yaml
+  config_sha256: 771980f14a6019a1f6e4bf03668d9f37dcf63495ae2dafa866312b12fc71855e
+  cache_root: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/primitive_cache
+  cache_population: exactly_32_immutable_train_cache_shards_and_sidecars
+  primitive_and_feature_reuse_only: true
+  fitted_scaler_library_prediction_or_metric_reuse: forbidden
+
+evidence_scope:
+  level: family_held_out_exposed_development_only
+  reason: all_four_query_flows_were_already_exposed_and_belong_to_the_parent_train_population
+  formal_confirmation: false
+  aggregate_mainExp_performance_claim: forbidden
+  in_library_reconstruction_claim: forbidden
+
+method:
+  descriptor_id: fmt_independent_3d_161d_sha256_25fce29499c9089e
+  descriptor_width: 161
+  descriptor_change_from_parent: none
+  primitive_contract: parent_H48_seven_lines_32_arc_samples_2000_scale_union
+  label: whole_loaded_volume_ivd_p95
+  matcher: global_exact_one_nearest_neighbor
+  metric: euclidean_after_fold_library_only_feature_standardization
+  binary_score: distance_to_nearest_negative_minus_distance_to_nearest_positive
+  positive_rule: score_greater_than_zero
+  tie_rule: non_vortex
+  approximate_index: forbidden
+
+folds:
+  - id: holdout_half_cylinder
+    held_out_physical_family: half_cylinder
+    query_datasets:
+      - cylinder3d
+      - halfcylinderRe640
+      - halfcylinderRe6400
+    library_datasets:
+      - deltaWing_resampled
+      - deltaWing_LBM
+      - f22raptor
+      - channel
+      - boeing747
+    expected_selected_template_count: 50770
+    expected_selected_templates_per_class: 25385
+  - id: holdout_boeing_747
+    held_out_physical_family: boeing_747
+    query_datasets:
+      - boeing747
+    library_datasets:
+      - cylinder3d
+      - halfcylinderRe640
+      - halfcylinderRe6400
+      - deltaWing_resampled
+      - deltaWing_LBM
+      - f22raptor
+      - channel
+    expected_selected_template_count: 86728
+    expected_selected_templates_per_class: 43364
+
+leakage_guards:
+  - every_query_dataset_is_excluded_from_its_fold_library
+  - every_dataset_sharing_the_query_physical_family_is_excluded_together
+  - the_parent_96160_template_library_is_not_filtered_or_reused
+  - each_fold_restarts_the_parent_global_PCG64_15068_library_sampler_over_only_eligible_datasets
+  - each_fold_refits_FMT_feature_mean_and_population_standard_deviation_from_its_selected_library_only
+  - no_query_feature_label_prediction_metric_or_validity_fits_any_method_component
+  - source_and_scale_block_selection_are_fixed_before_classification
+
+library:
+  population: valid_parent_3_1_train_primitives_from_eligible_non_held_out_families
+  stratum: dataset_by_source_time_by_scale_by_class
+  selection: exactly_one_negative_and_one_positive_when_both_classes_are_nonempty
+  empty_class_action: select_zero_from_both_classes_and_audit
+  candidate_order: ascending_seed_index
+  traversal_order: parent_train_dataset_order_then_source_ordinal_then_scale_id_then_negative_then_positive
+  random_generator: numpy_Generator_PCG64
+  random_seed: 15068
+  generator_scope: independently_restarted_once_per_fold
+  concatenation: one_global_cross_dataset_cross_time_cross_block_library_per_fold
+  matching_scale_restriction: none
+
+query:
+  source_ordinal: 2
+  source_selection: fixed_not_metric_selected
+  valid_primitive_rule: every_valid_parent_3_1_primitive_in_the_selected_dataset_source_and_block
+  balancing: disabled
+  downsampling: disabled
+  invalid_replacement: forbidden
+  assigned_count_per_dataset_source_block: 64000
+  requested_datasets:
+    - cylinder3d
+    - halfcylinderRe640
+    - halfcylinderRe6400
+    - boeing747
+
+scale_blocks:
+  - id: legacy_2_1
+    scale_id_start: 0
+    scale_id_stop_exclusive: 1000
+  - id: expanded_3_1
+    scale_id_start: 1000
+    scale_id_stop_exclusive: 2000
+
+cross_block_library_matching: true
+cross_block_query_aggregation_or_majority_vote: forbidden
+
+metrics:
+  unit: dataset_source_ordinal_2_scale_block
+  required:
+    - coverage
+    - accuracy
+    - average_precision
+    - f1
+    - balanced_accuracy
+    - auroc
+    - precision
+    - recall
+    - true_positive
+    - false_positive
+    - true_negative
+    - false_negative
+  invalid_rows_enter_only_the_coverage_denominator: true
+  confidence_interval: none_single_fixed_source_visualization_run
+
+figure_contract:
+  core_conclusion: the_fixed_FMT_exact_1NN_method_produces_spatially_resolved_family_held_out_assignments_and_auditable_error_patterns_on_the_four_requested_exposed_flows
+  results_level_question: where_does_the_method_agree_or_disagree_with_IVD_p95_when_the_complete_target_physical_family_is_absent_from_the_library
+  archetype: image_plate_plus_quantification
+  target_output: report_grade_audited_triptych_not_a_submission_ready_Nature_figure
+  backend: python_matplotlib
+  final_size_inches: [21.0, 5.0]
+  panel_map:
+    a: whole_loaded_volume_IVD_p95_isosurface_plus_240_reference_selected_center_pathlines
+    b: FMT_global_exact_1NN_template_class_assignment_for_all_valid_query_rows
+    c: TP_FP_FN_TN_against_IVD_p95_for_the_same_complete_query_rows
+  decisive_evidence: panel_c_error_localization_with_counts_and_per_figure_metrics
+  reviewer_risks:
+    - target_flows_are_historically_exposed_even_though_the_current_fold_is_family_held_out
+    - coverage_differs_by_dataset_and_scale_block
+    - the_240_pathlines_are_balanced_explanatory_context_not_the_natural_query_distribution
+    - the_figures_do_not_replace_aggregate_multisource_performance_evaluation
+
+visualization:
+  figure_unit: one_dataset_by_one_scale_block
+  expected_figure_count: 8
+  unique_key: [dataset, scale_block_id]
+  source_ordinal: 2
+  metric_or_prediction_based_scene_selection: forbidden
+  display_center_pathlines:
+    count: 240
+    negative_count: 120
+    positive_count: 120
+    selection_seed: 15068
+    selection_algorithm: deterministic_per_class_maximin
+    selection_uses_prediction_or_metric: false
+  identical_complete_query_rows_and_order_across_three_panels: true
+  clustering_claim: forbidden_template_assignment_is_not_clustering
+  png_dpi: 360
+  required_exports:
+    - scene_npz
+    - svg_with_editable_text_and_rasterized_3d_marks
+    - pdf_with_editable_text_and_rasterized_3d_marks
+    - png_360dpi
+    - panel_alignment_json
+
+provenance:
+  freeze_before_array_open:
+    - exact_current_clean_git_commit
+    - this_config_file_and_SHA256
+    - parent_config_file_and_SHA256
+    - all_32_train_sidecar_paths_sizes_and_SHA256
+    - all_32_train_cache_paths_sizes_and_SHA256
+    - cache_builder_git_commit_and_portable_population_marker_identity
+  per_query_required_match_metadata:
+    - query_dataset_family_source_seed_block_scale_and_reference
+    - prediction_score_and_nearest_positive_negative_distances
+    - selected_template_dataset_family_source_seed_block_scale_label_and_distance
+
+execution:
+  platform: Ibex_from_committed_clean_git_revision
+  preferred_device: cuda
+  cuda_tensorfloat32: disabled
+  torch_deterministic_algorithms: enabled
+  matcher_arithmetic: float32
+  query_chunk_size: 1024
+  library_chunk_size: 8192
+  output_root: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1
+  run_directory_pattern: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1/runs/slurm_JOBID_COMMIT12
+  existing_run_directory_action: fail
+  completion_marker: RUN_COMPLETE.json
+
+required_outputs:
+  - frozen_config.yaml
+  - input_manifest.json
+  - library_audit.csv
+  - library_manifest.json
+  - preprocessing_manifest.json
+  - per_query_matches.csv
+  - per_figure_metrics.csv
+  - main_table.md
+  - visualization_manifest.json
+  - environment_versions.json
+  - result_manifest.json
+  - RUN_COMPLETE.json

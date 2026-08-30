@@ -149,3 +149,16 @@ Development 表格必须将 seen-scale 与 unseen-scale 分开，保留所有 fl
 - 这10个flow和2.1 test结果均已曝光，3.1只能产生exposed-development描述。任何来自2.1 test coverage或metric的设计动机都必须如实记录；formal confirmation需要新的、从未读取的physical families。
 
 3.1的全部显式数值、门禁、WekaFS输出和运行规则以`config/mainExp_TemplateMatching_3.1.yaml`及`config/Verify_LongArcHorizon_1.1.yaml`为准。冻结时状态为`frozen_pre_run_not_run`；随后Ibex job `50999189`在数值commit `260a07ad380d64fc300cabe8926244e92d8ba04a`上完成，运行后权威状态为`development_completed_confirmation_not_run`。性能结论、反例和文件哈希见`docs/mainExp_TemplateMatching_3.1.md`及其结构化证据；不得回写冻结config中的历史pre-run字段，也不得把exposed-development结果称为formal confirmation。
+
+## 14. `Other_MainExp31FamilyHeldOutVisualization_1.1`的四个已暴露train flow分类图
+
+本版本是固定3.1方法的下游解释性实验，不修改primitive、2000个尺度、IVD-p95标签、FMT161 descriptor、Euclidean distance或exact one-nearest-neighbor规则。因`cylinder3d`（Re160）、`halfcylinderRe640`、`halfcylinderRe6400`和`boeing747`都参与了3.1 library构建，禁止直接用现有96,160模板查询这四个flow。
+
+- `holdout_half_cylinder`同时查询三个cylinder datasets，并从library中整体排除`half_cylinder` family；library只含`deltaWing_resampled,deltaWing_LBM,f22raptor,channel,boeing747`。
+- `holdout_boeing_747`查询`boeing747`，并整体排除`boeing_747` family；library含其他七个train datasets。
+- 每fold必须仅在其合格datasets上从`PCG64(15068)`重新开始3.1的全局模板抽样，并只用新选中library重新拟合FMT feature mean和population standard deviation；禁止过滤或复用3.1已拟合library/scaler/prediction。
+- 四个datasets都固定source ordinal `2`。`legacy_2_1`与`expanded_3_1`分开查询和出图，共8张三联图；查询使用当前block的全部valid rows，但每个fold的library仍是跨全2000 scales的全局library。禁止跨block叠画、聚合或多数投票。
+- 每图第一栏为whole-loaded-volume IVD-p95等值面加240条仅按reference class与几何位置选出的中心pathlines；第二栏为FMT global exact-1NN template class assignment，不得称为clustering；第三栏为同一批完整query rows的TP/FP/FN/TN。
+- 每图报告coverage、accuracy、Average Precision、F1、balanced accuracy、Area Under the Receiver Operating Characteristic Curve、precision、recall及混淆计数。图和表只是`family-held-out exposed-development`；四个flow历史上已暴露，因此不是formal confirmation，也不代替跨source的主实验统计。
+
+详细数值、fold、哈希、输出和执行规则唯一由`config/Other_MainExp31FamilyHeldOutVisualization_1.1.yaml`定义；冻结config SHA-256为`6fec35d2f64a3b593a74e8b35674137b1665ce169491e3546384142514b46670`。

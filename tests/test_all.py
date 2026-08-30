@@ -93,6 +93,11 @@ from test_phase21_visualization import (
     test_phase21_scale_decode_and_selection_are_balanced_deterministic_and_prediction_free,
     test_phase21_scene_roundtrip_hashes_every_array_and_refuses_overwrite,
     test_phase21_selection_direct_api_is_repeatable_and_fails_if_a_class_is_short,
+    test_phase21_train_cache_requires_explicit_heldout_context_and_preserves_it,
+)
+from test_family_heldout_visualization import (
+    test_family_heldout_block_cache_rehashes_every_filtered_array_and_combined_identity,
+    test_family_heldout_visualization_plan_freezes_complete_families_and_eight_figures,
 )
 from test_phase21_pipeline import (
     test_phase21_atomic_cache_can_recover_a_missing_sidecar_without_reintegration,
@@ -196,6 +201,7 @@ TESTS = (
     test_phase21_scale_decode_and_selection_are_balanced_deterministic_and_prediction_free,
     test_phase21_selection_direct_api_is_repeatable_and_fails_if_a_class_is_short,
     test_phase21_prediction_order_mismatch_and_nonfixed_source_fail_closed,
+    test_phase21_train_cache_requires_explicit_heldout_context_and_preserves_it,
     test_phase21_pipeline_hook_writes_two_fixed_visualization_bundles_and_manifest,
     test_phase21_scene_roundtrip_hashes_every_array_and_refuses_overwrite,
     test_phase21_render_writes_png_pdf_metadata_counts_and_alignment,
@@ -225,6 +231,8 @@ TESTS = (
     test_phase31_portable_population_marker_authenticates_complete_train_scope,
     test_phase31_portable_index_train_only_never_requires_test_manifests,
     test_phase31_visualization_emits_four_unique_dataset_block_svgs,
+    test_family_heldout_block_cache_rehashes_every_filtered_array_and_combined_identity,
+    test_family_heldout_visualization_plan_freezes_complete_families_and_eight_figures,
     test_killing_frame_translation_and_identity_pushforward,
     test_channel_observer_is_finite_deterministic_and_domain_scaled,
     test_killing_rotation_orientation_matches_rodrigues_golden_value,

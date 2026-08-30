@@ -192,9 +192,49 @@ def test_phase21_prediction_order_mismatch_and_nonfixed_source_fail_closed():
         raise AssertionError("a metric-selectable source ordinal was accepted")
 
 
+def test_phase21_train_cache_requires_explicit_heldout_context_and_preserves_it():
+    cache, prediction = _cache_and_prediction()
+    train_cache = {
+        **cache,
+        "metadata": {
+            **cache["metadata"],
+            "dataset": "cylinder3d",
+            "split": "train",
+        },
+    }
+    try:
+        build_phase21_visualization_scene(train_cache, prediction)
+    except ValueError as error:
+        assert "explicitly allowed set" in str(error)
+    else:
+        raise AssertionError("default test-only visualization accepted a train cache")
+
+    scene, audit = build_phase21_visualization_scene(
+        train_cache,
+        prediction,
+        allowed_datasets=("cylinder3d",),
+        required_split="train",
+        required_source_ordinal=2,
+        regime="physical-family-held-out exposed-development",
+        analysis_experiment="Other_MainExp31FamilyHeldOutVisualization_1.1",
+    )
+    assert scene["title"] == "Half-cylinder Re160"
+    assert scene["regime"] == "physical-family-held-out exposed-development"
+    assert audit["split"] == "train"
+    assert audit["analysis_experiment"] == (
+        "Other_MainExp31FamilyHeldOutVisualization_1.1"
+    )
+    assert audit["source_selection"] == (
+        "fixed before classification; never metric-selected"
+    )
+
+
 def test_phase21_scene_roundtrip_hashes_every_array_and_refuses_overwrite():
     cache, prediction = _cache_and_prediction()
     scene, audit = build_phase21_visualization_scene(cache, prediction)
+    scene["title"] = f"{scene['title']} | expanded_3_1"
+    audit["display_title"] = scene["title"]
+    audit["regime"] = "physical-family-held-out exposed-development"
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         scene_path = root / "tangaroa_source2.scene.npz"
@@ -211,6 +251,10 @@ def test_phase21_scene_roundtrip_hashes_every_array_and_refuses_overwrite():
         loaded = load_phase21_scene_artifact(scene_path, manifest_path)
         assert loaded.npz_sha256 == sha256_file(scene_path)
         assert loaded.manifest_file_sha256 == sha256_file(manifest_path)
+        assert loaded.scene["title"] == "Tangaroa | expanded_3_1"
+        assert loaded.scene["regime"] == (
+            "physical-family-held-out exposed-development"
+        )
         np.testing.assert_array_equal(loaded.scene["seeds"], scene["seeds"])
         np.testing.assert_array_equal(
             loaded.scene["prediction"], scene["prediction"]
@@ -230,6 +274,20 @@ def test_phase21_scene_roundtrip_hashes_every_array_and_refuses_overwrite():
 def test_phase21_render_writes_png_pdf_metadata_counts_and_alignment():
     cache, prediction = _cache_and_prediction()
     scene, audit = build_phase21_visualization_scene(cache, prediction)
+    audit.update(
+        {
+            "analysis_experiment": "Other_MainExp31FamilyHeldOutVisualization_1.1",
+            "display_title": "Tangaroa | legacy_2_1",
+            "regime": "physical-family-held-out exposed-development",
+            "fold_id": "holdout_tangaroa_test_fixture",
+            "held_out_physical_family": "tangaroa",
+            "library_contains_query_family": False,
+            "scale_block": {
+                "scale_block_index": 0,
+                "scale_block_id": "legacy_2_1",
+            },
+        }
+    )
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         scene_path = root / "scene.npz"
@@ -252,6 +310,12 @@ def test_phase21_render_writes_png_pdf_metadata_counts_and_alignment():
         assert stored_metadata["pdf_sha256"] == sha256_file(rendered.pdf_path)
         assert stored_metadata["counts"]["sample_count"] == 260
         assert stored_metadata["counts"]["display_pathline_count"] == 240
+        assert stored_metadata["analysis_experiment"] == (
+            "Other_MainExp31FamilyHeldOutVisualization_1.1"
+        )
+        assert stored_metadata["fold_id"] == "holdout_tangaroa_test_fixture"
+        assert stored_metadata["library_contains_query_family"] is False
+        assert stored_metadata["scale_block"]["scale_block_id"] == "legacy_2_1"
         assert sum(
             stored_metadata["counts"][name]
             for name in (
