@@ -1,0 +1,94 @@
+experiment: Other_NegativeDistanceSpatial_1.1
+phase: exposed_development_diagnostic
+status: frozen_pre_run_not_run
+parent_experiments:
+  - mainExp_TemplateMatching_3.1
+  - Other_MainExp31FamilyHeldOutVisualization_1.1
+
+research_question: >-
+  Does the distance to the nearest non-vortex FMT template contain a more
+  stable vortex ranking than the signed positive-versus-negative 1NN margin,
+  and can label-free source-local spatial regularization turn that ranking
+  into useful classifications?
+
+evidence_scope:
+  level: exposed_development_only
+  formal_confirmation: false
+  preliminary_results_were_inspected_before_freeze: true
+  allowed_claim: mechanism_diagnosis_and_candidate_generation_only
+  forbidden_claims:
+    - sealed_confirmation
+    - unbiased_model_selection
+    - main_method_success
+
+inputs:
+  - id: main31_cross_family_test
+    path: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/runs/slurm_50999189_260a07ad380d/per_query_matches.csv
+    sha256: 492d521f5ebbcd470ff1f94de119e5ecf2b17cda0c0d5e1edfbd202aa5f50fa4
+    allowed_datasets: [tangaroa, smokeBuoyancy]
+    provenance_commit: 260a07ad380d64fc300cabe8926244e92d8ba04a
+    columns:
+      dataset: query_dataset
+      source_ordinal: query_source_ordinal
+      block: query_scale_block_id
+      center_index: query_center_seed_index
+      score: fmt_nearest_negative_distance
+      label: reference_label
+  - id: main31_train_family_holdouts_source2
+    path: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1/runs/slurm_51029080_86be29698eb6/per_query_matches.csv
+    sha256: 5f2c3b303c97e0c60ee152ea7e417c9d93278e26918f98e053508da758093be0
+    allowed_datasets:
+      - cylinder3d
+      - halfcylinderRe640
+      - halfcylinderRe6400
+      - boeing747
+    provenance_commit: 86be29698eb689c0e269fe987a5b6d5f125a67be
+    columns:
+      dataset: query_dataset
+      source_ordinal: query_source_ordinal
+      block: query_scale_block_id
+      center_index: query_center_seed_index
+      score: nearest_negative_distance
+      label: reference_label
+
+grouping: [dataset, source, block]
+grid_shape_zyx: [40, 40, 40]
+rank_definition: stable_ascending_score_then_center_index_with_percentile_rank_plus_one_over_n
+gaussian:
+  mask_normalized: true
+  no_cross_group_smoothing: true
+  truncate: 3.0
+  sigma_grid_indices: [0.0, 0.5, 0.75, 1.0, 1.5, 2.0]
+
+prediction_rules:
+  - high_score_two_means
+  - fixed_top_fraction
+fixed_top_fraction: 0.05
+fixed_top_fraction_reason: IVD_p95_definition_prior_not_observed_group_prevalence
+fixed_top_fraction_rule: rank_greater_than_one_minus_fraction_selecting_ceil_fraction_times_n
+
+metrics:
+  - accuracy
+  - average_precision
+  - f1
+  - balanced_accuracy
+  - auroc
+  - precision
+  - recall
+  - coverage
+aggregation: equal_weight_dataset_source_block_groups
+oracle_threshold:
+  enabled: true
+  role: diagnostic_ranking_upper_bound_only
+  prediction_rule: score_greater_than_or_equal_to_threshold
+  tie_break: highest_f1_then_highest_precision_then_highest_threshold
+  may_select_or_name_main_method: false
+
+output_root: /ibex/user/zhanx0o/pathline-template-matching/Other_NegativeDistanceSpatial_1.1
+run_directory_pattern: /ibex/user/zhanx0o/pathline-template-matching/Other_NegativeDistanceSpatial_1.1/runs/slurm_JOBID_COMMIT12
+immutability:
+  output_directory_must_not_exist: true
+  reference_column_excluded_from_prediction_projection_and_logic: true
+  predictions_written_before_explicit_reference_evaluation_pass: true
+  input_hash_mismatch_action: fail
+  overwrite: forbidden

@@ -99,6 +99,29 @@ from test_family_heldout_visualization import (
     test_family_heldout_block_cache_rehashes_every_filtered_array_and_combined_identity,
     test_family_heldout_visualization_plan_freezes_complete_families_and_eight_figures,
 )
+from test_negative_distance_spatial_runner import (
+    test_spatial_plan_rejects_method_contract_drift,
+    test_spatial_runner_is_byte_deterministic_and_oracle_ties_are_frozen,
+    test_spatial_runner_publishes_label_free_predictions_before_reference_metrics,
+    test_spatial_runner_rejects_hash_mismatch_missing_reference_and_overwrite,
+    test_spatial_runner_reports_single_class_metrics_and_finite_group_counts,
+)
+from test_one_class_spatial import (
+    test_high_score_two_means_constant_or_insufficient_input_fails_closed,
+    test_high_score_two_means_finds_global_high_mean_cluster,
+    test_high_score_two_means_rejects_invalid_scores,
+    test_high_score_two_means_is_translation_stable_at_large_offset,
+    test_masked_gaussian_flat_indices_follow_zyx_c_order,
+    test_masked_gaussian_normalizes_only_over_valid_centers,
+    test_masked_gaussian_rejects_invalid_inputs,
+    test_masked_gaussian_sigma_zero_preserves_input_rows_and_order,
+    test_negative_knn_scores_are_exact_and_chunk_invariant_on_cpu,
+    test_negative_knn_scores_cuda_matches_cpu,
+    test_negative_knn_scores_include_zero_self_distance_and_empty_queries,
+    test_negative_knn_scores_reject_invalid_inputs,
+    test_rank_scores_reject_invalid_inputs,
+    test_rank_scores_use_center_index_to_break_score_ties,
+)
 from test_phase21_pipeline import (
     test_phase21_atomic_cache_can_recover_a_missing_sidecar_without_reintegration,
     test_phase21_config_freezes_split_scales_and_balanced_assignment,
@@ -146,6 +169,25 @@ from test_visualization import (
 
 
 TESTS = (
+    test_negative_knn_scores_are_exact_and_chunk_invariant_on_cpu,
+    test_negative_knn_scores_include_zero_self_distance_and_empty_queries,
+    test_negative_knn_scores_cuda_matches_cpu,
+    test_negative_knn_scores_reject_invalid_inputs,
+    test_rank_scores_use_center_index_to_break_score_ties,
+    test_rank_scores_reject_invalid_inputs,
+    test_masked_gaussian_normalizes_only_over_valid_centers,
+    test_masked_gaussian_flat_indices_follow_zyx_c_order,
+    test_masked_gaussian_sigma_zero_preserves_input_rows_and_order,
+    test_masked_gaussian_rejects_invalid_inputs,
+    test_high_score_two_means_finds_global_high_mean_cluster,
+    test_high_score_two_means_is_translation_stable_at_large_offset,
+    test_high_score_two_means_constant_or_insufficient_input_fails_closed,
+    test_high_score_two_means_rejects_invalid_scores,
+    test_spatial_runner_publishes_label_free_predictions_before_reference_metrics,
+    test_spatial_runner_reports_single_class_metrics_and_finite_group_counts,
+    test_spatial_runner_rejects_hash_mismatch_missing_reference_and_overwrite,
+    test_spatial_runner_is_byte_deterministic_and_oracle_ties_are_frozen,
+    test_spatial_plan_rejects_method_contract_drift,
     test_arc_length_scale_cartesian_product_is_unique_and_ordered,
     test_constant_velocity_reaches_arc_target_and_resamples_uniformly,
     test_zero_velocity_and_clamped_final_time_step_are_invalid_and_audited,

@@ -162,3 +162,16 @@ Development 表格必须将 seen-scale 与 unseen-scale 分开，保留所有 fl
 - 每图报告coverage、accuracy、Average Precision、F1、balanced accuracy、Area Under the Receiver Operating Characteristic Curve、precision、recall及混淆计数。图和表只是`family-held-out exposed-development`；四个flow历史上已暴露，因此不是formal confirmation，也不代替跨source的主实验统计。
 
 详细数值、fold、哈希、输出和执行规则唯一由`config/Other_MainExp31FamilyHeldOutVisualization_1.1.yaml`定义；冻结config SHA-256为`6fec35d2f64a3b593a74e8b35674137b1665ce169491e3546384142514b46670`。
+
+## 15. `Other_NegativeDistanceSpatial_1.1` 的负类单类距离机制诊断
+
+本版本只复用 `mainExp_TemplateMatching_3.1` 与 `Other_MainExp31FamilyHeldOutVisualization_1.1` 已发布的逐 query 距离，不重积分、不重建模板库，也不改写任何父实验。两份输入 CSV 的绝对路径、允许数据集和 SHA-256 必须由唯一 config 冻结；哈希或数据集集合不符即失败。
+
+- 基础分数固定为 FMT 最近负模板距离，越大越像涡；禁止把正模板距离重新混入该分数。
+- 每个 `dataset×source×block` 单独做稳定百分位排序和 mask-normalized 40³ Gaussian；禁止跨 source、block 或 dataset 传播空间信息。
+- sigma 只允许 config 中冻结的网格。无标签预测只允许高分 one-dimensional two-means 与固定 top-5%；后者使用 IVD-p95 的定义先验，不得根据该组真实标签比例改动。
+- 两份输入CSV本身含label，reader解析整行后才做列投影，因此不得声称预测阶段没有物理打开label所在文件。预测逻辑的显式投影必须排除reference label，先生成并关闭不含label的预测文件；随后才允许第二次显式reference投影和评测。预测产物不得含label。
+- oracle threshold 只报告排序上界，不得选择方法、写入部署预测或作为主结论。
+- 所有输入已经暴露，且初步机制结果在冻结前已被查看；因此本版本只能称 `exposed-development mechanism diagnostic`。它不能证明 generalization，也不能替代下一版本 train-only nested complete-family validation。
+
+详细 sigma、列名、输入身份、指标与不可覆盖规则唯一由 `config/Other_NegativeDistanceSpatial_1.1.yaml` 定义；冻结 SHA-256 为 `e891af14037c464a6042143625646be0d2f71c37e5e9ff30e50cc30dd553c141`。
