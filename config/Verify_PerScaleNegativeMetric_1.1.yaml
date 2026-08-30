@@ -1,0 +1,366 @@
+experiment: Verify_PerScaleNegativeMetric_1.1
+phase: exposed_train_only_nested_family_validation
+status: frozen_pre_run_not_implemented
+frozen_before_parent_outer_results: Verify_NegativeTailCalibration_1.1
+parent_experiments:
+  - mainExp_TemplateMatching_3.1
+  - Other_NegativeDistanceSpatial_1.1
+  - Verify_ScaleConditionedRetrieval_1.1
+  - Verify_NegativeTailCalibration_1.1
+
+research_question: >-
+  Does replacing the parent global negative-only diagonal variance with a
+  fit-negative exact-per-scale shrunk diagonal within-scale variance improve
+  same-scale FMT distance ordering and held-out-family F1 while leaving the
+  negative-tail calibration and every candidate rule unchanged?
+
+single_mechanism_change:
+  parent_feature_metric: global_negative_only_diagonal_population_variance
+  current_feature_metric: fit_negative_per_scale_shrunk_diagonal_within_scale_population_variance
+  unchanged_score_transform: fit_negative_scale_tail_anomaly
+  forbidden_concurrent_changes:
+    - principal_component_analysis
+    - learned_metric
+    - kinematic_features
+    - descriptor_change
+    - cross_scale_retrieval
+    - tail_calibration_change
+    - representation_grid_change
+    - k_grid_change
+    - spatial_sigma_grid_change
+    - decision_grid_change
+    - nested_split_change
+    - success_stop_rule_change
+
+evidence_scope:
+  level: exposed_development_only
+  formal_confirmation: false
+  allowed_inputs: mainExp_TemplateMatching_3.1_train_caches_only
+  forbidden_datasets: [tangaroa, smokeBuoyancy]
+  forbidden_claims: [sealed_confirmation, conformal_coverage, independent_full_classifier]
+
+parent_identity:
+  cache_builder_git_commit: 260a07ad380d64fc300cabe8926244e92d8ba04a
+  main_config_sha256: 771980f14a6019a1f6e4bf03668d9f37dcf63495ae2dafa866312b12fc71855e
+  descriptor_id: fmt_independent_3d_161d_sha256_25fce29499c9089e
+  cache_schema: pathline_template_matching.phase31_cache.v1
+  scale_conditioned_config_sha256: f5dbdae08e2e13140245a6a9fd12dba67b4eaf6a7ae1aaea8d600f89a409a6a2
+  negative_tail_config_sha256: 4b6f05dd852990364aa3465d1c990d79532e6c859ab27a219f3d95817868ce3b
+  input_manifest:
+    path: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/train_coverage/slurm_50998592_260a07ad380d/train_cache_input_manifest.json
+    size_bytes: 24009
+    sha256: e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393
+    schema: pathline_template_matching.long_arc_train_cache_input.v1
+    row_count: 32
+    rows_content_sha256: ceb6d0e3fb7a2c90fcaae98583f8d1def7ee75fa7968f38d2821ee3040ae156f
+
+families:
+  half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+  delta_wing: [deltaWing_resampled, deltaWing_LBM]
+  f22_raptor: [f22raptor]
+  channel: [channel]
+  boeing_747: [boeing747]
+
+nested_split:
+  outer_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  inner_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  outer_unit: complete_physical_family
+  inner_unit: complete_physical_family
+  source_window_unit: complete_source_plus_48_future_frame_horizon
+  random_seed_split: forbidden
+  outer_labels_available_to_selection: false
+  selection_aggregation: equal_dataset_source_block_groups_within_family_then_equal_inner_families
+
+library:
+  class: negative_only
+  population: every_valid_natural_negative_row_from_fit_families
+  balancing: none
+  subsampling: none
+  scaler: fit_negative_exact_per_scale_mean_and_shrunk_within_scale_population_std
+  scaler_dtype: float64
+  distance_dtype: float32
+  scale_blocks:
+    legacy_2_1: [0, 999]
+    expanded_3_1: [1000, 1999]
+  local_mean: arithmetic_mean_of_fit_negative_rows_at_exact_scale
+  local_variance_ddof: 0
+  local_variance_formula: sum_squared_residuals_about_exact_scale_mean_divided_by_exact_scale_row_count
+  block_other_prior_population: same_block_other_scales_fit_negative_rows_only
+  block_other_prior_centering: each_other_scale_uses_its_own_local_mean
+  block_other_prior_formula: pooled_sum_of_other_scale_within_scale_squared_residuals_divided_by_other_scale_row_count
+  block_other_prior_excludes:
+    - current_scale
+    - between_scale_mean_differences
+  global_other_prior_population: both_blocks_all_other_scales_fit_negative_rows_only
+  global_other_prior_centering: each_other_scale_uses_its_own_local_mean
+  global_other_prior_formula: pooled_sum_of_other_scale_within_scale_squared_residuals_divided_by_other_scale_row_count
+  global_other_prior_excludes:
+    - current_scale
+    - between_scale_mean_differences
+  global_other_prior_use: only_when_block_other_row_count_is_zero
+  shrinkage_lambda: 64
+  shrinkage_lambda_source: assigned_rows_per_source_block_scale_from_mainexp_3_1_design
+  local_weight_formula: exact_scale_row_count_divided_by_exact_scale_row_count_plus_64
+  variance_shrinkage_formula: local_weight_times_local_variance_plus_one_minus_local_weight_times_prior_variance
+  shrinkage_domain: variance_before_square_root
+  broader_prior_fallback_order:
+    - block_other
+    - global_other_only_if_block_other_empty
+    - local_only_if_all_other_scales_empty
+  std_floor_exclusive: 1.0e-12
+  effective_std_formula: square_root_of_shrunk_variance_unless_shrunk_std_strictly_less_than_1e_12_then_one
+  zero_or_subfloor_effective_std: 1.0
+  query_and_library_transform: same_fit_only_exact_scale_mean_and_effective_std
+  mean_metric_effect: cancels_exactly_in_same_scale_euclidean_difference
+  mechanism_metric_effect: exact_scale_effective_std_only
+  scaler_refit_per_leave_one_out_row: false
+  no_local_row_policy: no_scale_library_and_retrieval_unsupported
+  synthetic_or_broader_library_rows: forbidden
+  scaler_modes:
+    no_local_rows: 0
+    local_block_shrink: 1
+    local_global_shrink: 2
+    local_only: 3
+
+representations:
+  order: [fmt161, real_neighbor36, chirality_all35]
+  fmt161:
+    definition: all_seven_contiguous_23d_FMT_line_blocks
+    width: 161
+  real_neighbor36:
+    definition: six_neighbor_lines_times_local_indices_0_3_6_9_12_15
+    width: 36
+  chirality_all35:
+    definition: seven_lines_times_local_indices_18_through_22
+    width: 35
+
+retrieval:
+  distance: exact_euclidean_after_fit_negative_exact_scale_diagonal_standardization
+  conditioning: exact_numeric_scale_id
+  ks: [1, 5, 15, 31]
+  query_chunk_size: 1024
+  library_chunk_size: 8192
+  score_before_calibration: kth_nearest_negative_distance
+  cross_scale_distance: forbidden
+  support_count_source: fit_family_negative_rows_only
+
+negative_tail_calibration:
+  reference_population: fit_family_natural_negative_rows_only
+  scaler_refit_per_leave_one_out_row: false
+  leave_one_out_definition: explicit_self_row_exclusion_after_one_fit_negative_per_scale_scaler_fit
+  self_exclusion_implementation: current_row_distance_set_to_positive_infinity
+  duplicate_feature_policy: exclude_only_current_row_and_retain_other_zero_distance_rows
+  multi_k_search: one_exact_maximum_supported_k_pass_per_scale
+  local_reference_minimum_count: k_plus_1_negative_rows
+  tail_probability_formula: one_plus_count_reference_greater_than_or_equal_to_distance_divided_by_reference_count_plus_one
+  anomaly_score_formula: count_reference_strictly_less_than_distance_divided_by_reference_count_plus_one
+  equal_distance_policy: conservative_larger_tail_probability
+  scale_blocks:
+    legacy_2_1: [0, 999]
+    expanded_3_1: [1000, 1999]
+  shrinkage_lambda: 64
+  shrinkage_lambda_source: assigned_rows_per_source_block_scale_from_mainexp_3_1_design
+  local_weight_formula: local_reference_count_divided_by_local_reference_count_plus_64
+  block_other_reference: same_block_all_other_scales_only
+  global_other_reference: both_blocks_all_other_scales_only
+  fallback_order:
+    - local_plus_block_other_shrinkage
+    - local_plus_global_other_shrinkage
+    - local_only
+    - block_other_only
+    - global_other_only
+    - unsupported
+  retrieval_support_rule: scale_negative_count_greater_than_or_equal_to_k
+  local_reference_rule: scale_negative_count_greater_than_or_equal_to_k_plus_1
+  no_reference_tail_probability: 1.0
+  no_reference_anomaly_score: 0.0
+  calibration_modes:
+    no_calibration: 0
+    local_block_shrink: 1
+    local_global_shrink: 2
+    local_only: 3
+    block_fallback: 4
+    global_fallback: 5
+
+group_transform:
+  group_fields: [dataset, source_ordinal, scale_block]
+  grid_shape_zyx: [40, 40, 40]
+  query_group_rank: forbidden
+  input_score: fit_negative_tail_anomaly
+  gaussian_sigmas_grid_indices: [0.0, 0.5, 1.0, 1.5, 2.0]
+  gaussian_truncate: 3.0
+  sigma_zero_policy: calibration_unsupported_score_zero_and_explicit_negative_rejection
+  positive_sigma_policy: calibration_support_mask_normalized_spatial_imputation
+  positive_sigma_formula: G(tail_anomaly_times_calibration_support)_divided_by_G(calibration_support)
+  zero_denominator_policy: score_zero_and_explicit_negative_rejection
+  cross_dataset_source_or_block_smoothing: forbidden
+  classifier_minimum_query_batch: complete_valid_source_times_scale_block_grid
+
+decision_candidates:
+  fixed_top_fraction:
+    enabled: true
+    fraction: 0.05
+    count: ceil_fraction_times_all_valid_group_rows_capped_by_eligible_count
+    eligible: calibration_supported_or_spatially_imputed_rows_with_strictly_positive_score
+    ineligible_prediction: negative
+    tie_break: descending_score_then_ascending_center_index
+  calibrated_tail_anomaly_threshold:
+    enabled: true
+    comparison: score_greater_than_or_equal_to_threshold
+    eligible: calibration_supported_or_spatially_imputed_rows
+    ineligible_prediction: negative
+    values:
+      - 0.50
+      - 0.51
+      - 0.52
+      - 0.53
+      - 0.54
+      - 0.55
+      - 0.56
+      - 0.57
+      - 0.58
+      - 0.59
+      - 0.60
+      - 0.61
+      - 0.62
+      - 0.63
+      - 0.64
+      - 0.65
+      - 0.66
+      - 0.67
+      - 0.68
+      - 0.69
+      - 0.70
+      - 0.71
+      - 0.72
+      - 0.73
+      - 0.74
+      - 0.75
+      - 0.76
+      - 0.77
+      - 0.78
+      - 0.79
+      - 0.80
+      - 0.81
+      - 0.82
+      - 0.83
+      - 0.84
+      - 0.85
+      - 0.86
+      - 0.87
+      - 0.88
+      - 0.89
+      - 0.90
+      - 0.91
+      - 0.92
+      - 0.93
+      - 0.94
+      - 0.95
+      - 0.96
+      - 0.97
+      - 0.98
+      - 0.99
+  frozen_candidate_count: 3060
+
+selection:
+  eligible_evidence: inner_out_of_family_groups_only
+  aggregation_stage_1: equal_dataset_source_block_groups_within_each_inner_family
+  aggregation_stage_2: equal_inner_family_macro
+  expected_inner_family_count_per_outer_fold: 4
+  primary: highest_equal_inner_family_macro_f1
+  tie_break_order:
+    - highest_equal_inner_family_macro_average_precision
+    - highest_equal_inner_family_macro_balanced_accuracy
+    - highest_equal_inner_family_macro_precision
+    - highest_equal_inner_family_macro_recall
+    - lexicographically_smallest_candidate_id
+  outer_family_metric_or_label_use: forbidden
+
+metrics:
+  - accuracy
+  - average_precision
+  - f1
+  - balanced_accuracy
+  - auroc
+  - precision
+  - recall
+  - retrieval_support_fraction
+  - calibration_support_fraction
+  - spatial_imputed_fraction
+  - spatial_unimputable_fraction
+  - true_positive
+  - false_positive
+  - true_negative
+  - false_negative
+  - sample_count
+  - positive_count
+  - negative_count
+  - retrieval_supported_count
+  - calibration_supported_count
+  - imputed_count
+  - unimputable_count
+  - calibration_mode_counts
+  - scaler_mode_counts
+
+success_stop_rule:
+  outer_family_macro_f1_minimum: 0.70
+  outer_families_at_or_above_0_65_minimum: 4
+  minimum_single_outer_family_f1: 0.50
+  outer_family_macro_average_precision_minimum: 0.60
+  outer_family_macro_balanced_accuracy_minimum: 0.70
+  outer_family_macro_precision_minimum: 0.60
+  outer_family_macro_recall_minimum: 0.60
+  threshold_changes_after_outer_results: forbidden
+
+serialization:
+  scaler_schema: pathline_template_matching.per_scale_negative_metric.v1
+  scaler_scale_count: 2000
+  scaler_required_arrays:
+    - scale_id_int32
+    - local_row_count_int64
+    - block_other_row_count_int64
+    - global_other_row_count_int64
+    - local_support_bool
+    - scaler_mode_int8
+    - local_mean_float64
+    - local_variance_float64
+    - prior_variance_float64
+    - shrunk_variance_float64
+    - effective_std_float64
+  absent_scale_serialization: support_false_mode_no_local_rows_numeric_placeholders_never_used
+  manifest_must_record:
+    - config_sha256
+    - input_manifest_sha256
+    - fit_family_set
+    - representation
+    - candidate_identity
+    - array_names_dtypes_shapes_sha256
+    - scaler_support_and_mode_counts
+    - parent_negative_tail_config_sha256
+  selected_candidate_must_record:
+    - final_per_scale_scaler_manifest_sha256
+    - final_tail_calibration_manifest_sha256
+
+output:
+  root: /ibex/user/zhanx0o/pathline-template-matching/Verify_PerScaleNegativeMetric_1.1
+  fold_directory_pattern: runs/slurm_JOBID_ARRAYTASK_COMMIT12_outer_FAMILY
+  overwrite: forbidden
+  final_scaler_written_before_outer_feature_open: true
+  final_calibration_written_before_outer_feature_open: true
+  predictions_written_before_outer_reference_open: true
+  required_fold_files:
+    - inner_group_metrics.csv
+    - inner_candidate_summary.csv
+    - inner_fit_audits.json
+    - final_per_scale_scaler.npz
+    - final_per_scale_scaler_manifest.json
+    - final_tail_calibration.npz
+    - final_tail_calibration_manifest.json
+    - selected_candidate.json
+    - outer_predictions.npz
+    - outer_prediction_manifest.json
+    - outer_group_metrics.csv
+    - outer_summary.json
+    - outer_reference_access_audit.json
+    - result_manifest.json
+    - RUN_COMPLETE.json

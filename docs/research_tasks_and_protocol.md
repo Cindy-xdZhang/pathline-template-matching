@@ -240,3 +240,16 @@ SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 - Final calibration artifacts与selected candidate必须在任何outer feature member打开前关闭并哈希；prediction artifact认证后才允许读取outer labels。所有失败、回退mode、support状态与哈希都必须保留。
 
 唯一配置为`config/Verify_NegativeTailCalibration_1.1.yaml`；冻结SHA-256为`4b6f05dd852990364aa3465d1c990d79532e6c859ab27a219f3d95817868ce3b`。即使达到停止规则，本版本也只使用已暴露train flows，不是formal confirmation。
+
+## 19. `Verify_PerScaleNegativeMetric_1.1` 的 fit-negative 逐尺度方差度量
+
+本版本必须在读取 `Verify_NegativeTailCalibration_1.1` 的任何 outer 指标前冻结，状态固定为 `frozen_pre_run_not_implemented`。相对该父验证，唯一数值变化是把 global negative-only diagonal population variance 替换为 fit-negative exact-per-scale shrunk diagonal within-scale population variance；tail calibration、三个 FMT representation、exact same-scale retrieval、`k`、spatial sigma、decision grid、3060 个候选、nested family split、宏平均与停止规则全部不变。禁止扫描 lambda/metric 网格或同时加入 PCA、learned metric、kinematic feature、descriptor 修改与跨尺度检索。
+
+- 精确尺度 `s` 的 local mean 与 variance 只用 fit-family natural negatives，`ddof=0`：`mu_s=sum(x)/n_s`，`v_s=sum((x-mu_s)^2)/n_s`。
+- Block-other prior 必须对同 block 其他尺度分别减去各自 local mean，再把 within-scale squared residual 以总 row 数 pooling；禁止包含尺度均值之间的差异。只有 block-other row count 为零时才允许用两个 block 全部其他尺度、按同一 per-scale-centering 公式得到的 global-other prior。
+- 固定 `lambda=64` 与 `w_s=n_s/(n_s+64)`，并先在 variance 域收缩：`v_shrunk=w_s*v_s+(1-w_s)*v_prior`。`sqrt(v_shrunk)<1e-12` 的 coordinate 固定使用 effective std `1`；禁止直接收缩 standard deviation。
+- Query 与 library 必须使用同一 fit-only exact-scale mean/std。Mean 在同尺度 Euclidean difference 中理论上相消，数值机制只来自 effective std。若两级 broader prior 都空，只允许记录 local-only；若 `n_s=0`，不得用 broader row 伪造 library，该尺度 retrieval unsupported。
+- `n_s<k`、`n_s=k`、`n_s>=k+1` 的 retrieval/calibration support、leave-one-out self exclusion、tail probability 方向、tail-reference `lambda=64` shrinkage与 fallback modes逐字段继承父验证；leave-one-out 不得逐行重拟合 scaler。
+- Final per-scale scaler、tail calibration 与 selected candidate 必须在任何 outer feature member 打开前关闭、原子发布并认证。Scaler NPZ/manifest 必须保存完整 2000-scale 的 counts、support、mode、mean、local/prior/shrunk variance、effective std、array SHA-256，并由 selected candidate 绑定 scaler 与 calibrator manifest SHA-256；prediction 认证后才允许读取 outer labels。
+
+唯一配置为 `config/Verify_PerScaleNegativeMetric_1.1.yaml`；冻结 SHA-256 为 `b469b909466dda941d122629ba43cf94e872faceed73c5f0970e3cf66697dd79`。冻结发生在任何 `Verify_NegativeTailCalibration_1.1` outer 结果可见前；本版本目前没有数值实现、Ibex run 或性能结论，也不是 formal confirmation。
