@@ -1,0 +1,227 @@
+experiment: Verify_ScaleConditionedRetrieval_1.1
+phase: exposed_train_only_nested_family_validation
+status: frozen_pre_run_not_run
+parent_experiments:
+  - mainExp_TemplateMatching_3.1
+  - Other_NegativeDistanceSpatial_1.1
+
+research_question: >-
+  Can a natural non-vortex library, an exact same-scale negative k-nearest-
+  neighbour distance, and source-local spatial regularization generalize to a
+  completely held-out physical family when every method choice is selected by
+  nested leave-one-physical-family-out validation?
+
+evidence_scope:
+  level: exposed_development_only
+  formal_confirmation: false
+  allowed_inputs: mainExp_TemplateMatching_3.1_train_caches_only
+  forbidden_datasets: [tangaroa, smokeBuoyancy]
+  forbidden_claims: [sealed_confirmation, independent_per_primitive_classifier]
+
+parent_identity:
+  cache_builder_git_commit: 260a07ad380d64fc300cabe8926244e92d8ba04a
+  main_config_sha256: 771980f14a6019a1f6e4bf03668d9f37dcf63495ae2dafa866312b12fc71855e
+  descriptor_id: fmt_independent_3d_161d_sha256_25fce29499c9089e
+  cache_schema: pathline_template_matching.phase31_cache.v1
+  input_manifest:
+    path: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/train_coverage/slurm_50998592_260a07ad380d/train_cache_input_manifest.json
+    size_bytes: 24009
+    sha256: e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393
+    schema: pathline_template_matching.long_arc_train_cache_input.v1
+    row_count: 32
+    rows_content_sha256: ceb6d0e3fb7a2c90fcaae98583f8d1def7ee75fa7968f38d2821ee3040ae156f
+
+families:
+  half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+  delta_wing: [deltaWing_resampled, deltaWing_LBM]
+  f22_raptor: [f22raptor]
+  channel: [channel]
+  boeing_747: [boeing747]
+
+nested_split:
+  outer_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  inner_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  outer_unit: complete_physical_family
+  inner_unit: complete_physical_family
+  source_window_unit: complete_source_plus_48_future_frame_horizon
+  random_seed_split: forbidden
+  outer_labels_available_to_selection: false
+  selection_aggregation: equal_dataset_source_block_groups_within_family_then_equal_inner_families
+
+library:
+  class: negative_only
+  population: every_valid_natural_negative_row_from_fit_families
+  balancing: none
+  subsampling: none
+  scaler: global_population_mean_and_std_fit_on_negative_library_only
+  scaler_dtype: float64
+  distance_dtype: float32
+  std_ddof: 0
+  std_floor_exclusive: 1.0e-12
+  zero_variance_effective_std: 1.0
+
+representations:
+  order: [fmt161, real_neighbor36, chirality_all35]
+  fmt161:
+    definition: all_seven_contiguous_23d_FMT_line_blocks
+    width: 161
+  real_neighbor36:
+    definition: six_neighbor_lines_times_local_indices_0_3_6_9_12_15
+    width: 36
+  chirality_all35:
+    definition: seven_lines_times_local_indices_18_through_22
+    width: 35
+
+retrieval:
+  distance: exact_euclidean
+  conditioning: exact_numeric_scale_id
+  ks: [1, 5, 15, 31]
+  query_chunk_size: 1024
+  library_chunk_size: 8192
+  score: kth_nearest_negative_distance
+  cross_scale_distance: forbidden
+  support_count_source: fit_family_negative_rows_only
+
+group_transform:
+  group_fields: [dataset, source_ordinal, scale_block]
+  grid_shape_zyx: [40, 40, 40]
+  rank: supported_only_stable_ascending_distance_then_center_index_r_plus_1_over_n
+  unsupported_rank: 0.0
+  gaussian_sigmas_grid_indices: [0.0, 0.5, 1.0, 1.5, 2.0]
+  gaussian_truncate: 3.0
+  sigma_zero_policy: unsupported_score_zero_and_explicit_negative_rejection
+  positive_sigma_policy: support_mask_normalized_spatial_imputation
+  positive_sigma_formula: G(rank_times_support)_divided_by_G(support)
+  zero_denominator_policy: score_zero_and_explicit_negative_rejection
+  cross_dataset_source_or_block_smoothing: forbidden
+  classifier_minimum_query_batch: complete_valid_source_times_scale_block_grid
+
+decision_candidates:
+  fixed_top_fraction:
+    enabled: true
+    fraction: 0.05
+    count: ceil_fraction_times_all_valid_group_rows_capped_by_eligible_count
+    eligible: supported_or_spatially_imputed_rows_with_strictly_positive_score
+    ineligible_prediction: negative
+    tie_break: descending_score_then_ascending_center_index
+  calibrated_rank_threshold:
+    enabled: true
+    comparison: score_greater_than_or_equal_to_threshold
+    eligible: supported_or_spatially_imputed_rows
+    ineligible_prediction: negative
+    values:
+      - 0.50
+      - 0.51
+      - 0.52
+      - 0.53
+      - 0.54
+      - 0.55
+      - 0.56
+      - 0.57
+      - 0.58
+      - 0.59
+      - 0.60
+      - 0.61
+      - 0.62
+      - 0.63
+      - 0.64
+      - 0.65
+      - 0.66
+      - 0.67
+      - 0.68
+      - 0.69
+      - 0.70
+      - 0.71
+      - 0.72
+      - 0.73
+      - 0.74
+      - 0.75
+      - 0.76
+      - 0.77
+      - 0.78
+      - 0.79
+      - 0.80
+      - 0.81
+      - 0.82
+      - 0.83
+      - 0.84
+      - 0.85
+      - 0.86
+      - 0.87
+      - 0.88
+      - 0.89
+      - 0.90
+      - 0.91
+      - 0.92
+      - 0.93
+      - 0.94
+      - 0.95
+      - 0.96
+      - 0.97
+      - 0.98
+      - 0.99
+
+selection:
+  eligible_evidence: inner_out_of_family_groups_only
+  aggregation_stage_1: equal_dataset_source_block_groups_within_each_inner_family
+  aggregation_stage_2: equal_inner_family_macro
+  expected_inner_family_count_per_outer_fold: 4
+  primary: highest_equal_inner_family_macro_f1
+  tie_break_order:
+    - highest_equal_inner_family_macro_average_precision
+    - highest_equal_inner_family_macro_balanced_accuracy
+    - highest_equal_inner_family_macro_precision
+    - highest_equal_inner_family_macro_recall
+    - lexicographically_smallest_candidate_id
+  outer_family_metric_or_label_use: forbidden
+
+metrics:
+  - accuracy
+  - average_precision
+  - f1
+  - balanced_accuracy
+  - auroc
+  - precision
+  - recall
+  - retrieval_support_fraction
+  - spatial_imputed_fraction
+  - spatial_unimputable_fraction
+  - true_positive
+  - false_positive
+  - true_negative
+  - false_negative
+  - sample_count
+  - positive_count
+  - negative_count
+  - supported_count
+  - imputed_count
+  - unimputable_count
+  - supported_subset_f1
+  - imputed_subset_f1
+  - unimputable_subset_f1
+
+success_stop_rule:
+  outer_family_macro_f1_minimum: 0.70
+  outer_families_at_or_above_0_65_minimum: 4
+  minimum_single_outer_family_f1: 0.50
+  outer_family_macro_average_precision_minimum: 0.60
+  outer_family_macro_balanced_accuracy_minimum: 0.70
+  outer_family_macro_precision_minimum: 0.60
+  outer_family_macro_recall_minimum: 0.60
+  threshold_changes_after_outer_results: forbidden
+
+output:
+  root: /ibex/user/zhanx0o/pathline-template-matching/Verify_ScaleConditionedRetrieval_1.1
+  fold_directory_pattern: runs/slurm_JOBID_ARRAYTASK_COMMIT12_outer_FAMILY
+  overwrite: forbidden
+  predictions_written_before_outer_reference_open: true
+  required_fold_files:
+    - inner_group_metrics.csv
+    - inner_candidate_summary.csv
+    - selected_candidate.json
+    - outer_predictions.npz
+    - outer_prediction_manifest.json
+    - outer_group_metrics.csv
+    - outer_summary.json
+    - result_manifest.json
+    - RUN_COMPLETE.json

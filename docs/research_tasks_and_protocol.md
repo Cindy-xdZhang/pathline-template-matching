@@ -175,3 +175,18 @@ Development 表格必须将 seen-scale 与 unseen-scale 分开，保留所有 fl
 - 所有输入已经暴露，且初步机制结果在冻结前已被查看；因此本版本只能称 `exposed-development mechanism diagnostic`。它不能证明 generalization，也不能替代下一版本 train-only nested complete-family validation。
 
 详细 sigma、列名、输入身份、指标与不可覆盖规则唯一由 `config/Other_NegativeDistanceSpatial_1.1.yaml` 定义；冻结 SHA-256 为 `e891af14037c464a6042143625646be0d2f71c37e5e9ff30e50cc30dd553c141`。
+
+## 16. `Verify_ScaleConditionedRetrieval_1.1` 的 train-only nested physical-family 验证
+
+本版本只允许读取3.1的32个train caches，禁止访问Tangaroa与Smoke Buoyancy。五个train physical families依次作为outer fold；每个outer fold内，另外四个family各作一次inner validation，剩余三个family拟合全部自然负类组成的library和library-only scaler。Outer candidate按“family内`dataset×source×block`等权、再跨四个inner families等权”的F1、Average Precision、balanced accuracy、precision、recall和candidate ID顺序选择。
+
+- Representation固定为FMT161、real-neighbor36和chirality-all35；`k`固定为`1,5,15,31`，查询只允许exact numeric same-scale negative distance。
+- Supported-only distance rank按distance和center index稳定排序；unsupported行不删除，score为0并计入全部指标。
+- 正sigma仅允许同`dataset×source×block`的support-mask-normalized spatial imputation；输出必须区分supported、imputed和unimputable。插值结果不得称为exact-scale k-nearest-neighbor命中。
+- Fixed top-5%与`0.50–0.99`阈值共同构成3060个冻结候选；ineligible行必须判负，fixed-top不能把zero-score行通过center tie选正。
+- 每个outer task必须先写入并hash含final scaler/support的`selected_candidate.json`，再首次打开outer feature members；outer prediction projection禁止打开`metadata_json`和`valid_labels`。无标签prediction NPZ与manifest关闭后，必须重新验证manifest自哈希、文件大小/SHA-256、逐数组dtype/shape/SHA-256；只有全部通过后，第二次NPZ projection才能读取label评测。
+- 完整classifier因空间处理依赖完整source/block grid，必须称transductive classifier；只有FMT encoder可称per-primitive independent。
+- 五个outer fit均须对全部2000尺度支持`k=31`。两个inner fold存在真实支持缺口，必须保留unsupported行和分层指标，不得删尺度、删query或跳fold。
+- 达到config冻结的F1/AP/BA/precision/recall门槛只允许进入新的`mainExp_TemplateMatching_4.1`；本版本使用的八个flow都已暴露，不是formal confirmation。
+
+精确候选、split、输入哈希、支持规则、成功条件和输出由`config/Verify_ScaleConditionedRetrieval_1.1.yaml`唯一规定；冻结SHA-256为`f5dbdae08e2e13140245a6a9fd12dba67b4eaf6a7ae1aaea8d600f89a409a6a2`。
