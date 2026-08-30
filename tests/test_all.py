@@ -154,6 +154,29 @@ from test_negative_tail_aggregate import (
     test_negative_tail_aggregate_single_fold_authenticates_full_chain_and_exact_files,
     test_negative_tail_single_fold_certificate_stops_only_for_impossibility,
 )
+from test_per_scale_negative_metric import (
+    test_composite_artifact_reconstruction_rejects_tail_lambda_or_count_tamper,
+    test_composite_model_uses_exact_scale_std_without_second_global_weighting,
+    test_no_local_transform_never_reads_poisoned_placeholders_and_fails_closed,
+    test_per_scale_scaler_local_only_floor_and_absent_placeholders_are_exact,
+    test_per_scale_scaler_matches_frozen_ddof0_prior_and_variance_shrinkage,
+    test_per_scale_scaler_nonintegral_variance_round_trip_is_bitwise_exact,
+    test_per_scale_scaler_rejects_prior_shrink_and_effective_std_tamper,
+    test_same_scale_mean_cancels_and_query_membership_is_invariant,
+)
+from test_per_scale_negative_metric_runner import (
+    test_final_scaler_authentication_rejects_formula_valid_shape_tamper,
+    test_final_scaler_then_tail_artifacts_round_trip_and_bind_each_other,
+    test_per_scale_plan_candidate_grid_and_output_contract_are_exact,
+    test_per_scale_runner_query_path_is_rank_free_and_reports_scaler_modes,
+    test_synthetic_double_artifact_prediction_and_label_gate_end_to_end,
+)
+from test_per_scale_negative_metric_aggregate import (
+    test_per_scale_aggregate_complete_five_fold_applies_frozen_stop_rule,
+    test_per_scale_aggregate_contract_and_double_artifact_gate_are_frozen,
+    test_per_scale_ibex_aggregate_requires_exact_fold_checkout_and_job_local_numba_cache,
+    test_per_scale_aggregate_rejects_incomplete_or_mixed_provenance,
+)
 from test_one_class_spatial import (
     test_high_score_two_means_constant_or_insufficient_input_fails_closed,
     test_high_score_two_means_finds_global_high_mean_cluster,
@@ -272,6 +295,23 @@ def test_negative_tail_export_is_pure_arrays_and_round_trip_is_exact():
 
 
 TESTS = (
+    test_per_scale_scaler_matches_frozen_ddof0_prior_and_variance_shrinkage,
+    test_per_scale_scaler_local_only_floor_and_absent_placeholders_are_exact,
+    test_per_scale_scaler_nonintegral_variance_round_trip_is_bitwise_exact,
+    test_per_scale_scaler_rejects_prior_shrink_and_effective_std_tamper,
+    test_no_local_transform_never_reads_poisoned_placeholders_and_fails_closed,
+    test_composite_model_uses_exact_scale_std_without_second_global_weighting,
+    test_composite_artifact_reconstruction_rejects_tail_lambda_or_count_tamper,
+    test_same_scale_mean_cancels_and_query_membership_is_invariant,
+    test_per_scale_plan_candidate_grid_and_output_contract_are_exact,
+    test_per_scale_runner_query_path_is_rank_free_and_reports_scaler_modes,
+    test_final_scaler_then_tail_artifacts_round_trip_and_bind_each_other,
+    test_final_scaler_authentication_rejects_formula_valid_shape_tamper,
+    test_synthetic_double_artifact_prediction_and_label_gate_end_to_end,
+    test_per_scale_aggregate_contract_and_double_artifact_gate_are_frozen,
+    test_per_scale_ibex_aggregate_requires_exact_fold_checkout_and_job_local_numba_cache,
+    test_per_scale_aggregate_complete_five_fold_applies_frozen_stop_rule,
+    test_per_scale_aggregate_rejects_incomplete_or_mixed_provenance,
     test_negative_spatial_visualization_plan_freezes_candidate_and_eight_figures,
     test_candidate_projection_uses_fixed_columns_and_rejects_duplicate_join_identity,
     test_candidate_projection_rejects_extra_identity_and_reordered_parent_join,
