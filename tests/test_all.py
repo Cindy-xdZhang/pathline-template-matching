@@ -134,6 +134,16 @@ from test_negative_tail_calibration import (
     test_reconstruction_rejects_tampered_offsets_and_lambda,
     test_retrieval_and_calibration_boundaries_use_frozen_fallback_chain,
 )
+from test_negative_tail_runner import (
+    test_batched_tail_threshold_metrics_match_direct_predictions_with_ties,
+    test_final_calibration_authentication_rejects_structure_valid_content_tamper,
+    test_negative_tail_plan_and_candidate_grid_are_exact_and_rank_free,
+    test_negative_tail_query_path_never_calls_query_rank_and_is_membership_invariant,
+    test_outer_projection_and_reference_gate_do_not_open_labels_early,
+    test_runner_final_fit_accepts_n_equals_k_and_uses_calibration_fallback,
+    test_spatial_calibrated_tail_scores_match_independent_mask_normalized_gaussian,
+    test_synthetic_negative_tail_artifact_prediction_and_label_pipeline_end_to_end,
+)
 from test_one_class_spatial import (
     test_high_score_two_means_constant_or_insufficient_input_fails_closed,
     test_high_score_two_means_finds_global_high_mean_cluster,
@@ -266,6 +276,14 @@ TESTS = (
     test_local_global_shrink_exact_tail_probability_excludes_current_scale,
     test_local_only_exact_tail_probability_matches_independent_reference,
     test_retrieval_and_calibration_boundaries_use_frozen_fallback_chain,
+    test_batched_tail_threshold_metrics_match_direct_predictions_with_ties,
+    test_final_calibration_authentication_rejects_structure_valid_content_tamper,
+    test_negative_tail_plan_and_candidate_grid_are_exact_and_rank_free,
+    test_negative_tail_query_path_never_calls_query_rank_and_is_membership_invariant,
+    test_outer_projection_and_reference_gate_do_not_open_labels_early,
+    test_runner_final_fit_accepts_n_equals_k_and_uses_calibration_fallback,
+    test_spatial_calibrated_tail_scores_match_independent_mask_normalized_gaussian,
+    test_synthetic_negative_tail_artifact_prediction_and_label_pipeline_end_to_end,
     test_local_global_shrink_and_local_only_modes_are_reachable_without_labels,
     test_no_reference_keeps_n_equals_k_retrieved_but_calibration_unsupported,
     test_fit_and_query_are_invariant_to_distance_chunk_sizes_and_query_membership,
