@@ -1,8 +1,8 @@
 # `Verify_PerScaleNegativeMetric_1.1`
 
-执行状态：`ibex_submitted_pending`。配置中的预注册字段仍保持 `status: frozen_pre_run_not_implemented`，以保留冻结 SHA-256；方法、候选集与输出认证合同是在读取任何 `Verify_NegativeTailCalibration_1.1` outer 指标前冻结的。数值实现、认证聚合器、Ibex 五折提交脚本和测试已经完成；五折 array `51063738` 与依赖聚合 `51063753` 已提交但尚无 outer 指标或性能结论。
+执行状态：`fold_array_completed_aggregation_failed_pre_metric_acceptance`。配置中的预注册字段仍保持 `status: frozen_pre_run_not_implemented`，以保留冻结 SHA-256；方法、候选集与输出认证合同是在读取任何 `Verify_NegativeTailCalibration_1.1` outer 指标前冻结的。五折 array `51063738` 的五个 task 均已完成，但依赖聚合 `51063753` 在 fresh replay 中因 `authenticated spatial score does not match tail transform` 失败。尚未读取或接受任何 outer metrics，因此仍无性能结论。
 
-实现路径：`src/pathline_template_matching/per_scale_negative_metric.py`、`scripts/run_verify_per_scale_negative_metric_1_1.py`、`scripts/aggregate_verify_per_scale_negative_metric_1_1.py`、`ibex/verify_per_scale_negative_metric_1.1_all_folds.sh` 与 `ibex/verify_per_scale_negative_metric_1.1_aggregate_five.sh`。提交前本地完整标准库回归为 220 项；numerical commit 为 `809ffa3b9490ca4f5b0817d77759b5d88cce628c`。实际设备、结果与产物哈希必须在作业结束后追加。
+实现路径：`src/pathline_template_matching/per_scale_negative_metric.py`、`scripts/run_verify_per_scale_negative_metric_1_1.py`、`scripts/aggregate_verify_per_scale_negative_metric_1_1.py`、`ibex/verify_per_scale_negative_metric_1.1_all_folds.sh` 与 `ibex/verify_per_scale_negative_metric_1.1_aggregate_five.sh`。提交前本地完整标准库回归为 220 项；numerical commit 为 `809ffa3b9490ca4f5b0817d77759b5d88cce628c`。实际设备和终态见 `docs/ibex_run_registry.md`；未经 fresh-replay 认证的 fold 结果不得转写为指标或结论。
 
 冻结配置：`config/Verify_PerScaleNegativeMetric_1.1.yaml`
 
@@ -127,4 +127,24 @@ G(tail_anomaly × calibration_support) / G(calibration_support).
 - 本版本只改变 diagonal feature weighting，不引入 coordinate covariance；相关 feature 的重复计权仍可能存在。
 - Per-scale mean 理论上在 exact same-scale distance 中相消；若观测到结果依赖 mean shift，说明实现违反了同尺度或同 scaler 合同。
 - `n_s=1` 时 local variance 为零，结果主要由冻结的 broader prior 决定；这不是新增 library support。
-- 本版本在任何 `Verify_NegativeTailCalibration_1.1` outer 指标可见前冻结。当前实现已完成且 Ibex run 已提交，但尚无本版本性能结论；预注册配置中的历史状态字段不得为反映实现进度而改写。
+- 本版本在任何 `Verify_NegativeTailCalibration_1.1` outer 指标可见前冻结。当前实现已完成；首次 Ibex fold array 完成但依赖聚合认证失败，终态见第 8 节。尚无本版本性能结论；预注册配置中的历史状态字段不得为反映实现进度而改写。
+
+## 8. Ibex 首次运行终态（不含 outer metrics）
+
+Slurm array `51063738_[0-4]` 于 2026-08-31 00:46:13 +03:00 同时开始，五个 task 全部 `COMPLETED`、exit `0:0`。按 task 0–4：
+
+| task / held-out family | node | elapsed | end | batch MaxRSS |
+|---|---|---:|---|---:|
+| `0 / half_cylinder` | `cn509-07-r` | `00:10:44` | `00:56:57` | `13478416K` |
+| `1 / delta_wing` | `cn509-05-l` | `00:12:07` | `00:58:20` | `19409736K` |
+| `2 / f22_raptor` | `cn509-04-l` | `00:12:27` | `00:58:40` | `20518168K` |
+| `3 / channel` | `cn509-03-r` | `00:13:31` | `00:59:44` | `21470428K` |
+| `4 / boeing_747` | `cn514-06-r` | `00:10:35` | `00:56:48` | `21643012K` |
+
+依赖聚合 `51063753` 于 00:59:45 在 `cn504-17` 开始，01:04:54 以 `FAILED`、exit `1:0` 结束，elapsed `00:05:09`，batch MaxRSS `12250816K`。失败发生在 fresh replay 的认证阶段，精确错误为：
+
+```text
+authenticated spatial score does not match tail transform
+```
+
+这说明当前 fold artifact 尚未通过冻结的 fresh-replay 合同；它不说明逐尺度度量的性能好坏。五个 fold 目录及失败聚合目录必须原样保留，不覆盖、不删除，也不得把其中任何 outer metric 读出或接受为证据。后续工作限定为 label-free 诊断：只定位已认证 spatial score 与由 tail transform 重放所得 score 不一致的首个 identity、字段与数值来源；在诊断完成、修复另行版本化并重新认证以前，本版本保持“无 outer 性能结论”。
