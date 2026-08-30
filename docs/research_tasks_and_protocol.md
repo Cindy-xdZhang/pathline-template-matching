@@ -269,3 +269,96 @@ SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 - 固定 top-5% 判决在每个 dataset/source/block 内是 transductive 的；全部流场与 fitted outer-fold classifier 已暴露，因此只是 `family-held-out exposed-development visualization`，不是 formal confirmation 或多 source 汇总证据。
 
 唯一配置为 `config/Other_NegativeTailVisualization_1.1.yaml`；冻结 SHA-256 为 `5a82a9d1af406043066316262e5dcefb1a0d559f6d66e82da16440a2066df131`。
+
+## 21. `Verify_EarlyOppositePairKinematics_1.1` 的 seed-time 局部运动学增强
+
+本版本配置必须在首次读取 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer
+prediction、label、metric 或 aggregate 结果之前冻结。冻结时 PerScale jobs
+`51063738/51063753` 已提交但 outer 结果尚未读取；配置中的
+`frozen_before_first_read_of_any_per_scale_outer_result: true` 是不可改写的历史事实。
+本版本尚未实现、未运行且没有性能结论。
+
+相对 `Verify_PerScaleNegativeMetric_1.1`，唯一数值变化是把同一个固定 4D
+seed-time kinematic block 无权重追加到三个父 FMT 表示，形成固定顺序的
+`165D/40D/39D` 三个表示。禁止增加 kinematics-only 候选，禁止改变 per-scale
+metric、`lambda=64`、tail calibration、exact same-scale retrieval、`k`、spatial
+sigma、decision grid、3060 candidates、nested physical-family split、选择、成功或
+提前停止规则；也禁止扫描 block weight、log、time window、DFT、mean-vorticity
+correction 或任何 whole-volume IVD feature。
+
+- 每个 valid row 的 center 固定为
+  `seeds_xyz[valid_assigned_row_index]`；以
+  `h=dx_grid_scale[valid_scale_id]×min(Δx,Δy,Δz)` 构造固定顺序
+  `center,x+,x-,y+,y-,z+,z-`。七点必须在同一 relative seed time `t0=0`，用与
+  production RK4 相同 corner/arithmetic order 的 quadrilinear sampler 从 matching
+  train portable frame 0 取 float32 初始速度。禁止用 Raw 第一段或 center line
+  times 估计 neighbour velocity。
+- 以 float64 计算
+  `G[:,x]=(u_x+−u_x−)/(2h)`、对应的 y/z columns，
+  `omega=curl(G)`、`S=(G+G^T)/2`、`Omega=(G−G^T)/2`、
+  `div=trace(G)` 与
+  `Q=0.5(||Omega||_F²−||S||_F²)`；4D 顺序固定为
+  `[||omega||₂,||S||_F,signed div,signed Q]`，finite 后 float32 序列化。禁止
+  batch/flow statistics、absolute divergence、log 与 mean-vorticity subtraction。
+- 不得覆盖或扩展 immutable 3.1 parent cache。必须先冻结精确 32-row、train-only
+  kinematic input manifest，再构建 additive
+  `pathline_template_matching.seed_time_opposite_pair_kinematics_cache.v1` sidecars。
+  Sidecar exact arrays、parent/portable hashes、line/time/interpolation/dtype contract、
+  identity join 与 atomic non-overwrite 规则由唯一 config 固定；sidecar metadata
+  禁止 label 与 label-derived counts。Input freeze/build 禁止打开 parent
+  `valid_labels/reference_labels_all/ivd_values_all/ivd_volume/metadata_json`。
+- 任何真实 sidecar 之前必须用 production sampler 通过 affine、translation、
+  rotation、strain、expansion、batch/chunk/order invariance、RK4-first-v1 equality、
+  forbidden-member access 与 exact-identity join synthetic gate，并最后写 immutable
+  PASS marker。
+- 每个 outer fold 必须先用 nonouter data 完成 inner selection，再写出并 fresh
+  authenticate final per-scale scaler、tail calibrator 与 selected candidate，之后才
+  可打开 outer sidecar/FMT feature；outer prediction 再经 fresh recomputation 与
+  authentication 后，才允许打开 parent outer labels。五折成功门槛与认证提前停止
+  条件逐字段继承 PerScale。
+- 只允许 8 个 3.1 train flows 及其 32 个 train shards/windows。Tangaroa 与
+  SmokeBuoyancy 的 raw、portable、cache、feature、label、prediction 和 metric 全部
+  禁止访问。本版本是 exposed-development direct-kinematic baseline；即使提升，也
+  不得称为 FMT-only 或 pathline-history 证据，因为 IVD-p95 与 seed-time curl 有直接
+  物理关系。
+
+唯一配置为 `config/Verify_EarlyOppositePairKinematics_1.1.yaml`；冻结 SHA-256 为
+`e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767`。完整 sidecar
+schema、3060 candidate 合同、outer label gate、成功规则、成本边界与风险说明见
+`docs/Verify_EarlyOppositePairKinematics_1.1.md`。
+
+## 22. `Verify_RawPCANegativeMetric_1.1` 的 train-only Raw-PCA 表示对照
+
+本版本与 `Verify_EarlyOppositePairKinematics_1.1` 一样，已在首次读取
+`Verify_PerScaleNegativeMetric_1.1` 的任何 outer feature、label、prediction、metric
+或 summary 前冻结；冻结时 PerScale jobs 已提交但结果未读。本版本尚未实现、未运行，
+没有性能结论。
+
+相对 PerScale 父方法，唯一数值变化是把三个可选 FMT 表示整体替换为单一固定
+`raw_pca161`：3.1 cache 的 `raw_features` 是七线 `7×32×3` 坐标减中心线首点后按
+C-order flatten 的 float32 672D 向量；Principal Component Analysis（PCA，主成分
+分析）维数固定 161，不扫描、不 whitening，也不追加全局 standardization。禁止把
+Raw-PCA 作为第四表示加入 FMT 三臂候选，否则结果会混入候选集扩大的选择效应。
+
+- 每个 inner fit 只用对应三个 fit physical families 的全部 valid Raw rows、无视 label，
+  以两遍 float64 streaming scatter 独立拟合 PCA；final fit 只用四个 nonouter families
+  独立重拟合。全八流场的旧 PCA artifact、inner validation rows 与 outer rows均禁止
+  进入 PCA sufficient statistics。
+- 冻结 solver 为对称 scatter 的 `numpy.linalg.eigh`，降序 stable order；负特征值容差、
+  clamp、首个最大绝对 loading 的 sign convention、float32 mean/components 及精确 transform
+  公式都由唯一 config 固定。PCA 后再由 fit-family natural negatives 拟合父方法不变的
+  exact-per-scale shrunk diagonal scaler、negative library 与 tail calibrator。
+- 表示只有 `raw_pca161`，因此候选恰为
+  `1 representation × 4 k × 5 sigma × 51 decisions = 1020`；nested complete-family split、
+  两级等权宏平均、tie-break、outer label gate、五折成功与提前停止条件全部继承 PerScale。
+- Final PCA NPZ/manifest 必须先原子发布、逐成员认证，再绑定 final scaler、calibrator、
+  selected candidate 与 prediction。只有 PCA/scaler/calibrator/selection 全部关闭认证后才
+  能打开 outer Raw；fresh label-free replay 完成后才允许读取 outer labels。每折固定 17 个
+  文件，禁止覆盖。
+- 只允许同一 32 个 3.1 train caches。Tangaroa/Smoke 的文件、manifest、cache、feature、
+  label、prediction 与 metric 全部禁止访问；即使成功也只是 exposed-development 对照。
+
+唯一配置为 `config/Verify_RawPCANegativeMetric_1.1.yaml`；冻结 SHA-256 为
+`6f4718ce6d6385bd0bd5b41a7a04e74cb8f2064fee64097f162999e9eefe6440`。完整 PCA
+算法、family row counts、17-file artifact/label gate、1020 candidates、资源成本和风险见
+`docs/Verify_RawPCANegativeMetric_1.1.md`。
