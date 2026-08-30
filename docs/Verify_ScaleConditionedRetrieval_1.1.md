@@ -136,3 +136,16 @@ python scripts/run_verify_scale_conditioned_retrieval_1_1.py \
 ```
 
 `RUN_COMPLETE.json` 必须最后写入。当前本地完整回归为 158/158 tests passed；CUDA 分支仍需由 Ibex job 验证。
+
+## 8. 运行前的旧分数 oracle 上限诊断
+
+这项诊断只分析已暴露的 `Other_NegativeDistanceSpatial_1.1` 旧分数，不使用也不约束本验证尚未产生的 scale-conditioned 分数。证据为：
+
+```text
+outputs/Other_NegativeDistanceSpatial_1.1_download/
+  slurm_51039505_7118af6c17b9/oracle_upper_bound.csv
+```
+
+文件 SHA-256 为 `1fa00ea04d00d0a879f390d5a59867ed04d960297a72bda27f416a53b799f26f`；数值实验 commit 为 `7118af6c17b964b5561e6e297609f431f81aa020`。过滤 `input_id=main31_train_family_holdouts_source2` 后，用整数混淆计数按 `2TP/(2TP+FP+FN)` 重算，`masked_gaussian_rank_sigma_1` 的八个 `dataset×block` group oracle F1 宏平均仅为 `0.586170054270344856`；最低组 `halfcylinderRe640/expanded_3_1` 为 `0.475285735490574440`，最高组 `cylinder3d/legacy_2_1` 为 `0.712839506172839506`。
+
+这里的 oracle 比可部署阈值更宽松：八个 group 各自读取本组真值、分别枚举并选择最佳 threshold，不是共享一个 threshold。因此它只支持一个否定结论：**在旧分数的组内排序不变时，继续调 threshold 本身不可能把八组宏平均 F1 推到 0.7。** 它不能否定本验证，因为本验证同时改变了自然负类 library、representation、exact same-scale 检索与 `k`。
