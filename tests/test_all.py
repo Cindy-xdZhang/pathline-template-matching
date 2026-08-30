@@ -164,9 +164,13 @@ from test_scale_conditioned_runner import (
     test_sorted_threshold_confusions_match_direct_predictions_with_ties,
 )
 from test_scale_conditioned_aggregate import (
+    test_scale_conditioned_aggregate_accepts_clean_hardening_commit_after_folds,
     test_scale_conditioned_aggregate_refuses_to_overwrite_output_directory,
     test_scale_conditioned_aggregate_rejects_corrupt_result_completion_and_artifact,
     test_scale_conditioned_aggregate_rejects_duplicate_outer_family,
+    test_scale_conditioned_aggregate_rejects_embedded_outer_summary_mismatch,
+    test_scale_conditioned_aggregate_rejects_group_csv_hash_contract_drift,
+    test_scale_conditioned_aggregate_rejects_invalid_group_partition,
     test_scale_conditioned_aggregate_rejects_mixed_fold_commits,
     test_scale_conditioned_aggregate_writes_five_family_macro_and_passes_stop_rule,
 )
@@ -223,10 +227,14 @@ TESTS = (
     test_candidate_projection_rejects_extra_identity_and_reordered_parent_join,
     test_parent_provenance_closes_scene_candidate_and_prediction_source_chain,
     test_scale_conditioned_aggregate_writes_five_family_macro_and_passes_stop_rule,
+    test_scale_conditioned_aggregate_accepts_clean_hardening_commit_after_folds,
     test_scale_conditioned_aggregate_rejects_duplicate_outer_family,
     test_scale_conditioned_aggregate_rejects_mixed_fold_commits,
     test_scale_conditioned_aggregate_rejects_corrupt_result_completion_and_artifact,
     test_scale_conditioned_aggregate_refuses_to_overwrite_output_directory,
+    test_scale_conditioned_aggregate_rejects_embedded_outer_summary_mismatch,
+    test_scale_conditioned_aggregate_rejects_group_csv_hash_contract_drift,
+    test_scale_conditioned_aggregate_rejects_invalid_group_partition,
     test_query_never_crosses_scale,
     test_missing_or_insufficient_scale_fails_before_any_distance_calculation,
     test_k_semantics_and_one_pass_results_match_exact_order_statistics,
