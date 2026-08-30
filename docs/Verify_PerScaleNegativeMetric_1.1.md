@@ -1,8 +1,8 @@
 # `Verify_PerScaleNegativeMetric_1.1`
 
-执行状态：`fold_array_completed_aggregation_failed_pre_metric_acceptance`。配置中的预注册字段仍保持 `status: frozen_pre_run_not_implemented`，以保留冻结 SHA-256；方法、候选集与输出认证合同是在读取任何 `Verify_NegativeTailCalibration_1.1` outer 指标前冻结的。五折 array `51063738` 的五个 task 均已完成，但依赖聚合 `51063753` 在 fresh replay 中因 `authenticated spatial score does not match tail transform` 失败。尚未读取或接受任何 outer metrics，因此仍无性能结论。
+执行状态：`validation_hardening_committed_pending_clean_ibex_rerun`。配置中的预注册字段仍保持 `status: frozen_pre_run_not_implemented`，以保留冻结 SHA-256；方法、候选集与输出认证合同是在读取任何 `Verify_NegativeTailCalibration_1.1` outer 指标前冻结的。五折 array `51063738` 的五个 task 均已完成，但依赖聚合 `51063753` 在 fresh replay 中因跨CPU Gaussian浮点末位差失败。两项label-free诊断已完成，validation-only hardening已提交；尚未读取或接受任何 outer metrics，因此仍无性能结论。
 
-实现路径：`src/pathline_template_matching/per_scale_negative_metric.py`、`scripts/run_verify_per_scale_negative_metric_1_1.py`、`scripts/aggregate_verify_per_scale_negative_metric_1_1.py`、`ibex/verify_per_scale_negative_metric_1.1_all_folds.sh` 与 `ibex/verify_per_scale_negative_metric_1.1_aggregate_five.sh`。提交前本地完整标准库回归为 220 项；numerical commit 为 `809ffa3b9490ca4f5b0817d77759b5d88cce628c`。实际设备和终态见 `docs/ibex_run_registry.md`；未经 fresh-replay 认证的 fold 结果不得转写为指标或结论。
+实现路径：`src/pathline_template_matching/per_scale_negative_metric.py`、`scripts/run_verify_per_scale_negative_metric_1_1.py`、`scripts/aggregate_verify_per_scale_negative_metric_1_1.py`、`ibex/verify_per_scale_negative_metric_1.1_all_folds.sh` 与 `ibex/verify_per_scale_negative_metric_1.1_aggregate_five.sh`。原数值方法commit为 `809ffa3b9490ca4f5b0817d77759b5d88cce628c`；不改变数值方法的validation hardening commit为 `eba96eb8bb2a20e0e41318cee0a6406e70605b66`，本地完整标准库回归221项PASS。实际设备和终态见 `docs/ibex_run_registry.md`；未经新的fresh-replay认证的fold结果不得转写为指标或结论。
 
 冻结配置：`config/Verify_PerScaleNegativeMetric_1.1.yaml`
 
@@ -153,4 +153,6 @@ authenticated spatial score does not match tail transform
 
 只读诊断 job `51064502` 在与失败聚合相同的 `cn504-17`（AMD EPYC 9655）上，只打开五折的 `outer_prediction_manifest.json` 与 `outer_predictions.npz`，未打开 outer labels、metrics、result 或 aggregate summary。它以1线程重放由已保存 tail anomaly 得到的 Gaussian spatial score：前四折逐位一致；原来在 AMD EPYC 7702 生成的 Boeing 折有78,874个 score 发生末位差，最大绝对差 `5.551115123125783e-16`、最大6 ULP，denominator最大5 ULP，但五折最终布尔 prediction 均为0个变化。
 
-结合 Intel Xeon Gold 6248 上 alternate-SIMD 的同类无标签复现，根因是 `np.exp` 生成 Gaussian kernel及后续 NumPy 运算在不同CPU/SIMD路径上的少量 ULP 差异，而当前认证错误地对连续 `float64` 数组要求 `np.array_equal`。这不是允许直接接受结果的理由：`51063753` 使用32线程环境，而 `51064502` 使用1线程且只重放 spatial transform。下一步必须在原32线程环境中完整重放 label-free query，分别量化 raw distance、tail probability/anomaly、spatial fields，并继续要求 identity、support、mode、imputation和最终 prediction逐位一致；在该诊断完成并冻结字段级认证边界前仍无性能结论。
+随后 job `51064646` 在同一 `cn504-17`、32线程环境中完成全部五折的完整 label-free query replay。Folds 0–3 的全部字段逐位一致；Boeing fold仍只有 `spatial_score` 和 `spatial_denominator` 不同，最大分别为6和5 ULP。`raw_negative_distance`、tail probability/anomaly、全部 identity/support/mode/imputation、group audit和最终 prediction逐位一致。结合 Intel Xeon Gold 6248 上 alternate-SIMD 的同类无标签复现，根因是 `np.exp` 生成 Gaussian kernel及后续 NumPy 运算在不同CPU/SIMD路径上的少量 ULP 差异，而当前认证错误地对连续 `float64` 数组要求 `np.array_equal`。
+
+因此认证修订只允许 `spatial_score` 和 `spatial_denominator` 各最多8 ULP，并继续要求它们的dtype、shape、finite、nonnegative和zero mask完全一致；artifact/manifest SHA-256以及 raw distance、tail values、全部离散状态、group audit和最终 prediction仍为exact。这是validation-only hardening，不改变Gaussian scorer、分数、候选、split或指标。边界在读取任何 outer metrics 前由jobs `51064502/51064646`冻结。旧fold与失败聚合保持不变；必须从新的clean commit重跑五折及聚合后才能读取指标，目前仍无性能结论。
