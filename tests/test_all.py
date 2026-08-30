@@ -169,6 +169,7 @@ from test_per_scale_negative_metric_runner import (
     test_final_scaler_then_tail_artifacts_round_trip_and_bind_each_other,
     test_per_scale_plan_candidate_grid_and_output_contract_are_exact,
     test_per_scale_runner_query_path_is_rank_free_and_reports_scaler_modes,
+    test_spatial_replay_portability_gate_is_narrow_and_field_specific,
     test_synthetic_double_artifact_prediction_and_label_gate_end_to_end,
 )
 from test_per_scale_negative_metric_aggregate import (
@@ -305,6 +306,7 @@ TESTS = (
     test_same_scale_mean_cancels_and_query_membership_is_invariant,
     test_per_scale_plan_candidate_grid_and_output_contract_are_exact,
     test_per_scale_runner_query_path_is_rank_free_and_reports_scaler_modes,
+    test_spatial_replay_portability_gate_is_narrow_and_field_specific,
     test_final_scaler_then_tail_artifacts_round_trip_and_bind_each_other,
     test_final_scaler_authentication_rejects_formula_valid_shape_tamper,
     test_synthetic_double_artifact_prediction_and_label_gate_end_to_end,

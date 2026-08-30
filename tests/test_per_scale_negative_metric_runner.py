@@ -56,6 +56,49 @@ def _selected() -> runner.TailCandidateSpec:
     )
 
 
+def test_spatial_replay_portability_gate_is_narrow_and_field_specific():
+    assert dict(runner.SPATIAL_REPLAY_ULP_BOUNDS) == {
+        "spatial_score": 8,
+        "spatial_denominator": 8,
+    }
+    base = np.asarray([0.0, 0.125, 0.5, 1.0], dtype=np.float64)
+    within = base.copy()
+    for _ in range(8):
+        within[1:] = np.nextafter(within[1:], np.inf)
+    assert runner._require_portable_spatial_replay(
+        "spatial_score", base, within
+    ) == 8
+    assert runner._require_portable_spatial_replay(
+        "spatial_denominator", base, within
+    ) == 8
+
+    beyond = within.copy()
+    beyond[1:] = np.nextafter(beyond[1:], np.inf)
+    _expect_error(
+        ValueError,
+        runner._require_portable_spatial_replay,
+        "spatial_score",
+        base,
+        beyond,
+    )
+    zero_drift = base.copy()
+    zero_drift[0] = np.nextafter(np.float64(0.0), np.float64(np.inf))
+    _expect_error(
+        ValueError,
+        runner._require_portable_spatial_replay,
+        "spatial_score",
+        base,
+        zero_drift,
+    )
+    _expect_error(
+        ValueError,
+        runner._require_portable_spatial_replay,
+        "raw_negative_distance",
+        base.astype(np.float32),
+        base.astype(np.float32),
+    )
+
+
 def _write_inner_evidence(
     output: Path,
     plan: runner.Plan,

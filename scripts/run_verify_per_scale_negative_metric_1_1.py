@@ -88,6 +88,12 @@ SIGMAS = (0.0, 0.5, 1.0, 1.5, 2.0)
 TAIL_THRESHOLDS = tuple(round(0.50 + 0.01 * index, 2) for index in range(50))
 GRID_SHAPE = (40, 40, 40)
 BLOCK_NAMES = ("legacy_2_1", "expanded_3_1")
+SPATIAL_REPLAY_ULP_BOUNDS: Mapping[str, int] = MappingProxyType(
+    {
+        "spatial_score": 8,
+        "spatial_denominator": 8,
+    }
+)
 FROZEN_CANDIDATE_COUNT = 3060
 CALIBRATION_ARTIFACT_SCHEMA = (
     "pathline_template_matching.per_scale_negative_tail_calibration_artifact.v1"
@@ -447,6 +453,45 @@ def _constant_zero_convolve_axis(values: np.ndarray, kernel: np.ndarray, axis: i
         selected[axis] = slice(offset, offset + values.shape[axis])
         result += float(weight) * padded[tuple(selected)]
     return result
+
+
+def _require_portable_spatial_replay(
+    field: str,
+    stored_values: object,
+    replayed_values: object,
+) -> int:
+    """Authenticate a spatial float64 field within its frozen cross-CPU ULP bound.
+
+    Jobs 51064502 and 51064646 were completed without opening outer labels or
+    metrics.  Across Intel Xeon Gold 6248, AMD EPYC 7702, and AMD EPYC 9655,
+    only these two Gaussian-derived fields differed: at most six ULP for score
+    and five ULP for denominator.  The bound of eight ULP is frozen here; all
+    identities, raw distances, tail values, states, and predictions remain
+    bitwise authenticated elsewhere.
+    """
+
+    _require(field in SPATIAL_REPLAY_ULP_BOUNDS, f"no portability bound is frozen for {field}")
+    stored = np.asarray(stored_values)
+    replayed = np.asarray(replayed_values)
+    _require(stored.dtype == np.dtype(np.float64), f"stored {field} dtype is not float64")
+    _require(replayed.dtype == np.dtype(np.float64), f"replayed {field} dtype is not float64")
+    _require(stored.shape == replayed.shape, f"{field} replay shape drifted")
+    _require(np.isfinite(stored).all() and np.isfinite(replayed).all(), f"{field} replay is nonfinite")
+    _require(np.all(stored >= 0.0) and np.all(replayed >= 0.0), f"{field} replay is negative")
+    _require(
+        np.array_equal(stored == 0.0, replayed == 0.0),
+        f"{field} replay zero mask drifted",
+    )
+    stored_bits = np.ascontiguousarray(stored).view(np.uint64)
+    replayed_bits = np.ascontiguousarray(replayed).view(np.uint64)
+    stored_greater = stored_bits >= replayed_bits
+    ulp_distance = np.empty_like(stored_bits)
+    np.subtract(stored_bits, replayed_bits, out=ulp_distance, where=stored_greater)
+    np.subtract(replayed_bits, stored_bits, out=ulp_distance, where=~stored_greater)
+    maximum = int(ulp_distance.max(initial=np.uint64(0)))
+    bound = SPATIAL_REPLAY_ULP_BOUNDS[field]
+    _require(maximum <= bound, f"{field} replay exceeds frozen {bound}-ULP portability bound: {maximum}")
+    return maximum
 
 
 def spatial_calibrated_tail_scores(
@@ -1989,8 +2034,14 @@ def authenticate_outer_prediction(
             grid_shape=plan.grid_shape,
             truncate=plan.gaussian_truncate,
         )
-        _require(np.array_equal(score[selected_rows], expected_spatial.scores), "authenticated spatial score does not match tail transform")
-        _require(np.array_equal(denominator[selected_rows], expected_spatial.denominator), "authenticated spatial denominator does not match support mask")
+        _require_portable_spatial_replay(
+            "spatial_score", score[selected_rows], expected_spatial.scores
+        )
+        _require_portable_spatial_replay(
+            "spatial_denominator",
+            denominator[selected_rows],
+            expected_spatial.denominator,
+        )
         _require(np.array_equal(imputed[selected_rows], expected_spatial.imputed), "authenticated spatial imputation state drifted")
         _require(np.array_equal(unimputable[selected_rows], expected_spatial.unimputable), "authenticated spatial unimputable state drifted")
         expected_prediction = candidate_predictions(
@@ -2011,11 +2062,14 @@ def authenticate_outer_prediction(
     )
     _require(set(expected_arrays) == set(arrays), "recomputed outer prediction member set drifted")
     for name in sorted(arrays):
-        _require(
-            canonical_array_sha256(expected_arrays[name])
-            == canonical_array_sha256(arrays[name]),
-            f"persisted outer prediction does not match calibrator query: {name}",
-        )
+        if name in SPATIAL_REPLAY_ULP_BOUNDS:
+            _require_portable_spatial_replay(name, arrays[name], expected_arrays[name])
+        else:
+            _require(
+                canonical_array_sha256(expected_arrays[name])
+                == canonical_array_sha256(arrays[name]),
+                f"persisted outer prediction does not match calibrator query: {name}",
+            )
     _require(
         _json_safe(expected_group_audits) == _json_safe(group_audits),
         "persisted outer group audit does not match calibrator query",
