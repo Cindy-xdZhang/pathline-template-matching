@@ -1,6 +1,6 @@
 # `Verify_NegativeTailCalibration_1.1`
 
-状态：数值方法与候选集已在读取任何 `Verify_ScaleConditionedRetrieval_1.1` outer 结果前冻结；实现与 Ibex 运行尚未完成。
+状态：数值方法、候选集、单折认证与提前停止合同均已在读取本版本任何 outer 结果前冻结；实现已完成，Ibex outer-family 运行尚未开始。
 
 冻结配置：`config/Verify_NegativeTailCalibration_1.1.yaml`
 
@@ -88,3 +88,34 @@ G(tail_anomaly × calibration_support) / G(calibration_support)
 - Held-out physical family 存在 distribution shift，因此不能宣称 conformal coverage。
 - Exact leave-one-out 增加约 `O(D sum_s n_s^2)` 的计算；若 Ibex profile 证明成本不可接受，必须另建版本使用预先冻结的 deterministic subsample，不能在 1.1 中静默近似。
 
+## 9. 实现门禁（尚无性能结果）
+
+- 核心 calibrator：commit `e9380e4`，`src/pathline_template_matching/negative_tail_calibration.py`。
+- 认证 runner：初始实现 commit `907a371`，最终部署 hardening commit `bd3037c`；文件 SHA-256 `ab62453215a7ecf508aad50e94e244093d898c2baa148908c215e71ce994b6d5`。
+- 聚合认证器：commit `bd3037c`，`scripts/aggregate_verify_negative_tail_calibration_1_1.py`，文件 SHA-256 `212e402cf287f780a0e8def4949a38dfde1d96d59b27ad61d50c35dff7730e58`。
+- Ibex CPU profile wrapper：commit `bd3037c`，文件 SHA-256 `e6921f54b702cc29a920db2f8e919d942e6249bf8e5352b428ecb185ae3fbc0e`；固定 runner/aggregator/config/input hashes，并分别用 GNU `time -v` 记录数值、postvalidation 与聚合认证耗时和峰值内存。
+- 2026-08-30 最终本地完整门禁：203/203 tests 通过，耗时 137.510 秒；聚合专项 7/7、`py_compile`、`git diff --check` 与 Git Bash `bash -n` 均通过；聚合器独立安全复审无剩余 P1/P2。
+- Inner selection 由落盘的 3060 个候选、122,400 条 group 记录和 12 个 fit audit 重新认证；最终 selected summary 直接取自认证后的 CSV 数值，禁止混用内存副本。
+- Outer label gate 会重新加载完整 label-free outer scope，以认证后的 calibrator 重算 distance、tail、support、spatial score 与 prediction，并逐数组核对；完成后才允许读取 label member。
+- CPU 环境审计在 CUDA 可见但 requested device 为 CPU 时不会把 CPU device 传给 CUDA API；该边界已有独立回归测试。
+- 仍待 Ibex profile 验证的风险：12 次 inner fit 加 1 次 final fit 的 CPU wall time；128 GB 峰值内存目前只有 chunked 复杂度审计，没有真实 job 证据。
+
+本节只记录实现证据，不包含、也不预判任何 outer F1。
+
+## 10. 首折认证与提前停止合同
+
+首个且唯一允许的单折 profile 固定为 `half_cylinder`。聚合器必须由命令行给出 40 位 expected numerical commit，并在打开任何 cache、outer feature 或 label 前认证 commit、config、input manifest、13 个 fold 文件和 11 个 result artifacts。随后重新执行 label-free prediction；只有该链逐数组认证后才允许打开 labels，并以 fresh evaluation 逐字段复算 group CSV 与 summary。
+
+单折认证输出固定为五个不可覆盖文件：
+
+```text
+outer_family_summary.csv
+single_fold_authentication_report.json
+early_stop_certificate.json
+aggregate_manifest.json
+AGGREGATE_COMPLETE.json
+```
+
+Schema 分别使用 `pathline_template_matching.negative_tail_single_fold_authentication_report.v1`、`pathline_template_matching.negative_tail_early_stop_certificate.v1`、`pathline_template_matching.negative_tail_aggregate_manifest.v1` 与 `pathline_template_matching.negative_tail_aggregate_complete.v1`；completion 必须最后写入，且发布前后重验其余文件 size、SHA-256、自哈希与完整集合。
+
+单折报告禁止推断五折成功。`stop_version=true` 只允许在已认证部分结果已数学证明最终不可能满足冻结规则时出现：任一已完成 family F1 `<0.50`；已有两个 family F1 `<0.65`；或把全部未运行 family 的相关指标设为理论上限 1 后，五-family macro 仍低于门槛。否则必须继续其他 folds。完整成功判断只允许 `complete-five-fold` 模式在五个唯一 physical families 齐全时产生。

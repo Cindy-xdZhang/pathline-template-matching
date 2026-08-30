@@ -241,6 +241,8 @@ SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 
 唯一配置为`config/Verify_NegativeTailCalibration_1.1.yaml`；冻结SHA-256为`4b6f05dd852990364aa3465d1c990d79532e6c859ab27a219f3d95817868ce3b`。即使达到停止规则，本版本也只使用已暴露train flows，不是formal confirmation。
 
+在读取本版本任何 outer 结果前，额外冻结单折认证与提前停止合同。首折只允许`half_cylinder`；认证器必须绑定外部给定的40位numerical commit、精确13文件、完整inner selection证据与fresh label-free prediction，认证后才可读取label并复算指标。单折不得声称五折成功；只有任一已完成family F1低于0.50、已有两个family F1低于0.65，或将全部剩余family指标设为1后仍不可能达到某个五-family macro门槛时，才可发布`negative_tail_early_stop_certificate.v1`且`stop_version=true`。否则继续运行；成功结论必须来自五个唯一physical families齐全的`complete-five-fold`聚合。
+
 ## 19. `Verify_PerScaleNegativeMetric_1.1` 的 fit-negative 逐尺度方差度量
 
 本版本必须在读取 `Verify_NegativeTailCalibration_1.1` 的任何 outer 指标前冻结，状态固定为 `frozen_pre_run_not_implemented`。相对该父验证，唯一数值变化是把 global negative-only diagonal population variance 替换为 fit-negative exact-per-scale shrunk diagonal within-scale population variance；tail calibration、三个 FMT representation、exact same-scale retrieval、`k`、spatial sigma、decision grid、3060 个候选、nested family split、宏平均与停止规则全部不变。禁止扫描 lambda/metric 网格或同时加入 PCA、learned metric、kinematic feature、descriptor 修改与跨尺度检索。
