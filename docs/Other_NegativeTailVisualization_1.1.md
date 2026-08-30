@@ -2,7 +2,9 @@
 
 ## 状态与用途
 
-状态：`FROZEN_PRE_RUN_NOT_RUN`。
+权威运行状态：`COMPLETED_EXPOSED_VISUALIZATION`。冻结 config 中的
+`frozen_pre_run_not_run` 是不回写的历史状态，完成证据以本文、运行表和
+Ibex completion marker 为准。
 
 本实验只为已经完成的 `Verify_NegativeTailCalibration_1.1` 生成固定
 source ordinal 2 的空间分类图。它不重新训练、不重新选择 candidate、不调整
@@ -177,8 +179,52 @@ result manifest 记录 completion 之前全部70个 artifact 的 size 和 SHA-25
 wrapper：`ibex/other_negative_tail_visualization_1.1.sh`。只允许从 clean、committed
 Git revision 运行，提交时必须以 `EXPECTED_NUMERICAL_COMMIT` 明确绑定40字符
 commit。wrapper 先运行共享测试和本实验12个零参数定向测试，再执行 runner 和
-70-artifact post-validation。预期 run 目录：
+70-artifact post-validation。权威 run 目录：
 
-`/ibex/user/zhanx0o/pathline-template-matching/Other_NegativeTailVisualization_1.1/runs/slurm_JOBID_COMMIT12`
+`/ibex/user/zhanx0o/pathline-template-matching/Other_NegativeTailVisualization_1.1/runs/slurm_51062980_cca0f589fad1`
 
-当前没有 job ID、结果指标或图形结论；运行完成前不得把本文件状态改为 completed。
+Ibex job `51062980` 于 2026-08-31 00:14:53--00:18:16 +03:00 在
+`cn604-10` 完成，exit `0:0`，elapsed `00:03:23`，16 CPU cores、64 GB，
+MaxRSS `2385332K`。数值 commit 为
+`cca0f589fad134c976fd94671eeda84df8845e7f`；该 committed revision 的203项共享
+测试和本实验12项定向测试全部通过。作业认证53个唯一输入文件，
+生成8张图、406,177个 valid query rows 和70个 result artifacts。
+
+## 完成结果
+
+| Flow | Scale block | Valid / 64,000 | Coverage | AP | F1 | BA | Precision | Recall | TP / FP / TN / FN |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Re160 | legacy | 60,560 | 94.63% | 0.7529 | 0.6858 | 0.8089 | 0.7510 | 0.6310 | 2,274 / 754 / 56,202 / 1,330 |
+| Re160 | expanded | 43,347 | 67.73% | 0.6636 | 0.5720 | 0.7313 | 0.7117 | 0.4782 | 1,543 / 625 / 39,495 / 1,684 |
+| Re640 | legacy | 60,555 | 94.62% | 0.5911 | 0.5342 | 0.7417 | 0.5651 | 0.5065 | 1,711 / 1,317 / 55,860 / 1,667 |
+| Re640 | expanded | 42,463 | 66.35% | 0.4188 | 0.4342 | 0.6838 | 0.4816 | 0.3953 | 1,023 / 1,101 / 38,774 / 1,565 |
+| Re6400 | legacy | 62,313 | 97.36% | 0.6084 | 0.5466 | 0.7577 | 0.5546 | 0.5388 | 1,728 / 1,388 / 57,718 / 1,479 |
+| Re6400 | expanded | 57,906 | 90.48% | 0.5830 | 0.5088 | 0.7336 | 0.5266 | 0.4923 | 1,525 / 1,371 / 53,437 / 1,573 |
+| Boeing 747 | legacy | 61,432 | 95.99% | 0.8198 | 0.7365 | 0.8660 | 0.7269 | 0.7463 | 2,233 / 839 / 57,601 / 759 |
+| Boeing 747 | expanded | 17,601 | 27.50% | 0.6546 | 0.5608 | 0.8540 | 0.4529 | 0.7362 | 399 / 482 / 16,577 / 143 |
+
+固定 source 2 上，Boeing legacy 的 F1 最高（0.7365），是唯一超过0.70的图；
+Re160 legacy 为0.6858。其余六图为0.4342--0.5720。expanded block
+在四个flow上的F1都低于legacy，但两block的valid population不同，特别是
+Boeing expanded coverage 只有27.50%，因此不把这一固定source图解释为尺度
+方法的独立因果比较。
+
+## 产物与交付 QA
+
+- result manifest SHA-256：`56284ba4064d88bd0c0375abd1a25d71bf17e3b8bf909711fefd72dcc29c2b83`；
+  `RUN_COMPLETE.json` SHA-256：`96e1cde702c0da825efbb8ebb1951c9b6a7d385eca0d1a452eeab4af72f02fb6`。
+- visualization/input manifest SHA-256：`e9e4157e2343ae5f476a1ef0f2feb2974fa09531bfb36b4d3a8a7c03466e0c37`
+  / `28d6886e9dfb84209fc68a1c97c66b762c6286c82f1deb5f4a0aa4d1b607d59c`。
+- stdout/stderr SHA-256：`454b28492552ed9301ec469088c1ef39b36dfbae78e5eebe457d7cd978a7c914`
+  / `d3682305e805236c7dfb81f57482040808fcc78b0205f756d47ab4abcf133634`。
+- 下载后重放70/70 artifact hashes；8/8 panel alignment 严格 PASS；8/8 PDF
+  最小文字为7 pt；8份collision report均0 FAIL。共96个WARN全部是`x`轴标签或
+  数值轴刻度与3D栅格/填充边缘接触，原始像素目视复核未发现标题、panel label
+  或数据标记裁切。8/8 PNG解码和目视PASS；8/8 SVG含可编辑`<text>`。
+- 本地 QA summary SHA-256：`d029b1d996e838ef1fcf07ab1294356d724af29ce3007d75efacfc4b06c8a1c6`；
+  content SHA-256：`bef4351509eddf163422d3dcd946511673037b06824635436c5cde470d1d1454`。
+- 本地下载：`outputs/Other_NegativeTailVisualization_1.1_job51062980_download`。
+
+这些完成结果只支持固定source的family-held-out exposed-development空间解释；
+不改变`Verify_NegativeTailCalibration_1.1`完整五折F1=0.540472、未通过停止门槛的
+结论，也不是formal confirmation。
