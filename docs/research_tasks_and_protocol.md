@@ -227,3 +227,16 @@ rank、同 `dataset×source×block` 的 support-mask-normalized Gaussian
 
 唯一配置为 `config/Other_NegativeDistanceSpatialVisualization_1.1.yaml`，冻结
 SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
+
+## 18. `Verify_NegativeTailCalibration_1.1` 的 fit-negative 逐尺度尾概率验证
+
+本版本必须在读取 `Verify_ScaleConditionedRetrieval_1.1` 的任何 outer 指标前冻结。相对该父验证，唯一数值变化是把 query-group supported-distance rank 替换为 fit-negative-only scale-tail anomaly；自然负类library、global negative-only scaler、三个FMT representation、exact same-scale distance、`k`、spatial sigma、decision grid、nested family split、宏平均与停止规则全部不变。禁止同时加入PCA、逐尺度feature scaler、kinematic feature或跨尺度检索。
+
+- 每个fit-negative row的calibration distance必须显式排除它自己，同时保留其他重复feature形成的零距离邻居；global scaler不做逐行leave-one-out重拟合。
+- Tail probability固定为`(1 + count(reference >= d))/(N+1)`，分类异常分数固定为`count(reference < d)/(N+1)`；相同距离按较保守的大tail probability处理。
+- Local reference只含同尺度leave-one-out距离；block-other必须排除当前尺度；global-other只在block-other为空时回退。收缩`lambda=64`，由3.1每个source/block/scale的assigned-row设计数冻结，不得由label或结果选择。
+- `n_s<k`时不得用pooled tail reference伪造第k近邻距离；`n_s=k`允许exact query distance但没有local reference，固定回退block/global。Retrieval support与calibration support必须分开保存。
+- Query-group rank被禁止。Tail anomaly直接进入calibration-support-mask-normalized Gaussian；完整候选因正sigma或fixed top-5%仍可能依赖query group，不能称独立逐primitive classifier。
+- Final calibration artifacts与selected candidate必须在任何outer feature member打开前关闭并哈希；prediction artifact认证后才允许读取outer labels。所有失败、回退mode、support状态与哈希都必须保留。
+
+唯一配置为`config/Verify_NegativeTailCalibration_1.1.yaml`；冻结SHA-256为`4b6f05dd852990364aa3465d1c990d79532e6c859ab27a219f3d95817868ce3b`。即使达到停止规则，本版本也只使用已暴露train flows，不是formal confirmation。
