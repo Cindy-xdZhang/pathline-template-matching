@@ -1,0 +1,71 @@
+{
+  "schema": "pathline_template_matching.ibex_evidence_summary.v1",
+  "experiment": "Other_NegativeDistanceSpatial_1.1",
+  "evidence_status": "exposed_development_diagnostic_completed",
+  "formal_confirmation": false,
+  "job_id": "51039505",
+  "state": "COMPLETED",
+  "exit_code": "0:0",
+  "elapsed": "00:01:49",
+  "node": "cn511-13",
+  "max_rss_kib": 1396428,
+  "git_commit": "7118af6c17b964b5561e6e297609f431f81aa020",
+  "config_sha256": "e891af14037c464a6042143625646be0d2f71c37e5e9ff30e50cc30dd553c141",
+  "tests": {
+    "passed": 124,
+    "total": 124,
+    "elapsed_seconds": 38.701
+  },
+  "counts": {
+    "prediction_rows": 884698,
+    "prediction_columns": 30,
+    "group_count": 24,
+    "per_group_metric_rows": 384,
+    "aggregate_metric_rows": 144,
+    "oracle_rows": 192
+  },
+  "artifacts": {
+    "predictions.csv": "cc4651baefeabda0c4570ad4a3f8a6b855e2616e835af02994294a2095f177f2",
+    "prediction_manifest.json": "e811ed6cc861e4a153e30c0e8c54d7e720eff3b651579ad84d065efee1210c4e",
+    "per_group_metrics.csv": "f857590d334227829309c7c51b7dcfd71d390909d66ad9744d014610146e455e",
+    "aggregate_metrics.csv": "0a5988cff148be534c27fb98fa2bbddeed37d70b375a9b735bf9d58723b9d6ae",
+    "oracle_upper_bound.csv": "1fa00ea04d00d0a879f390d5a59867ed04d960297a72bda27f416a53b799f26f",
+    "result_manifest.json": "b4e171d499af12dc5aca102950a33eba6762fb122ebe0b2828a0623236d9bff3",
+    "RUN_COMPLETE.json": "aa5ccb28991177bf9a06766e111fc10b9f717168a9fb6a4c947854e8f2ceaf3e"
+  },
+  "scheduler_logs": {
+    "stdout_sha256": "c2ac7821baab4dc4b0fb84b220e57acefb7e50e46ffebb9d5f454c42bbc0a8d6",
+    "stderr_sha256": "4ca0c946a388b65513348182f7ce18ff7815441a56371ae9d24a4725b1a38cbd"
+  },
+  "followup_candidate": {
+    "selection_scope": "four exposed target flows, eight dataset-source-block groups",
+    "selection_uses_exposed_reference_metrics": true,
+    "score_variant": "masked_gaussian_rank_sigma_1",
+    "prediction_rule": "fixed_top_fraction_0.05",
+    "macro": {
+      "accuracy": 0.95270,
+      "average_precision": 0.59548,
+      "f1": 0.54510,
+      "balanced_accuracy": 0.75620,
+      "auroc": 0.95589,
+      "precision": 0.57099,
+      "recall": 0.53504,
+      "coverage": 0.79331
+    },
+    "per_dataset_f1": {
+      "cylinder3d_Re160": 0.614093406194,
+      "halfcylinderRe640": 0.475149769396,
+      "halfcylinderRe6400": 0.522907535085,
+      "boeing747": 0.568244881953
+    }
+  },
+  "parent_same_eight_group_f1": 0.227814546256025,
+  "target_f1_reached": false,
+  "allowed_conclusion": "candidate generation for train-only nested family validation",
+  "forbidden_conclusions": [
+    "unbiased model selection",
+    "formal confirmation",
+    "deployable method success",
+    "F1 0.7-0.8 achieved"
+  ]
+}

@@ -1,6 +1,6 @@
 # Other_NegativeDistanceSpatial_1.1：负模板距离与空间后处理诊断
 
-状态：**`frozen_pre_run_not_run`**。本版本不修改 `mainExp_TemplateMatching_3.1`，只复用两次已完成运行保存的逐 query FMT 距离。唯一 config 为 `config/Other_NegativeDistanceSpatial_1.1.yaml`，冻结 SHA-256 是 `e891af14037c464a6042143625646be0d2f71c37e5e9ff30e50cc30dd553c141`。
+状态：**`exposed_development_diagnostic_completed`**。本版本不修改 `mainExp_TemplateMatching_3.1`，只复用两次已完成运行保存的逐 query FMT 距离。唯一 config 为 `config/Other_NegativeDistanceSpatial_1.1.yaml`，冻结 SHA-256 是 `e891af14037c464a6042143625646be0d2f71c37e5e9ff30e50cc30dd553c141`；Ibex 作业 `51039505`使用 numerical commit `7118af6c17b964b5561e6e297609f431f81aa020`完成。
 
 ## 为什么做这个诊断
 
@@ -25,3 +25,21 @@
 Tangaroa、Smoke、三个 cylinder 和 Boeing 747 的标签与旧预测均已看过，且 sigma 网格是在机制诊断后冻结。本实验只能回答故障机制和候选方法问题，不能称为无偏模型选择、formal confirmation 或主方法成功。若结果支持该方向，下一步必须新建 train-only 完整 physical-family nested validation；只有该验证冻结唯一方法后，才能建立 `mainExp_TemplateMatching_4.1`。
 
 成功目标仍不降低：后续 train-only nested family/source macro F1 目标为 `0.70`，precision 与 recall 都不低于 `0.60`。本 exposed diagnostic 即使出现 F1 `0.7–0.8` 也不替代该门槛。
+
+## Ibex 结果
+
+作业 `51039505`在 `cn511-13` 上以 CPU 完成，exit `0:0`，用时 `00:01:49`，MaxRSS `1396428K`；124/124 tests 通过。输出含 884,698 条无 reference 列的预测、384 条逐组指标、144 条汇总指标和 192 条只作上界的 oracle 记录；三层 manifest、行数、文件大小与 SHA-256 均复核通过。
+
+为了得到一个可进入后续验证的单一候选，在四个目标流场的八个 `dataset × source × block` 已暴露组上等权比较全部预先冻结候选，选得 `masked Gaussian rank sigma=1 grid + fixed top 5%`。这个选择使用了已暴露标签结果，因此只是下一步 train-only nested validation 的候选，不是已验证方法。
+
+| 范围 | Accuracy | AP | F1 | Balanced accuracy | AUROC | Precision | Recall | Coverage |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 四flow、8组等权宏平均 | 0.9527 | 0.5955 | 0.5451 | 0.7562 | 0.9559 | 0.5710 | 0.5350 | 0.7933 |
+| Re160 | 0.9546 | 0.6905 | 0.6141 | 0.7626 | 0.9696 | 0.7160 | 0.5405 | 0.8118 |
+| Re640 | 0.9430 | 0.4739 | 0.4751 | 0.7082 | 0.9336 | 0.5139 | 0.4422 | 0.8048 |
+| Re6400 | 0.9511 | 0.5949 | 0.5229 | 0.7432 | 0.9678 | 0.5356 | 0.5109 | 0.9392 |
+| Boeing 747 | 0.9621 | 0.6226 | 0.5682 | 0.8108 | 0.9525 | 0.5185 | 0.6465 | 0.6174 |
+
+父 family-held-out exact-1NN 在同一八组上的等权 F1 为 `0.2278`；统一候选提高到 `0.5451`。这支持“平衡正负模板下的 signed 1NN margin 与稀疏正模板 hub 是主要故障源之一”，但并不支持“已达 F1 0.7–0.8”：任何非 oracle 方法都没有达到 `0.7`，且 Re640 仍是明显瓶颈。下一步必须在完全不打开外层留出 family 的情况下，重建自然负类 library-only scaler 和 exact-scale negative k-nearest-neighbor，再用 inner leave-one-family-out 选择 `k/sigma/threshold`。
+
+可追溯证据：`aggregate_metrics.csv` SHA-256 `0a5988cff148be534c27fb98fa2bbddeed37d70b375a9b735bf9d58723b9d6ae`，`per_group_metrics.csv` SHA-256 `f857590d334227829309c7c51b7dcfd71d390909d66ad9744d014610146e455e`，`predictions.csv` SHA-256 `cc4651baefeabda0c4570ad4a3f8a6b855e2616e835af02994294a2095f177f2`，`result_manifest.json` SHA-256 `b4e171d499af12dc5aca102950a33eba6762fb122ebe0b2828a0623236d9bff3`。
