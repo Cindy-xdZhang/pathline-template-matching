@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,6 +112,27 @@ from test_negative_distance_spatial_visualization import (
     test_candidate_projection_uses_fixed_columns_and_rejects_duplicate_join_identity,
     test_negative_spatial_visualization_plan_freezes_candidate_and_eight_figures,
     test_parent_provenance_closes_scene_candidate_and_prediction_source_chain,
+)
+from test_negative_tail_calibration import (
+    test_all_supported_k_values_share_one_maximum_k_loo_pass_per_scale,
+    test_block_fallback_exact_tail_probability_matches_independent_reference,
+    test_cuda_duplicate_self_exclusion_and_equal_tail_ties_match_cpu,
+    test_cuda_fit_and_query_match_cpu_when_available as test_negative_tail_cuda_fit_and_query_match_cpu_when_available,
+    test_empirical_upper_tail_probability_is_plus_one_inclusive_and_conservative,
+    test_exact_loo_explicitly_excludes_only_the_self_row_with_duplicate_features,
+    test_export_is_pure_arrays_and_allow_pickle_false_round_trip_is_exact as _test_negative_tail_export_round_trip,
+    test_fit_and_query_are_invariant_to_distance_chunk_sizes_and_query_membership,
+    test_frozen_default_k_candidates_include_exact_1_5_15_31_references,
+    test_global_fallback_exact_tail_probability_matches_independent_reference,
+    test_inputs_and_outputs_are_copied_and_result_arrays_are_read_only,
+    test_invalid_inputs_fail_closed as test_negative_tail_invalid_inputs_fail_closed,
+    test_local_block_shrink_uses_lambda_64_and_excludes_the_local_scale_from_prior,
+    test_local_global_shrink_and_local_only_modes_are_reachable_without_labels,
+    test_local_global_shrink_exact_tail_probability_excludes_current_scale,
+    test_local_only_exact_tail_probability_matches_independent_reference,
+    test_no_reference_keeps_n_equals_k_retrieved_but_calibration_unsupported,
+    test_reconstruction_rejects_tampered_offsets_and_lambda,
+    test_retrieval_and_calibration_boundaries_use_frozen_fallback_chain,
 )
 from test_one_class_spatial import (
     test_high_score_two_means_constant_or_insufficient_input_fails_closed,
@@ -222,11 +244,37 @@ from test_visualization import (
 )
 
 
+def test_negative_tail_export_is_pure_arrays_and_round_trip_is_exact():
+    """Supply the pytest ``tmp_path`` contract using only the standard library."""
+
+    with tempfile.TemporaryDirectory() as directory:
+        _test_negative_tail_export_round_trip(Path(directory))
+
+
 TESTS = (
     test_negative_spatial_visualization_plan_freezes_candidate_and_eight_figures,
     test_candidate_projection_uses_fixed_columns_and_rejects_duplicate_join_identity,
     test_candidate_projection_rejects_extra_identity_and_reordered_parent_join,
     test_parent_provenance_closes_scene_candidate_and_prediction_source_chain,
+    test_empirical_upper_tail_probability_is_plus_one_inclusive_and_conservative,
+    test_exact_loo_explicitly_excludes_only_the_self_row_with_duplicate_features,
+    test_all_supported_k_values_share_one_maximum_k_loo_pass_per_scale,
+    test_frozen_default_k_candidates_include_exact_1_5_15_31_references,
+    test_local_block_shrink_uses_lambda_64_and_excludes_the_local_scale_from_prior,
+    test_block_fallback_exact_tail_probability_matches_independent_reference,
+    test_global_fallback_exact_tail_probability_matches_independent_reference,
+    test_local_global_shrink_exact_tail_probability_excludes_current_scale,
+    test_local_only_exact_tail_probability_matches_independent_reference,
+    test_retrieval_and_calibration_boundaries_use_frozen_fallback_chain,
+    test_local_global_shrink_and_local_only_modes_are_reachable_without_labels,
+    test_no_reference_keeps_n_equals_k_retrieved_but_calibration_unsupported,
+    test_fit_and_query_are_invariant_to_distance_chunk_sizes_and_query_membership,
+    test_negative_tail_export_is_pure_arrays_and_round_trip_is_exact,
+    test_reconstruction_rejects_tampered_offsets_and_lambda,
+    test_inputs_and_outputs_are_copied_and_result_arrays_are_read_only,
+    test_negative_tail_invalid_inputs_fail_closed,
+    test_negative_tail_cuda_fit_and_query_match_cpu_when_available,
+    test_cuda_duplicate_self_exclusion_and_equal_tail_ties_match_cpu,
     test_scale_conditioned_aggregate_writes_five_family_macro_and_passes_stop_rule,
     test_scale_conditioned_aggregate_accepts_clean_hardening_commit_after_folds,
     test_scale_conditioned_aggregate_rejects_duplicate_outer_family,
