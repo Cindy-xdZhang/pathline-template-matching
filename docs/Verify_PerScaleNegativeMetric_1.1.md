@@ -1,6 +1,6 @@
 # `Verify_PerScaleNegativeMetric_1.1`
 
-执行状态：`validation_hardening_committed_pending_clean_ibex_rerun`。配置中的预注册字段仍保持 `status: frozen_pre_run_not_implemented`，以保留冻结 SHA-256；方法、候选集与输出认证合同是在读取任何 `Verify_NegativeTailCalibration_1.1` outer 指标前冻结的。五折 array `51063738` 的五个 task 均已完成，但依赖聚合 `51063753` 在 fresh replay 中因跨CPU Gaussian浮点末位差失败。两项label-free诊断已完成，validation-only hardening已提交；尚未读取或接受任何 outer metrics，因此仍无性能结论。
+执行状态：`validation_hardened_clean_ibex_rerun_submitted`。配置中的预注册字段仍保持 `status: frozen_pre_run_not_implemented`，以保留冻结 SHA-256；方法、候选集与输出认证合同是在读取任何 `Verify_NegativeTailCalibration_1.1` outer 指标前冻结的。五折 array `51063738` 的五个 task 均已完成，但依赖聚合 `51063753` 在 fresh replay 中因跨CPU Gaussian浮点末位差失败。两项label-free诊断与validation-only hardening已经完成；clean rerun array/aggregate `51064965/51064966`已提交。尚未读取或接受任何 outer metrics，因此仍无性能结论。
 
 实现路径：`src/pathline_template_matching/per_scale_negative_metric.py`、`scripts/run_verify_per_scale_negative_metric_1_1.py`、`scripts/aggregate_verify_per_scale_negative_metric_1_1.py`、`ibex/verify_per_scale_negative_metric_1.1_all_folds.sh` 与 `ibex/verify_per_scale_negative_metric_1.1_aggregate_five.sh`。原数值方法commit为 `809ffa3b9490ca4f5b0817d77759b5d88cce628c`；不改变数值方法的validation hardening commit为 `eba96eb8bb2a20e0e41318cee0a6406e70605b66`，本地完整标准库回归221项PASS。实际设备和终态见 `docs/ibex_run_registry.md`；未经新的fresh-replay认证的fold结果不得转写为指标或结论。
 
