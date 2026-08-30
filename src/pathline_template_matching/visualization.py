@@ -7,7 +7,7 @@ seed population.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from hashlib import sha256
 import json
@@ -599,6 +599,8 @@ def render_template_matching_triptych(
     pdf_output_path: str | Path | None = None,
     svg_output_path: str | Path | None = None,
     alignment_output_path: str | Path | None = None,
+    panel_titles: Sequence[str] | None = None,
+    prediction_semantics: str | None = None,
 ) -> tuple[Path, dict[str, object]]:
     """Render the audited triptych and return its PNG path and metadata.
 
@@ -609,6 +611,23 @@ def render_template_matching_triptych(
     """
 
     validated = validate_scene(scene)
+    resolved_panel_titles = PANEL_TITLES
+    if panel_titles is not None:
+        if (
+            isinstance(panel_titles, (str, bytes))
+            or len(panel_titles) != len(PANEL_LABELS)
+        ):
+            raise ValueError("panel_titles must contain exactly three strings")
+        resolved_panel_titles = tuple(str(value).strip() for value in panel_titles)
+        if any(not value for value in resolved_panel_titles):
+            raise ValueError("panel_titles must contain exactly three non-empty strings")
+    resolved_prediction_semantics = (
+        "precomputed FMT exact-1NN binary assignment"
+        if prediction_semantics is None
+        else str(prediction_semantics).strip()
+    )
+    if not resolved_prediction_semantics:
+        raise ValueError("prediction_semantics must be non-empty")
     view_values = np.asarray(view, dtype=np.float64)
     if view_values.shape != (2,) or not np.isfinite(view_values).all():
         raise ValueError("view must contain finite (elevation, azimuth) values")
@@ -670,7 +689,7 @@ def render_template_matching_triptych(
             _draw_template_assignment(axes[1], validated)
             _draw_confusion(axes[2], validated.seeds, masks)
             for panel_label, axis, panel_title in zip(
-                PANEL_LABELS, axes, PANEL_TITLES, strict=True
+                PANEL_LABELS, axes, resolved_panel_titles, strict=True
             ):
                 _prepare_axis(axis, validated.bounds, camera_view, panel_title)
                 axis.text2D(
@@ -760,9 +779,9 @@ def render_template_matching_triptych(
             "top_margin_fraction": TOP_MARGIN,
             "header_y_fraction": 0.98,
         },
-        "panel_order": list(PANEL_TITLES),
+        "panel_order": list(resolved_panel_titles),
         "panel_labels": list(PANEL_LABELS),
-        "prediction_semantics": "precomputed FMT exact-1NN binary assignment",
+        "prediction_semantics": resolved_prediction_semantics,
         "visual_encoding": {
             "ivd_isosurface_and_false_negative": COLORS["false_negative"],
             "predicted_vortex_and_true_positive": COLORS["vortex"],

@@ -1,0 +1,184 @@
+experiment: Other_NegativeDistanceSpatialVisualization_1.1
+category: Other
+status: frozen_pre_run_not_run
+purpose: audited_triptychs_for_the_fixed_negative_distance_spatial_candidate_on_four_requested_flows
+
+evidence_scope:
+  level: family_held_out_exposed_development_visualization_only
+  formal_confirmation: false
+  reason: >-
+    The four query flows and the candidate-selection metrics were already
+    exposed.  The figures localize the fixed candidate's errors but cannot
+    establish unbiased cross-family generalization.
+  forbidden_claims:
+    - sealed_confirmation
+    - unbiased_model_selection
+    - aggregate_multisource_performance
+    - clustering
+
+parents:
+  family_held_out_scenes:
+    experiment: Other_MainExp31FamilyHeldOutVisualization_1.1
+    numerical_git_commit: 86be29698eb689c0e269fe987a5b6d5f125a67be
+    run_root: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1/runs/slurm_51029080_86be29698eb6
+    result_manifest: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1/runs/slurm_51029080_86be29698eb6/result_manifest.json
+    result_manifest_sha256: 57f03ba16ad8cfa0e1e0a9efd93f2dde7ae5866f173fad20055efb6939d4188e
+    visualization_manifest: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1/runs/slurm_51029080_86be29698eb6/visualization_manifest.json
+    visualization_manifest_sha256: 90bc9e1b0421b838a7b35066ce785b3f8866e6e6b8f4f6cda640cafabad241a2
+    reuse_rule: >-
+      Bounds, seeds, IVD mesh, reference labels, 240 reference-selected center
+      pathlines, pathline identities, camera, and scale-block identity must be
+      byte-identical to each verified parent scene.  Only prediction and
+      downstream analysis metadata may change.
+  fixed_candidate_predictions:
+    experiment: Other_NegativeDistanceSpatial_1.1
+    numerical_git_commit: 7118af6c17b964b5561e6e297609f431f81aa020
+    run_root: /ibex/user/zhanx0o/pathline-template-matching/Other_NegativeDistanceSpatial_1.1/runs/slurm_51039505_7118af6c17b9
+    result_manifest: /ibex/user/zhanx0o/pathline-template-matching/Other_NegativeDistanceSpatial_1.1/runs/slurm_51039505_7118af6c17b9/result_manifest.json
+    result_manifest_sha256: b4e171d499af12dc5aca102950a33eba6762fb122ebe0b2828a0623236d9bff3
+    predictions: /ibex/user/zhanx0o/pathline-template-matching/Other_NegativeDistanceSpatial_1.1/runs/slurm_51039505_7118af6c17b9/predictions.csv
+    predictions_sha256: cc4651baefeabda0c4570ad4a3f8a6b855e2616e835af02994294a2095f177f2
+    per_group_metrics: /ibex/user/zhanx0o/pathline-template-matching/Other_NegativeDistanceSpatial_1.1/runs/slurm_51039505_7118af6c17b9/per_group_metrics.csv
+    per_group_metrics_sha256: f857590d334227829309c7c51b7dcfd71d390909d66ad9744d014610146e455e
+
+candidate:
+  input_id: main31_train_family_holdouts_source2
+  score_column: masked_gaussian_rank_sigma_1
+  prediction_column: masked_gaussian_rank_sigma_1__fixed_top_fraction_0.05
+  score_semantics: >-
+    Stable within-group percentile rank of nearest non-vortex FMT-template
+    distance after support-mask-normalized Gaussian smoothing with sigma 1 grid
+    cell; larger means more vortex-like.
+  prediction_semantics: >-
+    FMT nearest-non-vortex-template distance, within-source/block rank,
+    mask-normalized Gaussian sigma=1 spatial smoothing, fixed top-5-percent
+    positive rule.
+  sigma_grid_indices: 1.0
+  fixed_top_fraction: 0.05
+  threshold_or_candidate_selection_from_figure_data: forbidden
+  oracle_threshold: forbidden
+
+query:
+  source_ordinal: 2
+  source_selection: fixed_before_prediction_and_metrics
+  assigned_count_per_dataset_block: 64000
+  complete_valid_rows_required: true
+  cross_block_aggregation_or_majority_vote: forbidden
+  row_join_key: [dataset, source_ordinal, block, center_index]
+  exact_join_guards:
+    duplicate_keys: fail
+    missing_parent_scene_rows: fail
+    extra_candidate_rows: fail
+    reordered_or_mismatched_center_identity: fail
+  datasets:
+    - id: cylinder3d
+      display_title: Half-cylinder Re160
+      fold_id: holdout_half_cylinder
+      held_out_physical_family: half_cylinder
+    - id: halfcylinderRe640
+      display_title: Half-cylinder Re640
+      fold_id: holdout_half_cylinder
+      held_out_physical_family: half_cylinder
+    - id: halfcylinderRe6400
+      display_title: Half-cylinder Re6400
+      fold_id: holdout_half_cylinder
+      held_out_physical_family: half_cylinder
+    - id: boeing747
+      display_title: Boeing 747
+      fold_id: holdout_boeing_747
+      held_out_physical_family: boeing_747
+  scale_blocks:
+    - id: legacy_2_1
+      index: 0
+      scale_id_start: 0
+      scale_id_stop_exclusive: 1000
+    - id: expanded_3_1
+      index: 1
+      scale_id_start: 1000
+      scale_id_stop_exclusive: 2000
+
+metrics:
+  unit: dataset_source_ordinal_2_scale_block
+  use_all_valid_query_rows: true
+  invalid_rows_enter_only_coverage_denominator: true
+  required:
+    - coverage
+    - accuracy
+    - average_precision
+    - f1
+    - balanced_accuracy
+    - auroc
+    - precision
+    - recall
+    - true_positive
+    - false_positive
+    - true_negative
+    - false_negative
+  comparison_to_parent_per_group_metrics:
+    required: exact_within_numeric_tolerance
+    absolute_tolerance: 1.0e-12
+
+figure_contract:
+  core_conclusion: >-
+    The fixed negative-distance spatial candidate produces localized
+    family-held-out classifications and flow/block-specific residual errors on
+    the four requested exposed flows; it does not reach the project's F1 goal.
+  results_level_question: >-
+    Where does the fixed candidate agree or disagree with whole-loaded-volume
+    IVD-p95 when the complete query physical family is absent from the template
+    library?
+  archetype: image_plate_plus_quantification
+  backend: python_matplotlib
+  figure_unit: one_dataset_by_one_scale_block
+  expected_figure_count: 8
+  final_size_inches: [21.0, 5.0]
+  panel_titles:
+    - IVD p95 + center pathlines
+    - FMT negative-distance + spatial top-5%
+    - TP / FP / FN / TN against IVD p95
+  panel_map:
+    a: unchanged_parent_IVD_p95_isosurface_plus_240_reference_selected_center_pathlines
+    b: fixed_candidate_assignment_for_every_valid_query_row
+    c: exact_TP_FP_FN_TN_partition_for_the_same_rows_in_the_same_order
+  display_pathlines:
+    count: 240
+    negative_count: 120
+    positive_count: 120
+    selection: unchanged_from_parent_reference_only_deterministic_maximin
+    interpretation: balanced_explanatory_context_not_natural_class_prevalence
+  identical_rows_camera_and_bounds_across_panels: true
+  png_dpi: 360
+  editable_svg_and_pdf_text: true
+  rasterized_3d_marks: true
+  required_exports:
+    - scene_npz
+    - scene_manifest_json
+    - svg_with_editable_text_and_rasterized_3d_marks
+    - pdf_with_editable_text_and_rasterized_3d_marks
+    - png_360dpi
+    - panel_alignment_json
+    - render_metadata_json
+  reviewer_risks:
+    - candidate_was_selected_from_exposed_metrics_on_the_same_four_flows
+    - fixed_top_5_percent_is_transductive_within_each_dataset_source_block
+    - coverage_differs_substantially_across_scale_blocks
+    - 240_display_pathlines_are_balanced_context_not_the_natural_query_population
+    - single_fixed_source_visualization_does_not_replace_multisource_statistics
+
+execution:
+  platform: Ibex_from_committed_clean_git_revision
+  device: cpu
+  output_root: /ibex/user/zhanx0o/pathline-template-matching/Other_NegativeDistanceSpatialVisualization_1.1
+  run_directory_pattern: /ibex/user/zhanx0o/pathline-template-matching/Other_NegativeDistanceSpatialVisualization_1.1/runs/slurm_JOBID_COMMIT12
+  existing_run_directory_action: fail
+  completion_marker: RUN_COMPLETE.json
+
+required_outputs:
+  - frozen_config.yaml
+  - input_manifest.json
+  - per_figure_metrics.csv
+  - main_table.md
+  - visualization_manifest.json
+  - environment_versions.json
+  - result_manifest.json
+  - RUN_COMPLETE.json

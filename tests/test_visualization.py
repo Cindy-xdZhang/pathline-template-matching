@@ -99,6 +99,34 @@ def test_triptych_writes_png_counts_and_identical_camera_metadata():
         assert cameras[0]["azimuth_degrees"] == -60.0
 
 
+def test_triptych_optional_panel_and_semantics_override_is_explicit_and_default_safe():
+    titles = (
+        "IVD p95 + center pathlines",
+        "FMT negative-distance + spatial top-5%",
+        "TP / FP / FN / TN against IVD p95",
+    )
+    semantics = "fixed negative-distance spatial top-5-percent assignment"
+    with tempfile.TemporaryDirectory() as directory:
+        _, metadata = render_template_matching_triptych(
+            _scene(),
+            Path(directory) / "overridden.png",
+            dpi=20,
+            panel_titles=titles,
+            prediction_semantics=semantics,
+        )
+    assert metadata["panel_order"] == list(titles)
+    assert metadata["prediction_semantics"] == semantics
+
+    with tempfile.TemporaryDirectory() as directory:
+        _, default = render_template_matching_triptych(
+            _scene(), Path(directory) / "default.png", dpi=20
+        )
+    assert default["panel_order"][1] == "FMT exact-1NN class assignment"
+    assert default["prediction_semantics"] == (
+        "precomputed FMT exact-1NN binary assignment"
+    )
+
+
 def test_triptych_uses_positive_reference_seeds_when_ivd_points_are_absent():
     with tempfile.TemporaryDirectory() as directory:
         _, metadata = render_template_matching_triptych(

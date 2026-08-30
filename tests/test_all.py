@@ -106,6 +106,12 @@ from test_negative_distance_spatial_runner import (
     test_spatial_runner_rejects_hash_mismatch_missing_reference_and_overwrite,
     test_spatial_runner_reports_single_class_metrics_and_finite_group_counts,
 )
+from test_negative_distance_spatial_visualization import (
+    test_candidate_projection_rejects_extra_identity_and_reordered_parent_join,
+    test_candidate_projection_uses_fixed_columns_and_rejects_duplicate_join_identity,
+    test_negative_spatial_visualization_plan_freezes_candidate_and_eight_figures,
+    test_parent_provenance_closes_scene_candidate_and_prediction_source_chain,
+)
 from test_one_class_spatial import (
     test_high_score_two_means_constant_or_insufficient_input_fails_closed,
     test_high_score_two_means_finds_global_high_mean_cluster,
@@ -206,11 +212,16 @@ from test_visualization import (
     test_scene_validation_rejects_invalid_shapes_and_mismatched_seed_copies,
     test_triptych_uses_positive_reference_seeds_when_ivd_points_are_absent,
     test_triptych_renders_audited_ivd_isosurface_without_fallback,
+    test_triptych_optional_panel_and_semantics_override_is_explicit_and_default_safe,
     test_triptych_writes_png_counts_and_identical_camera_metadata,
 )
 
 
 TESTS = (
+    test_negative_spatial_visualization_plan_freezes_candidate_and_eight_figures,
+    test_candidate_projection_uses_fixed_columns_and_rejects_duplicate_join_identity,
+    test_candidate_projection_rejects_extra_identity_and_reordered_parent_join,
+    test_parent_provenance_closes_scene_candidate_and_prediction_source_chain,
     test_scale_conditioned_aggregate_writes_five_family_macro_and_passes_stop_rule,
     test_scale_conditioned_aggregate_rejects_duplicate_outer_family,
     test_scale_conditioned_aggregate_rejects_mixed_fold_commits,
@@ -359,6 +370,7 @@ TESTS = (
     test_scale_table_rejects_insufficient_integration_steps,
     test_scale_table_rejects_duplicate_numeric_tuple,
     test_triptych_writes_png_counts_and_identical_camera_metadata,
+    test_triptych_optional_panel_and_semantics_override_is_explicit_and_default_safe,
     test_triptych_uses_positive_reference_seeds_when_ivd_points_are_absent,
     test_triptych_renders_audited_ivd_isosurface_without_fallback,
     test_scene_validation_rejects_invalid_shapes_and_mismatched_seed_copies,

@@ -190,3 +190,40 @@ Development 表格必须将 seen-scale 与 unseen-scale 分开，保留所有 fl
 - 达到config冻结的F1/AP/BA/precision/recall门槛只允许进入新的`mainExp_TemplateMatching_4.1`；本版本使用的八个flow都已暴露，不是formal confirmation。
 
 精确候选、split、输入哈希、支持规则、成功条件和输出由`config/Verify_ScaleConditionedRetrieval_1.1.yaml`唯一规定；冻结SHA-256为`f5dbdae08e2e13140245a6a9fd12dba67b4eaf6a7ae1aaea8d600f89a409a6a2`。
+
+## 17. `Other_NegativeDistanceSpatialVisualization_1.1` 的四流场当前候选三联图
+
+本版本是 `Other_NegativeDistanceSpatial_1.1` 固定候选的下游可视化，不重新
+选择 score、sigma 或 threshold。唯一候选为最近非涡 FMT 模板距离的组内稳定
+rank、同 `dataset×source×block` 的 support-mask-normalized Gaussian
+`sigma=1`，以及固定 top-5% positive rule。禁止使用 oracle threshold 或按图
+调整任何方法参数。
+
+- query 固定为 `cylinder3d`（Re160）、`halfcylinderRe640`、
+  `halfcylinderRe6400` 与 `boeing747` 的 source ordinal `2`。每个 dataset
+  分 `legacy_2_1` 与 `expanded_3_1` 单独出图，共八张；禁止跨 block 叠画、
+  投票或聚合。
+- 八个父 scene 必须来自
+  `Other_MainExp31FamilyHeldOutVisualization_1.1` job `51029080`：查询三个
+  cylinder 时完整排除 `half_cylinder` family，查询 Boeing 时完整排除
+  `boeing_747` family。父 scene 的 bounds、seeds、reference、IVD mesh、240
+  条 reference-only 选择的 pathlines、相机与 row identity 不得改变。
+- 当前 prediction 必须来自 `Other_NegativeDistanceSpatial_1.1` job
+  `51039505` 的已哈希 predictions，并按
+  `dataset×source ordinal×block×center index` 与父 scene 精确连接；duplicate、
+  missing、extra 或 row identity 不一致均失败。
+- 三栏固定为：IVD-p95 等值面与240条中心 pathlines；固定候选对全部 valid
+  rows 的 class assignment；同一完整 rows 的 TP/FP/FN/TN。第二栏不得称
+  clustering。240条线为120正/120负的解释性背景，不代表自然类别比例。
+- 每图必须报告 coverage、Accuracy、Average Precision、F1、balanced
+  accuracy、Area Under the Receiver Operating Characteristic Curve、precision、
+  recall 与混淆计数，并与父 `per_group_metrics.csv` 中同一固定候选逐组一致。
+- 每图必须导出新的 immutable scene NPZ/manifest、SVG、PDF、360 dpi PNG、
+  panel-alignment JSON 与 render metadata；全部三维 marks 栅格化，SVG/PDF
+  文字可编辑，所有产物禁止覆盖。
+- 候选与四个flow指标均已暴露，因此这些图只是
+  `family-held-out exposed-development visualization`，不是 formal confirmation、
+  无偏模型选择或多 source 聚合证据。
+
+唯一配置为 `config/Other_NegativeDistanceSpatialVisualization_1.1.yaml`，冻结
+SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。

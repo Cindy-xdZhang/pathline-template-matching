@@ -1274,6 +1274,10 @@ def render_phase21_scene_artifact(
         alignment_output_path=alignment_path,
         view=DATASET_VIEWS[str(artifact.scene["dataset"])],
         dpi=int(dpi),
+        panel_titles=artifact.metadata.get("renderer_panel_titles"),
+        prediction_semantics=artifact.metadata.get(
+            "renderer_prediction_semantics"
+        ),
     )
     counts = dict(render_metadata["counts"])
     expected_query_count = int(artifact.metadata["query_count"])
@@ -1331,6 +1335,14 @@ def render_phase21_scene_artifact(
             "held_out_physical_family",
             "library_contains_query_family",
             "scale_block",
+            "parent_analysis_experiment",
+            "candidate",
+            "exact_join",
+            "parent_scene_reuse",
+            "figure_interpretation",
+            "formal_confirmation",
+            "renderer_panel_titles",
+            "renderer_prediction_semantics",
         ):
             if name in artifact.metadata:
                 metadata[name] = artifact.metadata[name]
