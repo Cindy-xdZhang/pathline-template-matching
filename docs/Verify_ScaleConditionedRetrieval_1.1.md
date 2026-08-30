@@ -1,6 +1,6 @@
 # `Verify_ScaleConditionedRetrieval_1.1`
 
-状态：方法与候选集已冻结，尚未产生 Ibex 性能结果。
+状态：首个外层 `half_cylinder` CPU profile 已在 Ibex 完成、下载并通过强化验收；F1 `0.498262` 低于冻结的单 family 最低值 `0.50`，因此该版本已经不可能通过成功规则，其余四个 outer fold 不再运行。
 
 冻结配置：`config/Verify_ScaleConditionedRetrieval_1.1.yaml`
 配置 SHA-256：`f5dbdae08e2e13140245a6a9fd12dba67b4eaf6a7ae1aaea8d600f89a409a6a2`
@@ -135,7 +135,7 @@ python scripts/run_verify_scale_conditioned_retrieval_1_1.py \
   --output-dir /ibex/user/zhanx0o/pathline-template-matching/Verify_ScaleConditionedRetrieval_1.1/runs/UNIQUE_DIRECTORY
 ```
 
-`RUN_COMPLETE.json` 必须最后写入。当前本地完整回归为 158/158 tests passed；CUDA 分支仍需由 Ibex job 验证。
+`RUN_COMPLETE.json` 必须最后写入。认证数值 run `51052096` 的 preflight 为 168/168 tests passed；CUDA matcher 的独立单元测试已在此前 Ibex A100 run 中通过，但本次 outer profile 使用 CPU。
 
 因同一账户的其他 FMT GPU array 占满 GPU QOS，允许在完全相同的配置、输入和 outer family 上运行一个 CPU profile 副本。CPU 与 GPU 结果必须分别记录设备和数值 commit，不能把不同设备产生的 outer folds 混入同一个五折 aggregate。CPU profile 只用于尽早取得首折机制证据和 wall time；正式五折仍须使用同一种设备完成。
 
@@ -151,3 +151,36 @@ outputs/Other_NegativeDistanceSpatial_1.1_download/
 文件 SHA-256 为 `1fa00ea04d00d0a879f390d5a59867ed04d960297a72bda27f416a53b799f26f`；数值实验 commit 为 `7118af6c17b964b5561e6e297609f431f81aa020`。过滤 `input_id=main31_train_family_holdouts_source2` 后，用整数混淆计数按 `2TP/(2TP+FP+FN)` 重算，`masked_gaussian_rank_sigma_1` 的八个 `dataset×block` group oracle F1 宏平均仅为 `0.586170054270344856`；最低组 `halfcylinderRe640/expanded_3_1` 为 `0.475285735490574440`，最高组 `cylinder3d/legacy_2_1` 为 `0.712839506172839506`。
 
 这里的 oracle 比可部署阈值更宽松：八个 group 各自读取本组真值、分别枚举并选择最佳 threshold，不是共享一个 threshold。因此它只支持一个否定结论：**在旧分数的组内排序不变时，继续调 threshold 本身不可能把八组宏平均 F1 推到 0.7。** 它不能否定本验证，因为本验证同时改变了自然负类 library、representation、exact same-scale 检索与 `k`。
+
+## 9. Ibex 首折结果与停止决定
+
+认证 run 为 Ibex job `51052096`，数值 commit `de924b029cd88e8782ed7169434561e6f7b6ec3e`，节点 `cn509-17-l`，32 CPU、96 GB，elapsed `00:06:02`，batch MaxRSS `13081196K`。结果目录为：
+
+```text
+/ibex/user/zhanx0o/pathline-template-matching/Verify_ScaleConditionedRetrieval_1.1/runs/slurm_51052096_cpu_de924b029cd8_outer_half_cylinder
+```
+
+本地认证副本为 `outputs/Verify_ScaleConditionedRetrieval_1.1_hashfix_download`。`result_manifest.json` 文件 SHA-256 为 `66d6b4e42d2c833952aef8e8ec07a8f0efb1e25886d04b787990fd3228601b00`；stdout/stderr SHA-256 分别为 `f7ae0686eaa38681c7d1b350dae72902a7be1ae354c007cee8530dc891e774b7`、`fb6b51177e5f47c85cdd1ec145ceff281c4eb8014dbf21216b1d12da316efb66`。当前强化聚合器重新认证每个 artifact、重算 24 个 `dataset×source×block` group 的混淆矩阵与 family summary，全部通过。
+
+Inner 四 family 选择出的候选为 `real_neighbor36__k=01__sigma=1.00__rule=fixed_top_fraction__value=0.05`；inner family macro F1/AP 为 `0.553901/0.590357`。在未参与选择的 `half_cylinder` 上，24 组等权 family macro 为：
+
+| F1 | Average Precision | Balanced accuracy | Precision | Recall | Support |
+|---:|---:|---:|---:|---:|---:|
+| 0.498262 | 0.520068 | 0.722213 | 0.535185 | 0.469087 | 1.000000 |
+
+按 dataset 与尺度块等权平均四个 source：
+
+| Dataset | Scale block | F1 | Average Precision | Balanced accuracy |
+|---|---|---:|---:|---:|
+| `cylinder3d` | legacy | 0.687853 | 0.731607 | 0.819512 |
+| `cylinder3d` | expanded | 0.499645 | 0.532629 | 0.711536 |
+| `halfcylinderRe640` | legacy | 0.516973 | 0.546258 | 0.734246 |
+| `halfcylinderRe640` | expanded | 0.386545 | 0.389445 | 0.660825 |
+| `halfcylinderRe6400` | legacy | 0.639277 | 0.678556 | 0.802096 |
+| `halfcylinderRe6400` | expanded | 0.259281 | 0.241914 | 0.605063 |
+
+所有 `1,309,366` 个 query 均有 exact same-scale retrieval support，`imputed=0`、`unimputable=0`；所以失败不是尺度模板缺失。Expanded block 在 Re640/Re6400 上显著变差，说明当前 FMT 子块与全局负类 scaler 形成的尺度内排序仍不稳定。
+
+首次 CPU run `51047844` 得到逐位相同的 inner CSV、outer prediction NPZ、outer group CSV 与 outer summary，但两个 JSON 对象在自哈希前保留 NaN、落盘时转为 null，故被标记 `INVALID_EVIDENCE_PACKAGING`。只修复 JSON-safe 自哈希后执行 `51052096`；两次 `outer_predictions.npz` 的 SHA-256 均为 `d3ed5e76caa33eea23a72e12cb929190459071281be3ae7777335746c0bd6951`，三个数值 CSV 也逐字节相同，因此封装修复没有改变数值。
+
+冻结规则要求任何 outer family F1 不得低于 `0.50`。`half_cylinder=0.498262` 已使本版本无法通过；继续运行另外四折不能改变这一事实。下一步转入在看到该结果前已冻结的 `Verify_NegativeTailCalibration_1.1`，只检验 fit-negative 逐尺度尾概率是否修复跨尺度 score 不可比；若仍失败，则必须建立新版本改变尺度内排序特征。
