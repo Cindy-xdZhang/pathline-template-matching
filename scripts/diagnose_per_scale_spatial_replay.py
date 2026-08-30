@@ -40,23 +40,34 @@ def _sha256_file(path: Path) -> str:
 
 
 def _maximum_ulp_distance(left: np.ndarray, right: np.ndarray) -> int:
-    """Return the maximum ULP distance for finite nonnegative float64 arrays."""
+    """Return the maximum ULP distance for finite nonnegative float arrays."""
 
-    a = np.ascontiguousarray(left, dtype=np.float64)
-    b = np.ascontiguousarray(right, dtype=np.float64)
+    a = np.ascontiguousarray(left)
+    b = np.ascontiguousarray(right)
     _require(a.shape == b.shape, "ULP comparison shape mismatch")
+    _require(a.dtype == b.dtype and a.dtype in (np.dtype(np.float32), np.dtype(np.float64)), "ULP comparison dtype mismatch")
     _require(np.isfinite(a).all() and np.isfinite(b).all(), "ULP comparison is nonfinite")
     _require(np.all(a >= 0.0) and np.all(b >= 0.0), "ULP comparison requires nonnegative values")
-    a_bits = a.view(np.uint64)
-    b_bits = b.view(np.uint64)
+    unsigned_dtype = np.uint32 if a.dtype == np.dtype(np.float32) else np.uint64
+    a_bits = a.view(unsigned_dtype)
+    b_bits = b.view(unsigned_dtype)
     distance = np.where(a_bits >= b_bits, a_bits - b_bits, b_bits - a_bits)
-    return int(distance.max(initial=np.uint64(0)))
+    return int(distance.max(initial=unsigned_dtype(0)))
 
 
 def _difference_summary(stored: np.ndarray, replayed: np.ndarray) -> dict[str, Any]:
     _require(stored.shape == replayed.shape, "difference comparison shape mismatch")
-    absolute = np.abs(stored - replayed)
-    scale = np.maximum(np.abs(stored), np.abs(replayed))
+    _require(stored.dtype == replayed.dtype, "difference comparison dtype mismatch")
+    stored_nan = np.isnan(stored)
+    replayed_nan = np.isnan(replayed)
+    nan_mask_different_count = int(np.count_nonzero(stored_nan != replayed_nan))
+    finite = np.isfinite(stored) & np.isfinite(replayed)
+    _require(np.all(np.isfinite(stored) | stored_nan), "stored comparison contains infinity")
+    _require(np.all(np.isfinite(replayed) | replayed_nan), "replayed comparison contains infinity")
+    stored_finite = stored[finite]
+    replayed_finite = replayed[finite]
+    absolute = np.abs(stored_finite - replayed_finite)
+    scale = np.maximum(np.abs(stored_finite), np.abs(replayed_finite))
     relative = np.divide(
         absolute,
         scale,
@@ -64,13 +75,116 @@ def _difference_summary(stored: np.ndarray, replayed: np.ndarray) -> dict[str, A
         where=scale > 0.0,
     )
     return {
-        "bitwise_equal": bool(np.array_equal(stored, replayed)),
-        "different_count": int(np.count_nonzero(stored != replayed)),
+        "bitwise_equal": bool(np.array_equal(stored, replayed, equal_nan=True)),
+        "different_count": int(np.count_nonzero(stored_finite != replayed_finite))
+        + nan_mask_different_count,
+        "nan_mask_exact": nan_mask_different_count == 0,
+        "nan_mask_different_count": nan_mask_different_count,
         "maximum_absolute_difference": float(absolute.max(initial=0.0)),
         "maximum_relative_difference": float(relative.max(initial=0.0)),
-        "maximum_ulp_distance": _maximum_ulp_distance(stored, replayed),
-        "allclose_atol_1e_15": bool(np.allclose(stored, replayed, rtol=0.0, atol=1.0e-15)),
-        "allclose_atol_1e_14": bool(np.allclose(stored, replayed, rtol=0.0, atol=1.0e-14)),
+        "maximum_ulp_distance": _maximum_ulp_distance(stored_finite, replayed_finite),
+        "allclose_atol_1e_15": bool(
+            np.allclose(stored, replayed, rtol=0.0, atol=1.0e-15, equal_nan=True)
+        ),
+        "allclose_atol_1e_14": bool(
+            np.allclose(stored, replayed, rtol=0.0, atol=1.0e-14, equal_nan=True)
+        ),
+    }
+
+
+def _full_query_replay(
+    plan: runner.Plan,
+    run_directory: Path,
+    manifest: Mapping[str, Any],
+    arrays: Mapping[str, np.ndarray],
+    selected: runner.TailCandidateSpec,
+) -> dict[str, Any]:
+    """Rebuild every label-free query field from authenticated fit artifacts."""
+
+    outer_family = str(manifest["outer_family"])
+    git_commit = str(manifest["git_commit"])
+    fit_families = [family for family in plan.family_order if family != outer_family]
+    scaler_record = manifest.get("final_per_scale_scaler_manifest")
+    calibration_record = manifest.get("final_calibration_manifest")
+    _require(isinstance(scaler_record, Mapping), "prediction scaler reference is invalid")
+    _require(isinstance(calibration_record, Mapping), "prediction calibration reference is invalid")
+    scaler = runner.authenticate_and_rebuild_final_scaler(
+        run_directory / "final_per_scale_scaler.npz",
+        run_directory / "final_per_scale_scaler_manifest.json",
+        plan=plan,
+        selected=selected,
+        outer_family=outer_family,
+        fit_families=fit_families,
+        git_commit=git_commit,
+        expected_manifest_file_sha256=str(scaler_record["file_sha256"]),
+    )
+    calibration = runner.authenticate_and_rebuild_final_calibration(
+        run_directory / "final_tail_calibration.npz",
+        run_directory / "final_tail_calibration_manifest.json",
+        plan=plan,
+        selected=selected,
+        scaler=scaler,
+        outer_family=outer_family,
+        fit_families=fit_families,
+        git_commit=git_commit,
+        expected_manifest_file_sha256=str(calibration_record["file_sha256"]),
+    )
+    manifest_rows, _ = runner.load_cache_rows(plan)
+    outer_rows = tuple(row for row in manifest_rows if row.family == outer_family)
+    projections = tuple(
+        runner.load_cache_projection(plan, row, include_labels=False) for row in outer_rows
+    )
+    runner._validate_label_free_outer_scope(plan, outer_family, projections, outer_rows)
+    replayed_arrays, replayed_group_audits = runner.build_outer_prediction_arrays(
+        projections,
+        calibration.model,
+        selected,
+        plan,
+        device="cpu",
+    )
+    _require(set(replayed_arrays) == set(arrays), "full replay member set drifted")
+    exact_fields = (
+        "dataset",
+        "source_ordinal",
+        "source_index",
+        "scale_id",
+        "center_seed_index",
+        "scale_block_index",
+        "assigned_row_index",
+        "retrieval_supported",
+        "calibration_supported",
+        "spatial_imputed",
+        "spatial_unimputable",
+        "calibration_mode",
+        "scaler_mode",
+        "prediction",
+    )
+    exact = {
+        name: {
+            "exact": bool(np.array_equal(arrays[name], replayed_arrays[name])),
+            "different_count": int(np.count_nonzero(arrays[name] != replayed_arrays[name])),
+        }
+        for name in exact_fields
+    }
+    floating_fields = (
+        "raw_negative_distance",
+        "tail_probability",
+        "tail_anomaly",
+        "spatial_score",
+        "spatial_denominator",
+    )
+    floating = {
+        name: _difference_summary(arrays[name], replayed_arrays[name])
+        for name in floating_fields
+    }
+    return {
+        "access_scope": "authenticated_fit_artifacts_and_outer_feature_projection_only_no_labels_no_metrics",
+        "exact_fields": exact,
+        "floating_fields": floating,
+        "all_exact_fields_pass": all(record["exact"] for record in exact.values()),
+        "classification_replay_pass": exact["prediction"]["exact"],
+        "group_audits_exact": runner._json_safe(replayed_group_audits)
+        == runner._json_safe(manifest["group_audits"]),
     }
 
 
@@ -102,7 +216,12 @@ def _load_authenticated_prediction(run_directory: Path) -> tuple[Mapping[str, An
     return manifest, arrays
 
 
-def diagnose(config_path: Path, run_directory: Path) -> dict[str, Any]:
+def diagnose(
+    config_path: Path,
+    run_directory: Path,
+    *,
+    full_query_replay: bool = False,
+) -> dict[str, Any]:
     plan = runner.load_plan(config_path)
     manifest, arrays = _load_authenticated_prediction(run_directory)
     _require(manifest.get("config_sha256") == plan.sha256, "prediction/config binding drifted")
@@ -188,7 +307,7 @@ def diagnose(config_path: Path, run_directory: Path) -> dict[str, Any]:
         )
     _require(np.array_equal(coverage, np.ones_like(coverage)), "groups do not partition prediction rows")
     kernel = runner._gaussian_kernel1d(selected.sigma, plan.gaussian_truncate)
-    return {
+    report = {
         "schema": SCHEMA,
         "access_scope": "outer_prediction_manifest_and_npz_only_no_labels_no_metrics",
         "host": platform.node(),
@@ -215,18 +334,34 @@ def diagnose(config_path: Path, run_directory: Path) -> dict[str, Any]:
         "classification_replay_pass": changed_predictions == 0,
         "groups": group_reports,
     }
+    if full_query_replay:
+        report["full_query_replay"] = _full_query_replay(
+            plan, run_directory, manifest, arrays, selected
+        )
+    return report
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--run-dir", type=Path, required=True)
+    parser.add_argument("--full-query-replay", action="store_true")
     return parser.parse_args(argv)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
     args = parse_args(argv)
-    print(json.dumps(diagnose(args.config, args.run_dir), indent=2, sort_keys=True))
+    print(
+        json.dumps(
+            diagnose(
+                args.config,
+                args.run_dir,
+                full_query_replay=bool(args.full_query_replay),
+            ),
+            indent=2,
+            sort_keys=True,
+        )
+    )
 
 
 if __name__ == "__main__":

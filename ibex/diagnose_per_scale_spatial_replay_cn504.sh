@@ -63,7 +63,8 @@ for TASK_ID in 0 1 2 3 4; do
   echo "diagnostic_fold_start=$TASK_ID family=$FAMILY"
   python scripts/diagnose_per_scale_spatial_replay.py \
     --config "$CONFIG" \
-    --run-dir "$RUN_DIR"
+    --run-dir "$RUN_DIR" \
+    --full-query-replay
   echo "diagnostic_fold_end=$TASK_ID family=$FAMILY"
 done
 
