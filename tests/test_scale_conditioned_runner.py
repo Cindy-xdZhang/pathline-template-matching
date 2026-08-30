@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT))
 
 from pathline_template_matching.portable_flow import (
     canonical_array_sha256,
+    canonical_json_sha256,
     sha256_file,
 )
 from pathline_template_matching.metrics import average_precision, auroc
@@ -25,6 +26,8 @@ from scripts.run_verify_scale_conditioned_retrieval_1_1 import (
     PREDICTION_FILE,
     PREDICTION_MANIFEST_FILE,
     _load_outer_reference_after_prediction,
+    _atomic_json,
+    _json_safe_content_sha256,
     _partial_supported_query,
     _ranking_metrics_one_sort,
     _threshold_confusion_series,
@@ -49,6 +52,22 @@ def _plan():
         / "config"
         / "Verify_ScaleConditionedRetrieval_1.1.yaml"
     )
+
+
+def test_json_content_hash_matches_persisted_null_for_empty_subset_nan():
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "payload.json"
+        payload = {
+            "finite": 0.5,
+            "empty_subset_f1": float("nan"),
+        }
+        payload["content_sha256"] = _json_safe_content_sha256(payload)
+        _atomic_json(path, payload)
+        persisted = __import__("json").loads(path.read_text(encoding="utf-8"))
+        stored = persisted.pop("content_sha256")
+
+        assert persisted["empty_subset_f1"] is None
+        assert stored == canonical_json_sha256(persisted)
 
 
 def _write_valid_outer_artifacts(root, plan, projection):

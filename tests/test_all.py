@@ -162,6 +162,7 @@ from test_scale_conditioned_runner import (
     test_outer_reference_member_is_gated_by_closed_prediction_artifacts,
     test_partial_query_support_is_fit_only_and_independent_for_each_k,
     test_sorted_threshold_confusions_match_direct_predictions_with_ties,
+    test_json_content_hash_matches_persisted_null_for_empty_subset_nan,
 )
 from test_scale_conditioned_aggregate import (
     test_scale_conditioned_aggregate_accepts_clean_hardening_commit_after_folds,
@@ -263,6 +264,7 @@ TESTS = (
     test_outer_prediction_projection_never_opens_label_or_metadata_members,
     test_outer_reference_member_is_gated_by_closed_prediction_artifacts,
     test_sorted_threshold_confusions_match_direct_predictions_with_ties,
+    test_json_content_hash_matches_persisted_null_for_empty_subset_nan,
     test_one_sort_ranking_metrics_match_frozen_metric_definitions,
     test_negative_knn_scores_are_exact_and_chunk_invariant_on_cpu,
     test_negative_knn_scores_include_zero_self_distance_and_empty_queries,

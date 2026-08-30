@@ -489,6 +489,18 @@ def _json_safe(value: Any) -> Any:
     return value
 
 
+def _json_safe_content_sha256(value: Any) -> str:
+    """Hash the exact JSON-safe value that :func:`_atomic_json` will write.
+
+    Runtime summaries can contain NaN for an empty diagnostic subset.  The
+    persisted JSON contract maps such values to ``null``.  Content hashes must
+    therefore be computed after the same conversion, not from the pre-write
+    Python object containing NaN.
+    """
+
+    return canonical_json_sha256(_json_safe(value))
+
+
 def _atomic_json(path: Path, value: Any) -> str:
     payload = json.dumps(
         _json_safe(value), ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False
@@ -1379,7 +1391,7 @@ def _write_outer_prediction(
         },
         "outer_reference_opened": False,
     }
-    manifest["manifest_content_sha256"] = canonical_json_sha256(manifest)
+    manifest["manifest_content_sha256"] = _json_safe_content_sha256(manifest)
     manifest_sha = _atomic_json(output_dir / PREDICTION_MANIFEST_FILE, manifest)
     return manifest, manifest_sha
 
@@ -1837,7 +1849,7 @@ def run(
         "final_fit_families": [family for family in plan.family_order if family != outer_family],
         "final_fit_audit": final_fit_audit,
     }
-    selected_payload["selection_content_sha256"] = canonical_json_sha256(
+    selected_payload["selection_content_sha256"] = _json_safe_content_sha256(
         selected_payload
     )
     selected_sha = _atomic_json(destination / "selected_candidate.json", selected_payload)
@@ -1939,7 +1951,7 @@ def run(
             for name in artifact_names
         },
     }
-    result_manifest["manifest_content_sha256"] = canonical_json_sha256(
+    result_manifest["manifest_content_sha256"] = _json_safe_content_sha256(
         result_manifest
     )
     result_sha = _atomic_json(destination / "result_manifest.json", result_manifest)
@@ -1953,7 +1965,7 @@ def run(
         "result_manifest_file_sha256": result_sha,
         "completed_utc": _utc_now(),
     }
-    completion["completion_content_sha256"] = canonical_json_sha256(completion)
+    completion["completion_content_sha256"] = _json_safe_content_sha256(completion)
     _atomic_json(destination / "RUN_COMPLETE.json", completion)
     print(
         f"[{_utc_now()}] completed outer={outer_family} F1={outer_summary['f1']:.6f}",
