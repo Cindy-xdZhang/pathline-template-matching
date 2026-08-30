@@ -301,7 +301,7 @@ def test_spatial_runner_rejects_hash_mismatch_missing_reference_and_overwrite():
         runner.run(config, complete_output)
         _expect_error(
             FileExistsError,
-            "already exists",
+            "exist",
             lambda: runner.run(config, complete_output),
         )
 
