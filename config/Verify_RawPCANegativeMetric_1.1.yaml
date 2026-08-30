@@ -1,0 +1,543 @@
+experiment: Verify_RawPCANegativeMetric_1.1
+phase: exposed_train_only_nested_family_validation
+status: frozen_pre_run_not_implemented
+frozen_before_first_read_of_any_parent_outer_result: true
+parent_outer_results_visible_at_freeze: false
+freeze_parent: Verify_PerScaleNegativeMetric_1.1
+parent_experiments:
+  - mainExp_TemplateMatching_3.1
+  - Verify_NegativeTailCalibration_1.1
+  - Verify_PerScaleNegativeMetric_1.1
+
+research_question: >-
+  Does replacing the parent's three candidate FMT representations with one
+  fixed train-only Raw672 Principal Component Analysis representation of width
+  161 improve exact-scale negative-distance ordering and held-out-family F1,
+  while preserving the parent's per-scale negative metric, negative-tail
+  calibration, spatial transform, decision search, nested split, and stop rule?
+
+single_mechanism_change:
+  parent_representations: [fmt161, real_neighbor36, chirality_all35]
+  parent_representation_selection: inner_family_validation
+  current_representations: [raw_pca161]
+  current_representation_selection: none_one_fixed_representation
+  current_representation_definition: >-
+    every valid fit-family Raw672 row is projected by a separately fitted
+    train-only deterministic 672-to-161 Principal Component Analysis transform
+  unchanged_feature_metric: fit_negative_per_scale_shrunk_diagonal_within_scale_population_variance
+  unchanged_score_transform: fit_negative_scale_tail_anomaly
+  forbidden_concurrent_changes:
+    - fmt_representation_candidate
+    - representation_search
+    - pca_component_count_search
+    - pca_whitening
+    - global_post_pca_standardization
+    - learned_metric
+    - kinematic_features
+    - raw_descriptor_change
+    - cross_scale_retrieval
+    - per_scale_metric_change
+    - shrinkage_lambda_change
+    - tail_calibration_change
+    - k_grid_change
+    - spatial_sigma_grid_change
+    - decision_grid_change
+    - nested_split_change
+    - success_stop_rule_change
+
+evidence_scope:
+  level: exposed_development_only
+  formal_confirmation: false
+  allowed_inputs: mainExp_TemplateMatching_3.1_train_caches_only
+  forbidden_datasets: [tangaroa, smokeBuoyancy]
+  forbidden_dataset_file_manifest_cache_feature_label_metric_access: true
+  forbidden_claims:
+    - sealed_confirmation
+    - conformal_coverage
+    - independent_full_classifier
+    - pca_is_supervised
+
+parent_identity:
+  cache_builder_git_commit: 260a07ad380d64fc300cabe8926244e92d8ba04a
+  main_config_sha256: 771980f14a6019a1f6e4bf03668d9f37dcf63495ae2dafa866312b12fc71855e
+  cache_schema: pathline_template_matching.phase31_cache.v1
+  negative_tail_config_sha256: 4b6f05dd852990364aa3465d1c990d79532e6c859ab27a219f3d95817868ce3b
+  per_scale_negative_metric_config_sha256: b469b909466dda941d122629ba43cf94e872faceed73c5f0970e3cf66697dd79
+  input_manifest:
+    path: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/train_coverage/slurm_50998592_260a07ad380d/train_cache_input_manifest.json
+    size_bytes: 24009
+    sha256: e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393
+    schema: pathline_template_matching.long_arc_train_cache_input.v1
+    row_count: 32
+    rows_content_sha256: ceb6d0e3fb7a2c90fcaae98583f8d1def7ee75fa7968f38d2821ee3040ae156f
+    test_dataset_access: false
+
+families:
+  half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+  delta_wing: [deltaWing_resampled, deltaWing_LBM]
+  f22_raptor: [f22raptor]
+  channel: [channel]
+  boeing_747: [boeing747]
+
+nested_split:
+  outer_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  inner_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  outer_unit: complete_physical_family
+  inner_unit: complete_physical_family
+  source_window_unit: complete_source_plus_48_future_frame_horizon
+  random_seed_split: forbidden
+  pca_refit_per_inner_fold: true
+  pca_refit_for_final_outer_model: true
+  inner_pca_fit_families: all_families_except_outer_and_inner_exactly_three
+  final_pca_fit_families: all_families_except_outer_exactly_four
+  outer_features_available_to_pca_or_selection: false
+  outer_labels_available_to_selection: false
+  selection_aggregation: equal_dataset_source_block_groups_within_family_then_equal_inner_families
+
+raw_cache_input:
+  archive_member: raw_features
+  source_definition: >-
+    seven pathlines times thirty-two arc-length samples times XYZ, after
+    translating the complete primitive by the center pathline first sample,
+    flattened in C order
+  array_dtype: float32
+  array_shape: [valid_row_count, 672]
+  pathline_order: [center, x_plus, x_minus, y_plus, y_minus, z_plus, z_minus]
+  sample_count_per_pathline: 32
+  coordinate_count: 3
+  feature_width: 672
+  finite_values_required: true
+  cache_file_size_and_sha256_authentication: required_before_member_open
+  raw_array_sha256_authentication_from_fit_cache_metadata: required
+  fmt_features_member_access: forbidden
+  expected_train_cache_count: 32
+  expected_valid_rows_total: 2967612
+  expected_valid_rows_by_family:
+    half_cylinder: 1309366
+    delta_wing: 589051
+    f22_raptor: 437257
+    channel: 315580
+    boeing_747: 316358
+
+principal_component_analysis:
+  full_name: Principal Component Analysis
+  representation_id: raw_pca161
+  input_width: 672
+  output_width: 161
+  output_width_source: inherited_fixed_mainexp_3_1_raw_pca_control
+  output_width_search: forbidden
+  fit_population: every_valid_raw_row_from_current_fit_families_irrespective_of_label
+  fit_label_member_access: forbidden
+  fit_balancing: none
+  fit_subsampling: none
+  query_row_use_in_fit: forbidden
+  parent_all_eight_family_pca_artifact_reuse: forbidden
+  mainexp_2_1_pca_artifact_reuse: forbidden
+  cache_iteration_order:
+    - frozen_family_order
+    - frozen_dataset_order_within_family
+    - source_ordinal_ascending
+    - stored_valid_row_order
+  solver: deterministic_two_pass_streaming_covariance_eigendecomposition
+  algebraic_reference: right_singular_vectors_of_the_centered_fit_matrix
+  first_pass:
+    feature_sum_dtype: float64
+    sample_count_dtype: int64
+    mean_formula: feature_sum_divided_by_sample_count
+    minimum_sample_count: 2
+  second_pass:
+    row_chunk_size: 8192
+    raw_cast_dtype: float64
+    centered_formula: raw_float64_minus_first_pass_mean_float64
+    scatter_accumulator_dtype: float64
+    scatter_formula: sum_of_centered_transpose_times_centered
+    second_pass_count_must_equal_first_pass_count: true
+  eigendecomposition:
+    symmetrization: one_half_times_scatter_plus_scatter_transpose
+    solver: numpy_linalg_eigh
+    descending_order: stable_argsort_of_negative_eigenvalues
+    materially_negative_tolerance_formula: max_1e_minus_12_and_largest_nonnegative_eigenvalue_times_1e_minus_10
+    materially_negative_eigenvalue_policy: fail_closed
+    remaining_negative_eigenvalue_policy: clamp_to_zero
+    selected_components: first_161_descending_eigenvectors_as_rows
+  sign_freeze:
+    pivot: first_argmax_absolute_loading_per_component
+    rule: pivot_loading_nonnegative
+    zero_sign: positive_one
+  singular_value_formula: square_root_of_selected_clamped_eigenvalues
+  explained_variance_ratio_formula: selected_clamped_eigenvalue_divided_by_sum_of_all_672_clamped_eigenvalues
+  zero_total_variance_ratio: all_zero
+  serialized_mean_dtype: float32
+  serialized_components_dtype: float32
+  serialized_singular_values_dtype: float64
+  serialized_explained_variance_ratio_dtype: float64
+  transform_formula: contiguous_float32_of_raw_float32_minus_mean_float32_times_components_float32_transpose
+  whitening: false
+  post_transform_global_standardization: false
+  expected_sample_counts:
+    outer_half_cylinder:
+      inner_delta_wing: 1069195
+      inner_f22_raptor: 1220989
+      inner_channel: 1342666
+      inner_boeing_747: 1341888
+      final: 1658246
+    outer_delta_wing:
+      inner_half_cylinder: 1069195
+      inner_f22_raptor: 1941304
+      inner_channel: 2062981
+      inner_boeing_747: 2062203
+      final: 2378561
+    outer_f22_raptor:
+      inner_half_cylinder: 1220989
+      inner_delta_wing: 1941304
+      inner_channel: 2214775
+      inner_boeing_747: 2213997
+      final: 2530355
+    outer_channel:
+      inner_half_cylinder: 1342666
+      inner_delta_wing: 2062981
+      inner_f22_raptor: 2214775
+      inner_boeing_747: 2335674
+      final: 2652032
+    outer_boeing_747:
+      inner_half_cylinder: 1341888
+      inner_delta_wing: 2062203
+      inner_f22_raptor: 2213997
+      inner_channel: 2335674
+      final: 2651254
+
+library:
+  class: negative_only
+  population: every_valid_natural_negative_row_from_fit_families_after_the_current_fold_pca_transform
+  balancing: none
+  subsampling: none
+  synthetic_or_broader_library_rows: forbidden
+  scaler: fit_negative_exact_per_scale_mean_and_shrunk_within_scale_population_std
+  scaler_dtype: float64
+  distance_dtype: float32
+  scale_blocks:
+    legacy_2_1: [0, 999]
+    expanded_3_1: [1000, 1999]
+  local_mean: arithmetic_mean_of_fit_negative_rows_at_exact_scale
+  local_variance_ddof: 0
+  local_variance_formula: sum_squared_residuals_about_exact_scale_mean_divided_by_exact_scale_row_count
+  block_other_prior_population: same_block_other_scales_fit_negative_rows_only
+  block_other_prior_centering: each_other_scale_uses_its_own_local_mean
+  block_other_prior_formula: pooled_sum_of_other_scale_within_scale_squared_residuals_divided_by_other_scale_row_count
+  block_other_prior_excludes: [current_scale, between_scale_mean_differences]
+  global_other_prior_population: both_blocks_all_other_scales_fit_negative_rows_only
+  global_other_prior_centering: each_other_scale_uses_its_own_local_mean
+  global_other_prior_formula: pooled_sum_of_other_scale_within_scale_squared_residuals_divided_by_other_scale_row_count
+  global_other_prior_excludes: [current_scale, between_scale_mean_differences]
+  global_other_prior_use: only_when_block_other_row_count_is_zero
+  shrinkage_lambda: 64
+  shrinkage_lambda_source: assigned_rows_per_source_block_scale_from_mainexp_3_1_design
+  local_weight_formula: exact_scale_row_count_divided_by_exact_scale_row_count_plus_64
+  variance_shrinkage_formula: local_weight_times_local_variance_plus_one_minus_local_weight_times_prior_variance
+  shrinkage_domain: variance_before_square_root
+  broader_prior_fallback_order:
+    - block_other
+    - global_other_only_if_block_other_empty
+    - local_only_if_all_other_scales_empty
+  std_floor_exclusive: 1.0e-12
+  effective_std_formula: square_root_of_shrunk_variance_unless_shrunk_std_strictly_less_than_1e_12_then_one
+  zero_or_subfloor_effective_std: 1.0
+  query_and_library_transform: same_fit_only_exact_scale_mean_and_effective_std
+  pca_mean_and_exact_scale_mean_interaction: pca_global_mean_cancels_in_same_scale_centered_difference
+  scaler_refit_per_leave_one_out_row: false
+  no_local_row_policy: no_scale_library_and_retrieval_unsupported
+  scaler_modes:
+    no_local_rows: 0
+    local_block_shrink: 1
+    local_global_shrink: 2
+    local_only: 3
+
+representations:
+  order: [raw_pca161]
+  representation_search: forbidden
+  raw_pca161:
+    definition: current_nested_fit_only_Raw672_Principal_Component_Analysis_projection
+    width: 161
+
+retrieval:
+  distance: exact_euclidean_after_fit_negative_exact_scale_diagonal_standardization
+  conditioning: exact_numeric_scale_id
+  ks: [1, 5, 15, 31]
+  query_chunk_size: 1024
+  library_chunk_size: 8192
+  score_before_calibration: kth_nearest_negative_distance
+  cross_scale_distance: forbidden
+  support_count_source: fit_family_negative_rows_only
+
+negative_tail_calibration:
+  reference_population: fit_family_natural_negative_rows_only
+  scaler_refit_per_leave_one_out_row: false
+  leave_one_out_definition: explicit_self_row_exclusion_after_one_fit_negative_per_scale_scaler_fit
+  self_exclusion_implementation: current_row_distance_set_to_positive_infinity
+  duplicate_feature_policy: exclude_only_current_row_and_retain_other_zero_distance_rows
+  multi_k_search: one_exact_maximum_supported_k_pass_per_scale
+  local_reference_minimum_count: k_plus_1_negative_rows
+  tail_probability_formula: one_plus_count_reference_greater_than_or_equal_to_distance_divided_by_reference_count_plus_one
+  anomaly_score_formula: count_reference_strictly_less_than_distance_divided_by_reference_count_plus_one
+  equal_distance_policy: conservative_larger_tail_probability
+  scale_blocks:
+    legacy_2_1: [0, 999]
+    expanded_3_1: [1000, 1999]
+  shrinkage_lambda: 64
+  local_weight_formula: local_reference_count_divided_by_local_reference_count_plus_64
+  block_other_reference: same_block_all_other_scales_only
+  global_other_reference: both_blocks_all_other_scales_only
+  fallback_order:
+    - local_plus_block_other_shrinkage
+    - local_plus_global_other_shrinkage
+    - local_only
+    - block_other_only
+    - global_other_only
+    - unsupported
+  retrieval_support_rule: scale_negative_count_greater_than_or_equal_to_k
+  local_reference_rule: scale_negative_count_greater_than_or_equal_to_k_plus_1
+  no_reference_tail_probability: 1.0
+  no_reference_anomaly_score: 0.0
+  calibration_modes:
+    no_calibration: 0
+    local_block_shrink: 1
+    local_global_shrink: 2
+    local_only: 3
+    block_fallback: 4
+    global_fallback: 5
+
+group_transform:
+  group_fields: [dataset, source_ordinal, scale_block]
+  grid_shape_zyx: [40, 40, 40]
+  query_group_rank: forbidden
+  input_score: fit_negative_tail_anomaly
+  gaussian_sigmas_grid_indices: [0.0, 0.5, 1.0, 1.5, 2.0]
+  gaussian_truncate: 3.0
+  sigma_zero_policy: calibration_unsupported_score_zero_and_explicit_negative_rejection
+  positive_sigma_policy: calibration_support_mask_normalized_spatial_imputation
+  positive_sigma_formula: G_tail_anomaly_times_support_divided_by_G_support
+  zero_denominator_policy: score_zero_and_explicit_negative_rejection
+  cross_dataset_source_or_block_smoothing: forbidden
+  classifier_minimum_query_batch: complete_valid_source_times_scale_block_grid
+
+decision_candidates:
+  fixed_top_fraction:
+    enabled: true
+    fraction: 0.05
+    count: ceil_fraction_times_all_valid_group_rows_capped_by_eligible_count
+    eligible: calibration_supported_or_spatially_imputed_rows_with_strictly_positive_score
+    ineligible_prediction: negative
+    tie_break: descending_score_then_ascending_center_index
+  calibrated_tail_anomaly_threshold:
+    enabled: true
+    comparison: score_greater_than_or_equal_to_threshold
+    eligible: calibration_supported_or_spatially_imputed_rows
+    ineligible_prediction: negative
+    values:
+      - 0.50
+      - 0.51
+      - 0.52
+      - 0.53
+      - 0.54
+      - 0.55
+      - 0.56
+      - 0.57
+      - 0.58
+      - 0.59
+      - 0.60
+      - 0.61
+      - 0.62
+      - 0.63
+      - 0.64
+      - 0.65
+      - 0.66
+      - 0.67
+      - 0.68
+      - 0.69
+      - 0.70
+      - 0.71
+      - 0.72
+      - 0.73
+      - 0.74
+      - 0.75
+      - 0.76
+      - 0.77
+      - 0.78
+      - 0.79
+      - 0.80
+      - 0.81
+      - 0.82
+      - 0.83
+      - 0.84
+      - 0.85
+      - 0.86
+      - 0.87
+      - 0.88
+      - 0.89
+      - 0.90
+      - 0.91
+      - 0.92
+      - 0.93
+      - 0.94
+      - 0.95
+      - 0.96
+      - 0.97
+      - 0.98
+      - 0.99
+  frozen_candidate_count: 1020
+
+selection:
+  eligible_evidence: inner_out_of_family_groups_only
+  aggregation_stage_1: equal_dataset_source_block_groups_within_each_inner_family
+  aggregation_stage_2: equal_inner_family_macro
+  expected_inner_family_count_per_outer_fold: 4
+  primary: highest_equal_inner_family_macro_f1
+  tie_break_order:
+    - highest_equal_inner_family_macro_average_precision
+    - highest_equal_inner_family_macro_balanced_accuracy
+    - highest_equal_inner_family_macro_precision
+    - highest_equal_inner_family_macro_recall
+    - lexicographically_smallest_candidate_id
+  outer_family_metric_or_label_use: forbidden
+
+metrics:
+  - accuracy
+  - average_precision
+  - f1
+  - balanced_accuracy
+  - auroc
+  - precision
+  - recall
+  - retrieval_support_fraction
+  - calibration_support_fraction
+  - spatial_imputed_fraction
+  - spatial_unimputable_fraction
+  - true_positive
+  - false_positive
+  - true_negative
+  - false_negative
+  - sample_count
+  - positive_count
+  - negative_count
+  - retrieval_supported_count
+  - calibration_supported_count
+  - imputed_count
+  - unimputable_count
+  - calibration_mode_counts
+  - scaler_mode_counts
+
+success_stop_rule:
+  outer_family_macro_f1_minimum: 0.70
+  outer_families_at_or_above_0_65_minimum: 4
+  minimum_single_outer_family_f1: 0.50
+  outer_family_macro_average_precision_minimum: 0.60
+  outer_family_macro_balanced_accuracy_minimum: 0.70
+  outer_family_macro_precision_minimum: 0.60
+  outer_family_macro_recall_minimum: 0.60
+  all_conditions_required: true
+  threshold_changes_after_outer_results: forbidden
+  early_stop_certificate:
+    any_completed_family_f1_below_0_50: stop
+    two_completed_families_f1_below_0_65: stop
+    optimistic_remaining_family_metric_upper_bound_below_any_macro_threshold: stop
+    otherwise: continue_until_complete_five_folds
+  failed_version_does_not_end_project_goal: true
+
+serialization:
+  pca_schema: pathline_template_matching.raw_pca161.v1
+  final_pca_required_arrays:
+    mean_float32: {dtype: float32, shape: [672]}
+    components_float32: {dtype: float32, shape: [161, 672]}
+    singular_values_float64: {dtype: float64, shape: [161]}
+    explained_variance_ratio_float64: {dtype: float64, shape: [161]}
+    sample_count_int64: {dtype: int64, shape: scalar}
+    input_width_int32: {dtype: int32, shape: scalar, value: 672}
+    output_width_int32: {dtype: int32, shape: scalar, value: 161}
+  pca_manifest_must_record:
+    - config_sha256
+    - input_manifest_sha256
+    - parent_cache_commit_and_config_sha256
+    - outer_family
+    - ordered_fit_family_set
+    - ordered_fit_cache_paths_sizes_file_sha256
+    - per_cache_raw_feature_sha256_and_row_count
+    - total_sample_count
+    - fit_population_and_label_nonaccess
+    - solver_chunk_dtypes_no_whitening_sign_and_eigenvalue_rules
+    - array_names_dtypes_shapes_sha256
+    - pca_npz_file_sha256
+    - outer_raw_features_opened_false
+    - content_sha256
+  scaler_schema: pathline_template_matching.per_scale_negative_metric.v1
+  scaler_scale_count: 2000
+  final_scaler_and_calibrator_contract: exactly_inherited_from_Verify_PerScaleNegativeMetric_1.1
+  inner_fit_audit_count_per_outer_fold: 4
+  inner_fit_audit_must_record:
+    - outer_family
+    - inner_family
+    - ordered_fit_family_set
+    - pca_sample_count_and_array_sha256
+    - ordered_fit_cache_identity_and_raw_sha256
+    - per_scale_scaler_fit_audit
+    - negative_tail_calibration_fit_audit
+  selected_candidate_must_record:
+    - final_pca_file_sha256
+    - final_pca_manifest_sha256
+    - final_per_scale_scaler_file_sha256
+    - final_per_scale_scaler_manifest_sha256
+    - final_tail_calibration_file_sha256
+    - final_tail_calibration_manifest_sha256
+    - inner_evidence_file_sha256
+
+access_gates:
+  inner_fit:
+    - fit_pca_from_exact_three_fit_families_without_opening_labels
+    - close_pca_fit_and_record_complete_fit_identity
+    - open_only_fit_family_labels_to_select_natural_negatives
+    - fit_per_scale_scaler_and_tail_calibrator
+    - only_then_open_and_transform_current_inner_validation_family
+    - inner_validation_labels_only_compute_candidate_metrics
+  final_and_outer:
+    - fit_final_pca_from_exact_four_nonouter_families_without_opening_outer_cache
+    - atomically_write_close_authenticate_and_rebuild_final_pca
+    - fit_write_close_authenticate_and_rebuild_final_per_scale_scaler_and_tail_calibrator
+    - write_close_and_authenticate_selected_candidate_bound_to_all_inner_and_final_artifacts
+    - only_then_open_outer_raw_features_scale_center_block_and_assigned_row_identity
+    - valid_labels_and_metadata_json_remain_unopened
+    - write_close_and_per_array_authenticate_outer_predictions_and_manifest
+    - fresh_reload_label_free_outer_raw_and_recompute_pca_transform_score_and_prediction
+    - only_after_exact_prediction_replay_open_outer_valid_labels_and_metadata_json
+  aggregate:
+    - authenticate_exact_fold_file_set_commit_config_input_and_all_artifact_hashes
+    - rebuild_final_pca_scaler_and_calibrator_from_authenticated_arrays
+    - fresh_replay_label_free_outer_raw_predictions_before_labels
+    - fresh_recompute_outer_groups_family_macro_and_stop_rule_after_prediction_authentication
+
+output:
+  root: /ibex/user/zhanx0o/pathline-template-matching/Verify_RawPCANegativeMetric_1.1
+  fold_directory_pattern: runs/slurm_JOBID_ARRAYTASK_COMMIT12_outer_FAMILY
+  overwrite: forbidden
+  final_pca_written_before_outer_feature_open: true
+  final_scaler_written_before_outer_feature_open: true
+  final_calibration_written_before_outer_feature_open: true
+  predictions_written_before_outer_reference_open: true
+  expected_fold_file_count: 17
+  expected_result_artifact_count: 15
+  required_fold_files:
+    - inner_group_metrics.csv
+    - inner_candidate_summary.csv
+    - inner_fit_audits.json
+    - final_pca.npz
+    - final_pca_manifest.json
+    - final_per_scale_scaler.npz
+    - final_per_scale_scaler_manifest.json
+    - final_tail_calibration.npz
+    - final_tail_calibration_manifest.json
+    - selected_candidate.json
+    - outer_predictions.npz
+    - outer_prediction_manifest.json
+    - outer_group_metrics.csv
+    - outer_summary.json
+    - outer_reference_access_audit.json
+    - result_manifest.json
+    - RUN_COMPLETE.json

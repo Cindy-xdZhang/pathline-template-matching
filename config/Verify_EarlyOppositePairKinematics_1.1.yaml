@@ -1,0 +1,548 @@
+experiment: Verify_EarlyOppositePairKinematics_1.1
+phase: exposed_train_only_nested_family_validation
+status: frozen_pre_run_not_implemented
+frozen_before_first_read_of_any_per_scale_outer_result: true
+freeze_context:
+  date: 2026-08-31
+  per_scale_jobs_already_submitted: [51063738, 51063753]
+  per_scale_outer_result_or_metric_read_at_freeze: false
+  immutable_history_note: >-
+    This field records the state at configuration freeze and must not be
+    rewritten when implementation or runtime status later changes.
+
+parent_experiments:
+  - mainExp_TemplateMatching_3.1
+  - Verify_NegativeTailCalibration_1.1
+  - Verify_PerScaleNegativeMetric_1.1
+
+research_question: >-
+  Does appending a fixed, parameter-free four-dimensional seed-time local
+  kinematic block, computed from the center and six opposite-neighbour initial
+  velocities, improve exact-same-scale negative-template anomaly retrieval on
+  held-out physical families while every PerScale metric, tail-calibration,
+  spatial, decision, split, and success rule remains unchanged?
+
+single_mechanism_change:
+  parent_descriptor_inputs: three_parent_FMT_representations_only
+  current_descriptor_inputs: append_the_same_fixed_seed_time_kinematic4_to_each_parent_FMT_representation
+  concatenation_weight: 1.0
+  concurrent_kinematics_only_candidate: forbidden
+  forbidden_concurrent_changes:
+    - principal_component_analysis
+    - learned_metric
+    - global_negative_metric_reversion
+    - per_scale_metric_or_lambda_change
+    - tail_calibration_change
+    - cross_scale_retrieval
+    - representation_count_or_order_change
+    - k_grid_change
+    - spatial_sigma_grid_change
+    - decision_grid_change
+    - feature_block_weight_search
+    - kinematic_log_compression
+    - kinematic_time_window_or_DFT
+    - flow_or_batch_mean_vorticity_subtraction
+    - whole_volume_IVD_or_label_feature
+    - nested_split_change
+    - success_or_early_stop_rule_change
+
+evidence_scope:
+  level: exposed_development_only
+  formal_confirmation: false
+  allowed_datasets:
+    - cylinder3d
+    - halfcylinderRe640
+    - halfcylinderRe6400
+    - deltaWing_resampled
+    - deltaWing_LBM
+    - f22raptor
+    - channel
+    - boeing747
+  allowed_inputs: exact_32_mainExp_TemplateMatching_3.1_train_cache_shards_and_their_matching_train_portable_windows
+  forbidden_datasets: [tangaroa, smokeBuoyancy]
+  forbidden_access:
+    - Tangaroa_or_Smoke_raw_fields
+    - Tangaroa_or_Smoke_portable_windows
+    - Tangaroa_or_Smoke_primitive_caches
+    - Tangaroa_or_Smoke_features_labels_predictions_or_metrics
+  forbidden_claims:
+    - sealed_confirmation
+    - formal_confirmation
+    - independent_full_classifier
+    - FMT_only_improvement
+    - pathline_history_is_the_cause_of_any_gain
+
+parent_identity:
+  cache_builder_git_commit: 260a07ad380d64fc300cabe8926244e92d8ba04a
+  main_config_sha256: 771980f14a6019a1f6e4bf03668d9f37dcf63495ae2dafa866312b12fc71855e
+  descriptor_id: fmt_independent_3d_161d_sha256_25fce29499c9089e
+  cache_schema: pathline_template_matching.phase31_cache.v1
+  negative_tail_config_sha256: 4b6f05dd852990364aa3465d1c990d79532e6c859ab27a219f3d95817868ce3b
+  per_scale_config_sha256: b469b909466dda941d122629ba43cf94e872faceed73c5f0970e3cf66697dd79
+  train_cache_input_manifest:
+    path: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/train_coverage/slurm_50998592_260a07ad380d/train_cache_input_manifest.json
+    size_bytes: 24009
+    sha256: e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393
+    schema: pathline_template_matching.long_arc_train_cache_input.v1
+    row_count: 32
+    rows_content_sha256: ceb6d0e3fb7a2c90fcaae98583f8d1def7ee75fa7968f38d2821ee3040ae156f
+  train_portable_population_marker:
+    path: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/portable_population/train_only/slurm_50998449_260a07ad380d/TRAIN_PORTABLES_PASS.json
+    sha256: 489d303b4430be7eded4fe39ab87107c778e1f7db2579cb9e3bb1fdfce209341
+    dataset_count: 8
+    window_count: 32
+
+kinematic_input_manifest:
+  schema: pathline_template_matching.seed_time_opposite_pair_kinematics_input.v1
+  row_count: 32
+  freeze_before_opening_any_portable_velocity_member: true
+  row_identity:
+    - dataset
+    - physical_family
+    - source_ordinal
+    - source_index
+  every_row_must_bind:
+    - parent_cache_path_size_and_file_sha256
+    - portable_path_size_and_file_sha256
+    - portable_velocity_x_y_z_time_canonical_array_sha256
+    - parent_seeds_xyz_canonical_array_sha256
+    - parent_valid_assigned_row_index_canonical_array_sha256
+    - parent_valid_center_seed_index_canonical_array_sha256
+    - parent_valid_scale_block_index_canonical_array_sha256
+    - parent_valid_scale_id_canonical_array_sha256
+    - parent_center_sample_time_canonical_array_sha256
+    - parent_config_and_cache_builder_commit
+    - portable_config_and_builder_commit
+  allowed_parent_cache_members_before_outer_reference_gate:
+    - seeds_xyz
+    - valid_assigned_row_index
+    - valid_center_seed_index
+    - valid_scale_block_index
+    - valid_scale_id
+    - center_sample_time
+    - fmt_features
+  cache_builder_allowed_parent_members:
+    - seeds_xyz
+    - valid_assigned_row_index
+    - valid_center_seed_index
+    - valid_scale_block_index
+    - valid_scale_id
+    - center_sample_time
+  forbidden_parent_cache_members_during_input_freeze_and_sidecar_build:
+    - valid_labels
+    - reference_labels_all
+    - ivd_values_all
+    - ivd_volume
+    - metadata_json
+  exact_population_rule: every_and_only_row_from_the_frozen_32_row_train_cache_input_manifest
+  missing_duplicate_extra_or_reordered_row_policy: fail
+
+seed_time_sampling:
+  primitive_order: [center, x_plus, x_minus, y_plus, y_minus, z_plus, z_minus]
+  center_source: parent_seeds_xyz_indexed_by_valid_assigned_row_index
+  relative_seed_time: 0.0
+  absolute_source_time_use: provenance_only
+  source_velocity_frame: portable_velocity_frame_zero
+  center_time_audit:
+    required: true
+    formula: parent_center_sample_time[:,0]
+    expected_value: 0.0
+    absolute_tolerance: 1.0e-7
+  minimum_spacing_formula: min(x[1]-x[0],y[1]-y[0],z[1]-z[0])
+  coordinate_requirements:
+    - finite
+    - strictly_increasing
+    - uniform_within_existing_portable_contract
+  physical_dx_formula: explicit_mainExp_3_1_dx_grid_scale_at_valid_scale_id_times_minimum_spacing
+  runtime_linspace_reconstruction: forbidden
+  initial_positions:
+    center: c
+    x_plus: c_plus_h_e_x
+    x_minus: c_minus_h_e_x
+    y_plus: c_plus_h_e_y
+    y_minus: c_minus_h_e_y
+    z_plus: c_plus_h_e_z
+    z_minus: c_minus_h_e_z
+  interpolation: exact_same_corner_and_arithmetic_order_as_production_RK4_interp4_quadrilinear_scalar
+  interpolation_at_seed_time: temporal_weight_zero_spatial_trilinear_on_portable_frame_zero
+  velocity_input_dtype: float32
+  velocity_output_dtype: float32
+  outside_domain_or_nonfinite_policy: fail
+  center_velocity_storage: required_for_audit_but_not_used_in_central_difference
+  raw_first_pathline_segment_as_velocity: forbidden
+  center_sample_time_as_a_surrogate_for_neighbour_line_times: forbidden
+
+seed_time_kinematic4:
+  derivative_compute_dtype: float64
+  serialization_dtype: float32
+  gradient_layout: velocity_component_rows_and_spatial_derivative_columns
+  gradient_columns:
+    x: (u_x_plus-u_x_minus)/(2*h)
+    y: (u_y_plus-u_y_minus)/(2*h)
+    z: (u_z_plus-u_z_minus)/(2*h)
+  curl_formula:
+    - G_2_1_minus_G_1_2
+    - G_0_2_minus_G_2_0
+    - G_1_0_minus_G_0_1
+  strain_formula: S=(G+transpose(G))/2
+  rotation_formula: Omega=(G-transpose(G))/2
+  divergence_formula: trace(G)
+  divergence_sign: preserved
+  q_formula: Q=0.5*(frobenius_norm(Omega)^2-frobenius_norm(S)^2)
+  feature_order:
+    - l2_norm_of_curl
+    - frobenius_norm_of_strain
+    - signed_divergence
+    - signed_Q
+  feature_width: 4
+  finite_required: true
+  feature_transforms_before_fit_negative_scaler: none
+  feature_weight_before_fit_negative_scaler: 1.0
+  batch_or_flow_statistics: forbidden
+  whole_volume_mean_vorticity_subtraction: forbidden
+  algebraic_redundancy_note: Q_is_retained_by_pre_registration_even_though_it_is_determined_by_curl_norm_and_strain_norm
+
+sidecar_cache:
+  schema: pathline_template_matching.seed_time_opposite_pair_kinematics_cache.v1
+  storage_population: valid_parent_rows_only_in_exact_parent_order
+  exact_array_members:
+    valid_assigned_row_index: {dtype: int64, shape: [N_valid]}
+    valid_center_seed_index: {dtype: int64, shape: [N_valid]}
+    valid_scale_block_index: {dtype: int8, shape: [N_valid]}
+    valid_scale_id: {dtype: int32, shape: [N_valid]}
+    seed_velocity_xyz: {dtype: float32, shape: [N_valid, 7, 3]}
+    seed_kinematic4: {dtype: float32, shape: [N_valid, 4]}
+    physical_dx_by_scale: {dtype: float64, shape: [2000]}
+  metadata_member: metadata_json_scalar
+  metadata_label_information: forbidden
+  metadata_label_derived_counts: forbidden
+  metadata_must_bind:
+    - input_manifest_file_and_content_sha256
+    - parent_cache_path_size_file_sha256_and_allowed_array_hashes
+    - portable_path_size_file_sha256_and_velocity_coordinate_time_array_hashes
+    - config_sha256_and_clean_builder_git_commit
+    - kinematic_algorithm_source_sha256
+    - composite_descriptor_contract
+    - dataset_family_source_identity
+    - line_order_time_interpolation_and_float_contract
+    - all_array_dtype_shape_canonical_sha256_and_combined_sha256
+  exact_member_set: required
+  atomic_publish: required
+  overwrite: forbidden
+  join_to_parent: exact_identity_arrays_equal_and_order_preserving
+  missing_duplicate_extra_or_reordered_identity_policy: fail
+
+synthetic_gate:
+  required_before_real_sidecar_build: true
+  schema: pathline_template_matching.seed_time_opposite_pair_kinematics_synthetic_pass.v1
+  tests:
+    - arbitrary_affine_velocity_v_equals_Ax_plus_b_recovers_every_entry_of_A_for_every_frozen_dx
+    - rigid_translation_has_zero_gradient_curl_strain_divergence_and_Q
+    - rigid_rotation_has_zero_strain_and_divergence_correct_curl_and_positive_Q
+    - pure_strain_has_zero_curl_and_negative_Q
+    - isotropic_expansion_has_expected_signed_divergence_strain_and_Q
+    - seed4_is_invariant_under_constant_proper_rotation_and_translation
+    - single_batch_chunk_and_input_permutation_outputs_are_identical_after_unpermutation
+    - wrong_opposite_pair_order_fails_the_frozen_oracle
+    - public_seed_velocity_sampler_matches_production_RK4_first_v1_at_seed_time
+    - sidecar_member_access_test_proves_no_label_IVD_or_parent_metadata_member_is_opened
+    - sidecar_identity_join_rejects_missing_duplicate_extra_and_reordered_rows
+  real_flow_values_labels_or_valid_rates_in_gate: forbidden
+  final_marker_written_last: true
+
+representations:
+  order: [fmt161_plus_seed4, real_neighbor36_plus_seed4, chirality_all35_plus_seed4]
+  fmt161_plus_seed4:
+    parent_definition: all_seven_contiguous_23d_FMT_line_blocks
+    parent_width: 161
+    append: seed_kinematic4_in_frozen_order
+    width: 165
+  real_neighbor36_plus_seed4:
+    parent_definition: six_neighbor_lines_times_local_indices_0_3_6_9_12_15
+    parent_width: 36
+    append: seed_kinematic4_in_frozen_order
+    width: 40
+  chirality_all35_plus_seed4:
+    parent_definition: seven_lines_times_local_indices_18_through_22
+    parent_width: 35
+    append: seed_kinematic4_in_frozen_order
+    width: 39
+  concatenation_order: parent_FMT_coordinates_then_four_seed_time_coordinates
+  raw_block_weighting: none_beyond_literal_concatenation
+  fit_negative_scaler_application: jointly_to_every_composite_coordinate_under_the_parent_exact_scale_rule
+  composite_descriptor_id_must_hash:
+    - parent_descriptor_id
+    - parent_representation_indices
+    - kinematic_algorithm_source_sha256
+    - line_order_and_sampling_contract
+    - kinematic_feature_order_and_float_contract
+
+families:
+  half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+  delta_wing: [deltaWing_resampled, deltaWing_LBM]
+  f22_raptor: [f22raptor]
+  channel: [channel]
+  boeing_747: [boeing747]
+
+nested_split:
+  outer_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  inner_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  outer_unit: complete_physical_family
+  inner_unit: complete_physical_family
+  source_window_unit: complete_source_plus_48_future_frame_horizon
+  random_seed_split: forbidden
+  outer_labels_available_to_selection: false
+  selection_aggregation: equal_dataset_source_block_groups_within_family_then_equal_inner_families
+
+library_and_feature_metric:
+  class: negative_only
+  population: every_valid_natural_negative_row_from_fit_families
+  balancing: none
+  subsampling: none
+  scaler: fit_negative_exact_per_scale_mean_and_shrunk_within_scale_population_std
+  scaler_dtype: float64
+  distance_dtype: float32
+  local_variance_ddof: 0
+  scale_blocks:
+    legacy_2_1: [0, 999]
+    expanded_3_1: [1000, 1999]
+  local_mean: arithmetic_mean_of_fit_negative_rows_at_exact_scale
+  local_variance: population_variance_about_exact_scale_local_mean
+  block_other_prior: pool_other_scales_after_each_other_scale_is_centered_by_its_own_local_mean
+  global_other_prior: only_if_block_other_has_zero_rows_and_uses_the_same_per_scale_centering
+  shrinkage_lambda: 64
+  local_weight_formula: n_s/(n_s+64)
+  variance_shrinkage_formula: local_weight*local_variance+(1-local_weight)*prior_variance
+  shrinkage_domain: variance_before_square_root
+  std_floor_exclusive: 1.0e-12
+  zero_or_subfloor_effective_std: 1.0
+  query_and_library_transform: same_fit_only_exact_scale_mean_and_effective_std
+  no_local_row_policy: no_scale_library_and_retrieval_unsupported
+  broader_or_synthetic_library_rows: forbidden
+  scaler_refit_per_leave_one_out_row: false
+
+retrieval:
+  distance: exact_euclidean_after_fit_negative_exact_scale_diagonal_standardization
+  conditioning: exact_numeric_scale_id
+  ks: [1, 5, 15, 31]
+  query_chunk_size: 1024
+  library_chunk_size: 8192
+  score_before_calibration: kth_nearest_negative_distance
+  cross_scale_distance: forbidden
+  support_count_source: fit_family_negative_rows_only
+
+negative_tail_calibration:
+  reference_population: fit_family_natural_negative_rows_only
+  scaler_refit_per_leave_one_out_row: false
+  leave_one_out_definition: explicit_self_row_exclusion_after_one_fit_negative_per_scale_scaler_fit
+  self_exclusion_implementation: current_row_distance_set_to_positive_infinity
+  duplicate_feature_policy: exclude_only_current_row_and_retain_other_zero_distance_rows
+  multi_k_search: one_exact_maximum_supported_k_pass_per_scale
+  local_reference_minimum_count: k_plus_1_negative_rows
+  tail_probability_formula: (1+count(reference_distance>=query_distance))/(reference_count+1)
+  anomaly_score_formula: count(reference_distance<query_distance)/(reference_count+1)
+  equal_distance_policy: conservative_larger_tail_probability
+  scale_blocks:
+    legacy_2_1: [0, 999]
+    expanded_3_1: [1000, 1999]
+  shrinkage_lambda: 64
+  local_weight_formula: local_reference_count/(local_reference_count+64)
+  block_other_reference: same_block_all_other_scales_only
+  global_other_reference: both_blocks_all_other_scales_only_if_block_other_is_empty
+  fallback_order:
+    - local_plus_block_other_shrinkage
+    - local_plus_global_other_shrinkage
+    - local_only
+    - block_other_only
+    - global_other_only
+    - unsupported
+  retrieval_support_rule: scale_negative_count_greater_than_or_equal_to_k
+  local_reference_rule: scale_negative_count_greater_than_or_equal_to_k_plus_1
+  no_reference_tail_probability: 1.0
+  no_reference_anomaly_score: 0.0
+
+group_transform:
+  group_fields: [dataset, source_ordinal, scale_block]
+  grid_shape_zyx: [40, 40, 40]
+  query_group_rank: forbidden
+  input_score: fit_negative_tail_anomaly
+  gaussian_sigmas_grid_indices: [0.0, 0.5, 1.0, 1.5, 2.0]
+  gaussian_truncate: 3.0
+  sigma_zero_policy: calibration_unsupported_score_zero_and_explicit_negative_rejection
+  positive_sigma_policy: calibration_support_mask_normalized_spatial_imputation
+  positive_sigma_formula: G(anomaly*calibration_support)/G(calibration_support)
+  zero_denominator_policy: score_zero_and_explicit_negative_rejection
+  cross_dataset_source_or_block_smoothing: forbidden
+  classifier_minimum_query_batch: complete_valid_source_times_scale_block_grid
+
+decision_candidates:
+  fixed_top_fraction:
+    enabled: true
+    fraction: 0.05
+    count: ceil_fraction_times_all_valid_group_rows_capped_by_eligible_count
+    eligible: calibration_supported_or_spatially_imputed_rows_with_strictly_positive_score
+    ineligible_prediction: negative
+    tie_break: descending_score_then_ascending_center_index
+  calibrated_tail_anomaly_threshold:
+    enabled: true
+    comparison: score_greater_than_or_equal_to_threshold
+    eligible: calibration_supported_or_spatially_imputed_rows
+    ineligible_prediction: negative
+    values:
+      - 0.50
+      - 0.51
+      - 0.52
+      - 0.53
+      - 0.54
+      - 0.55
+      - 0.56
+      - 0.57
+      - 0.58
+      - 0.59
+      - 0.60
+      - 0.61
+      - 0.62
+      - 0.63
+      - 0.64
+      - 0.65
+      - 0.66
+      - 0.67
+      - 0.68
+      - 0.69
+      - 0.70
+      - 0.71
+      - 0.72
+      - 0.73
+      - 0.74
+      - 0.75
+      - 0.76
+      - 0.77
+      - 0.78
+      - 0.79
+      - 0.80
+      - 0.81
+      - 0.82
+      - 0.83
+      - 0.84
+      - 0.85
+      - 0.86
+      - 0.87
+      - 0.88
+      - 0.89
+      - 0.90
+      - 0.91
+      - 0.92
+      - 0.93
+      - 0.94
+      - 0.95
+      - 0.96
+      - 0.97
+      - 0.98
+      - 0.99
+  candidate_count_formula: 3_representations_times_4_k_times_5_sigma_times_51_decisions
+  frozen_candidate_count: 3060
+
+selection:
+  eligible_evidence: inner_out_of_family_groups_only
+  aggregation_stage_1: equal_dataset_source_block_groups_within_each_inner_family
+  aggregation_stage_2: equal_inner_family_macro
+  expected_inner_family_count_per_outer_fold: 4
+  primary: highest_equal_inner_family_macro_f1
+  tie_break_order:
+    - highest_equal_inner_family_macro_average_precision
+    - highest_equal_inner_family_macro_balanced_accuracy
+    - highest_equal_inner_family_macro_precision
+    - highest_equal_inner_family_macro_recall
+    - lexicographically_smallest_candidate_id
+  outer_family_metric_or_label_use: forbidden
+
+outer_label_gate:
+  nonouter_sidecar_features_and_parent_labels_for_inner_selection: allowed
+  final_artifacts_required_before_any_outer_sidecar_feature_member_opens:
+    - final_per_scale_scaler
+    - final_tail_calibration
+    - selected_candidate
+  every_final_artifact_must_be_atomically_written_and_freshly_authenticated: true
+  final_artifacts_must_bind:
+    - kinematic_input_manifest_sha256
+    - complete_32_sidecar_population_manifest_sha256
+    - selected_composite_descriptor_id
+    - fit_family_set
+    - config_sha256
+    - clean_git_commit
+  outer_feature_projection:
+    source: kinematic_sidecar_plus_parent_FMT_features
+    labels_opened: false
+    parent_metadata_opened: false
+  outer_prediction_must_be_written_and_freshly_recomputed_and_authenticated_before_parent_valid_labels_open: true
+  outer_reference_source_after_prediction_authentication: parent_valid_labels
+  identity_join: exact_dataset_source_scale_center_block_assigned_row_and_order
+  audit_file_required: true
+
+metrics:
+  - accuracy
+  - average_precision
+  - f1
+  - balanced_accuracy
+  - auroc
+  - precision
+  - recall
+  - retrieval_support_fraction
+  - calibration_support_fraction
+  - spatial_imputed_fraction
+  - spatial_unimputable_fraction
+  - true_positive
+  - false_positive
+  - true_negative
+  - false_negative
+  - sample_count
+  - positive_count
+  - negative_count
+  - retrieval_supported_count
+  - calibration_supported_count
+  - imputed_count
+  - unimputable_count
+  - calibration_mode_counts
+  - scaler_mode_counts
+
+success_stop_rule:
+  outer_family_macro_f1_minimum: 0.70
+  outer_families_at_or_above_0_65_minimum: 4
+  minimum_single_outer_family_f1: 0.50
+  outer_family_macro_average_precision_minimum: 0.60
+  outer_family_macro_balanced_accuracy_minimum: 0.70
+  outer_family_macro_precision_minimum: 0.60
+  outer_family_macro_recall_minimum: 0.60
+  threshold_changes_after_outer_results: forbidden
+  success_requires_complete_five_unique_outer_families: true
+  single_fold_success_claim: forbidden
+  authenticated_early_stop_conditions:
+    - any_completed_outer_family_f1_strictly_below_0_50
+    - two_completed_outer_family_f1_values_strictly_below_0_65
+    - setting_every_remaining_family_metric_to_one_still_cannot_reach_any_five_family_macro_threshold
+  early_stop_certificate_schema: pathline_template_matching.early_opposite_pair_kinematics_early_stop_certificate.v1
+
+scientific_interpretation:
+  descriptor_class: parameter_free_FMT_plus_Eulerian_seed_time_local_kinematic_augmentation
+  not_a_pathline_history_only_descriptor: true
+  label_proxy_risk: >-
+    The IVD-p95 reference is derived from seed-time curl deviation, so a gain
+    from local seed-time curl-related features must be reported as a direct
+    kinematic baseline contribution, not as evidence that FMT geometry learned
+    vortex structure.
+  observer_risk: >-
+    Curl magnitude and Q without a whole-volume mean-vorticity correction are
+    not objective under a time-dependent rotating observer; no correction is
+    allowed in this version because it would be another mechanism and could
+    reproduce the label construction.
+  scale_risk: >-
+    Central differences from 0.125 through 2.5 loaded-grid spacings have
+    scale-dependent cancellation and truncation error; exact-scale retrieval
+    and the frozen per-scale negative metric remain mandatory.
+
+output:
+  root: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1
+  sidecar_root: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/kinematic_cache/train
+  fold_directory_pattern: runs/slurm_JOBID_ARRAYTASK_COMMIT12_outer_FAMILY
+  overwrite: forbidden
+  current_state: configuration_frozen_implementation_absent_no_run_no_performance_result
