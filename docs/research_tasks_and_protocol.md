@@ -245,7 +245,7 @@ SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 
 ## 19. `Verify_PerScaleNegativeMetric_1.1` 的 fit-negative 逐尺度方差度量
 
-本版本必须在读取 `Verify_NegativeTailCalibration_1.1` 的任何 outer 指标前冻结；配置快照中的历史状态固定为 `frozen_pre_run_not_implemented`，不得为了反映后续实现进度而改写并破坏冻结 SHA-256。当前执行状态为 `implemented_frozen_pre_run_not_run`。相对该父验证，唯一数值变化是把 global negative-only diagonal population variance 替换为 fit-negative exact-per-scale shrunk diagonal within-scale population variance；tail calibration、三个 FMT representation、exact same-scale retrieval、`k`、spatial sigma、decision grid、3060 个候选、nested family split、宏平均与停止规则全部不变。禁止扫描 lambda/metric 网格或同时加入 PCA、learned metric、kinematic feature、descriptor 修改与跨尺度检索。
+本版本必须在读取 `Verify_NegativeTailCalibration_1.1` 的任何 outer 指标前冻结；配置快照中的历史状态固定为 `frozen_pre_run_not_implemented`，不得为了反映后续实现进度而改写并破坏冻结 SHA-256。当前执行状态为 `completed_stopped_after_authenticated_five_fold_failure`。相对该父验证，唯一数值变化是把 global negative-only diagonal population variance 替换为 fit-negative exact-per-scale shrunk diagonal within-scale population variance；tail calibration、三个 FMT representation、exact same-scale retrieval、`k`、spatial sigma、decision grid、3060 个候选、nested family split、宏平均与停止规则全部不变。禁止扫描 lambda/metric 网格或同时加入 PCA、learned metric、kinematic feature、descriptor 修改与跨尺度检索。
 
 - 精确尺度 `s` 的 local mean 与 variance 只用 fit-family natural negatives，`ddof=0`：`mu_s=sum(x)/n_s`，`v_s=sum((x-mu_s)^2)/n_s`。
 - Block-other prior 必须对同 block 其他尺度分别减去各自 local mean，再把 within-scale squared residual 以总 row 数 pooling；禁止包含尺度均值之间的差异。只有 block-other row count 为零时才允许用两个 block 全部其他尺度、按同一 per-scale-centering 公式得到的 global-other prior。
@@ -254,7 +254,7 @@ SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 - `n_s<k`、`n_s=k`、`n_s>=k+1` 的 retrieval/calibration support、leave-one-out self exclusion、tail probability 方向、tail-reference `lambda=64` shrinkage与 fallback modes逐字段继承父验证；leave-one-out 不得逐行重拟合 scaler。
 - Final per-scale scaler、tail calibration 与 selected candidate 必须在任何 outer feature member 打开前关闭、原子发布并认证。Scaler NPZ/manifest 必须保存完整 2000-scale 的 counts、support、mode、mean、local/prior/shrunk variance、effective std、array SHA-256，并由 selected candidate 绑定 scaler 与 calibrator manifest SHA-256；prediction 认证后才允许读取 outer labels。
 
-唯一配置为 `config/Verify_PerScaleNegativeMetric_1.1.yaml`；冻结 SHA-256 为 `b469b909466dda941d122629ba43cf94e872faceed73c5f0970e3cf66697dd79`。冻结发生在任何 `Verify_NegativeTailCalibration_1.1` outer 结果可见前；数值实现、认证聚合器与 Ibex 提交链现已完成并通过提交前 220 项本地回归，但尚未运行且没有性能结论，也不是 formal confirmation。实际 commit、job、设备与产物哈希以运行登记为准。
+唯一配置为 `config/Verify_PerScaleNegativeMetric_1.1.yaml`；冻结 SHA-256 为 `b469b909466dda941d122629ba43cf94e872faceed73c5f0970e3cf66697dd79`。冻结发生在任何 `Verify_NegativeTailCalibration_1.1` outer 结果可见前。clean deployment commit `e919c2e27b8c8157435d40da350866864721ac51` 的五折/聚合 jobs `51064965/51064966` 已完成认证；五-family macro F1 为 `0.5381077849`，未达到冻结成功规则并停止。该结果只属于已暴露 train flows 的 development 验证，不是 formal confirmation；完整结果、失败链与哈希以 `docs/Verify_PerScaleNegativeMetric_1.1.md` 和运行登记为准。
 
 ## 20. `Other_NegativeTailVisualization_1.1` 的四流场当前 NegativeTail 三联图
 
@@ -276,7 +276,7 @@ SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 prediction、label、metric 或 aggregate 结果之前冻结。冻结时 PerScale jobs
 `51063738/51063753` 已提交但 outer 结果尚未读取；配置中的
 `frozen_before_first_read_of_any_per_scale_outer_result: true` 是不可改写的历史事实。
-本版本尚未实现、未运行且没有性能结论。
+当前执行状态为 `IMPLEMENTED_LOCAL_TESTED_PRE_IBEX`：核心、sidecar、preparation、nested runner、aggregator 与九个 Ibex wrapper 已实现；定向测试 `45/45 PASS`，统一回归 `303/303 PASS`。尚未生成真实 sidecar 或运行 outer fold，因此没有性能结论。
 
 相对 `Verify_PerScaleNegativeMetric_1.1`，唯一数值变化是把同一个固定 4D
 seed-time kinematic block 无权重追加到三个父 FMT 表示，形成固定顺序的
@@ -331,8 +331,10 @@ schema、3060 candidate 合同、outer label gate、成功规则、成本边界�
 
 本版本与 `Verify_EarlyOppositePairKinematics_1.1` 一样，已在首次读取
 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer feature、label、prediction、metric
-或 summary 前冻结；冻结时 PerScale jobs 已提交但结果未读。本版本尚未实现、未运行，
-没有性能结论。
+或 summary 前冻结；冻结时 PerScale jobs 已提交但结果未读。当前执行状态为
+`IMPLEMENTED_LOCAL_TESTED_PRE_IBEX`：Raw-PCA core、nested runner、aggregator 与四个
+Ibex wrapper 已实现；定向测试 `26/26 PASS`，统一回归 `303/303 PASS`。尚未运行真实
+outer fold，没有性能结论。
 
 相对 PerScale 父方法，唯一数值变化是把三个可选 FMT 表示整体替换为单一固定
 `raw_pca161`：3.1 cache 的 `raw_features` 是七线 `7×32×3` 坐标减中心线首点后按
@@ -362,3 +364,43 @@ Raw-PCA 作为第四表示加入 FMT 三臂候选，否则结果会混入候选�
 `6f4718ce6d6385bd0bd5b41a7a04e74cb8f2064fee64097f162999e9eefe6440`。完整 PCA
 算法、family row counts、17-file artifact/label gate、1020 candidates、资源成本和风险见
 `docs/Verify_RawPCANegativeMetric_1.1.md`。
+
+## 23. `Verify_DimensionlessDeformationFMT_1.1` 的无量纲 deformation 表示
+
+本版本在读取 EarlyKinematics 或 Raw-PCA 的任何 outer 结果前冻结。相对 PerScale
+父方法，唯一变化是把 Raw672 恢复为 `7×32×3`：中心轨迹除以其实际31段空间弧长；
+六邻线相对中心的 deformation 除以六个实际初始邻距均值；随后进入不变的 independent
+FMT 和父方法原有三个 coordinate subsets。变换严格逐 primitive，不读取 label、IVD、
+batch/flow statistics，也不拟合参数。
+
+当前只实现了纯数值核心，冻结合同 `4/4`、数值核心 `7/7`、统一回归 `303/303 PASS`；
+nested runner、aggregator 与 Ibex wrapper 尚未实现，因此没有真实 artifact 或性能结论。
+唯一配置为 `config/Verify_DimensionlessDeformationFMT_1.1.yaml`，冻结 SHA-256 为
+`c689b1d265bbc39327b2ed4147e8ffb22450dcd26f87b7c19ceae346c9ecfe18`；完整公式与风险见
+`docs/Verify_DimensionlessDeformationFMT_1.1.md`。
+
+## 24. `Other_PerScaleNegativeMetricVisualization_1.1` 的四流场当前方法三联图
+
+本版本只报告已认证的 `Verify_PerScaleNegativeMetric_1.1` 固定 source ordinal 2
+predictions，不重新拟合、选择 candidate、调阈值或按图挑结果。三个 cylinder flow 查询时
+完整排除 `half_cylinder` family，Boeing 747 查询时完整排除 `boeing_747` family。
+
+- query 固定为 `cylinder3d`（Re160）、`halfcylinderRe640`、
+  `halfcylinderRe6400` 与 `boeing747`；每个 flow 对 `legacy_2_1`（原1000尺度）与
+  `expanded_3_1`（新增1000尺度）分别出图，共八张。禁止跨 block 选择、投票或聚合。
+- 父 scenes 固定来自 Ibex job `51029080`；predictions 固定来自 clean five-fold job
+  `51064965`，其 aggregate authentication 为 job `51064966`。报告器必须验证父 scene、
+  fold result、completion、prediction NPZ、候选与逐组指标的文件和内容哈希。
+- scene 与 prediction 按 dataset、source ordinal/index、block、center seed、assigned row、
+  scale ID 与 block index 精确保序连接；duplicate、missing、extra 或 reorder 均失败。
+- 三栏固定为：IVD-p95 等值面与240条中心 pathlines；完整 valid rows 的模板二分类；
+  同一 rows 的 TP/FP/FN/TN。第二栏是 classification，不得称 clustering。
+- 八图保留全部 `406,177` 个 valid rows；source ordinal、pathline 选择、camera、bounds 与
+  IVD mesh 均不变。交付前必须通过8/8 panel alignment、PDF 5 pt文字、PyMuPDF碰撞审计、
+  PNG解码和逐图目视检查。
+- 固定 top-5% 判决依赖完整 query group，因此完整分类器是 transductive。四个flow均为
+  exposed development data；这些图不是 sealed confirmation，也不能作为跨 block 因果比较。
+
+权威说明与结构化证据分别为
+`docs/Other_PerScaleNegativeMetricVisualization_1.1.md` 和
+`docs/evidence/Other_PerScaleNegativeMetricVisualization_1.1_local_summary.json`。

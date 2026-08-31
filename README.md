@@ -23,6 +23,7 @@
 - [2.1的1000尺度结果](docs/mainExp_TemplateMatching_2.1.md)与[1.1失败记录](docs/mainExp_TemplateMatching_1.1.md)
 - [实验版本表](docs/experiment_log.md)
 - [当前模板匹配失败的第一性原理诊断](docs/first_principles_template_matching_analysis.md)
+- [当前PerScale方法的四流场三联图与分类表](docs/Other_PerScaleNegativeMetricVisualization_1.1.md)
 - [Ibex 运行表](docs/ibex_run_registry.md)
 - [FMT 代码迁移来源](docs/source_provenance.md)
 - [Ibex 部署与数据清单](docs/ibex_deployment.md)

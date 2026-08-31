@@ -1,0 +1,51 @@
+{
+  "schema": "pathline_template_matching.per_scale_visualization_local_summary.v1",
+  "experiment": "Other_PerScaleNegativeMetricVisualization_1.1",
+  "status": "completed_local_reporting_qa_pass",
+  "formal_confirmation": false,
+  "evidence_scope": "family-held-out exposed-development fixed-source reporting",
+  "prediction_experiment": "Verify_PerScaleNegativeMetric_1.1",
+  "prediction_git_commit": "e919c2e27b8c8157435d40da350866864721ac51",
+  "prediction_config_sha256": "b469b909466dda941d122629ba43cf94e872faceed73c5f0970e3cf66697dd79",
+  "reporting_script_git_commit": "c678baa68d686982f968c9030e84277168da0e06",
+  "reporting_script_sha256": "e41d478cff25200221569642222d62d447c00baef91534ef3d3a35640c6c683c",
+  "ibex_jobs": {
+    "parent_scenes": "51029080",
+    "prediction_folds": "51064965_[0-4]",
+    "prediction_aggregate_authentication": "51064966"
+  },
+  "source_ordinal": 2,
+  "figure_count": 8,
+  "query_count": 406177,
+  "scale_blocks": {
+    "legacy_2_1": "scale_id 0-999",
+    "expanded_3_1": "scale_id 1000-1999"
+  },
+  "metrics": [
+    {"dataset": "cylinder3d", "block": "legacy_2_1", "valid_count": 60560, "average_precision": 0.758597593095, "f1": 0.679734620024, "balanced_accuracy": 0.805913383379, "precision": 0.744385733157, "recall": 0.625416204218, "tp": 2254, "fp": 774, "tn": 56182, "fn": 1350},
+    {"dataset": "cylinder3d", "block": "expanded_3_1", "valid_count": 43347, "average_precision": 0.710016950390, "f1": 0.618350324374, "balanced_accuracy": 0.752213069499, "precision": 0.769372693727, "recall": 0.516888751162, "tp": 1668, "fp": 500, "tn": 39620, "fn": 1559},
+    {"dataset": "halfcylinderRe640", "block": "legacy_2_1", "valid_count": 60555, "average_precision": 0.547958550073, "f1": 0.522947236965, "balanced_accuracy": 0.736096087339, "precision": 0.553170409511, "recall": 0.495855535820, "tp": 1675, "fp": 1353, "tn": 55824, "fn": 1703},
+    {"dataset": "halfcylinderRe640", "block": "expanded_3_1", "valid_count": 42463, "average_precision": 0.434124629626, "f1": 0.459677419355, "balanced_accuracy": 0.696181638912, "precision": 0.509887005650, "recall": 0.418469860896, "tp": 1083, "fp": 1041, "tn": 38834, "fn": 1505},
+    {"dataset": "halfcylinderRe6400", "block": "legacy_2_1", "valid_count": 62313, "average_precision": 0.561115826855, "f1": 0.512098687332, "balanced_accuracy": 0.739752899747, "precision": 0.519576379974, "recall": 0.504833177424, "tp": 1619, "fp": 1497, "tn": 57609, "fn": 1588},
+    {"dataset": "halfcylinderRe6400", "block": "expanded_3_1", "valid_count": 57906, "average_precision": 0.554534439847, "f1": 0.487821154488, "balanced_accuracy": 0.722876651201, "precision": 0.504834254144, "recall": 0.471917366043, "tp": 1462, "fp": 1434, "tn": 53374, "fn": 1636},
+    {"dataset": "boeing747", "block": "legacy_2_1", "valid_count": 61432, "average_precision": 0.802970850517, "f1": 0.720646437995, "balanced_accuracy": 0.857551394181, "precision": 0.711263020833, "recall": 0.730280748663, "tp": 2185, "fp": 887, "tn": 57553, "fn": 807},
+    {"dataset": "boeing747", "block": "expanded_3_1", "valid_count": 17601, "average_precision": 0.654947251666, "f1": 0.566408995081, "balanced_accuracy": 0.857761017818, "precision": 0.457434733258, "recall": 0.743542435424, "tp": 403, "fp": 478, "tn": 16581, "fn": 139}
+  ],
+  "delivery_qa": {
+    "status": "PASS",
+    "alignment_pass": 8,
+    "visual_review_pass": 8,
+    "collision_fail": 0,
+    "minimum_pdf_text_pt": 7.0,
+    "identity_join_pass": 8,
+    "metric_recompute_pass": 8,
+    "excluded_valid_rows": 0
+  },
+  "artifact_sha256": {
+    "input_manifest.json": "6f41b997fb7d76bf8bf5d4e82e5e8650dc78956ae5e2e09736adcce88195f842",
+    "per_figure_metrics.csv": "e60ba2c50d2f6d3e46ed71354434330c10d9a5cb8f22d3f7b3c17728c32a4229",
+    "result_manifest.json": "0d2a1e0c0f930c2eac3dc2d54998964dd439f5013c581c290cb30f30fd28a0aa",
+    "RUN_COMPLETE.json": "6a43310cd29a09e99f784452232898694697e75e852c490b8cfc567024592a2e",
+    "delivery_qa_summary.json": "3aa37062f7e00e2bd5c9a2032222fc4ec77822e61c83e0144b901cfe0db38987"
+  }
+}
