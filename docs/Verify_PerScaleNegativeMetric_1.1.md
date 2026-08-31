@@ -1,8 +1,8 @@
 # `Verify_PerScaleNegativeMetric_1.1`
 
-执行状态：`validation_hardened_clean_ibex_rerun_submitted`。配置中的预注册字段仍保持 `status: frozen_pre_run_not_implemented`，以保留冻结 SHA-256；方法、候选集与输出认证合同是在读取任何 `Verify_NegativeTailCalibration_1.1` outer 指标前冻结的。五折 array `51063738` 的五个 task 均已完成，但依赖聚合 `51063753` 在 fresh replay 中因跨CPU Gaussian浮点末位差失败。两项label-free诊断与validation-only hardening已经完成；clean rerun array/aggregate `51064965/51064966`已提交。尚未读取或接受任何 outer metrics，因此仍无性能结论。
+执行状态：`completed_stopped_after_authenticated_five_fold_failure`。配置中的预注册字段仍保持 `status: frozen_pre_run_not_implemented`，以保留冻结 SHA-256；方法、候选集与输出认证合同是在读取任何 `Verify_NegativeTailCalibration_1.1` outer 指标前冻结的。五折 array `51063738` 的五个 task 均已完成，但依赖聚合 `51063753` 在 fresh replay 中因跨CPU Gaussian浮点末位差失败。两项label-free诊断与validation-only hardening随后完成；clean rerun array/aggregate `51064965/51064966`通过完整认证后才首次读取本版本 outer metrics。权威结果见第9节。
 
-实现路径：`src/pathline_template_matching/per_scale_negative_metric.py`、`scripts/run_verify_per_scale_negative_metric_1_1.py`、`scripts/aggregate_verify_per_scale_negative_metric_1_1.py`、`ibex/verify_per_scale_negative_metric_1.1_all_folds.sh` 与 `ibex/verify_per_scale_negative_metric_1.1_aggregate_five.sh`。原数值方法commit为 `809ffa3b9490ca4f5b0817d77759b5d88cce628c`；不改变数值方法的validation hardening commit为 `eba96eb8bb2a20e0e41318cee0a6406e70605b66`，本地完整标准库回归221项PASS。实际设备和终态见 `docs/ibex_run_registry.md`；未经新的fresh-replay认证的fold结果不得转写为指标或结论。
+实现路径：`src/pathline_template_matching/per_scale_negative_metric.py`、`scripts/run_verify_per_scale_negative_metric_1_1.py`、`scripts/aggregate_verify_per_scale_negative_metric_1_1.py`、`ibex/verify_per_scale_negative_metric_1.1_all_folds.sh` 与 `ibex/verify_per_scale_negative_metric_1.1_aggregate_five.sh`。原数值方法commit为 `809ffa3b9490ca4f5b0817d77759b5d88cce628c`；不改变数值方法的validation hardening commit为 `eba96eb8bb2a20e0e41318cee0a6406e70605b66`，clean deployment commit为 `e919c2e27b8c8157435d40da350866864721ac51`。实际设备和终态见 `docs/ibex_run_registry.md`。
 
 冻结配置：`config/Verify_PerScaleNegativeMetric_1.1.yaml`
 
@@ -127,7 +127,7 @@ G(tail_anomaly × calibration_support) / G(calibration_support).
 - 本版本只改变 diagonal feature weighting，不引入 coordinate covariance；相关 feature 的重复计权仍可能存在。
 - Per-scale mean 理论上在 exact same-scale distance 中相消；若观测到结果依赖 mean shift，说明实现违反了同尺度或同 scaler 合同。
 - `n_s=1` 时 local variance 为零，结果主要由冻结的 broader prior 决定；这不是新增 library support。
-- 本版本在任何 `Verify_NegativeTailCalibration_1.1` outer 指标可见前冻结。当前实现已完成；首次 Ibex fold array 完成但依赖聚合认证失败，终态见第 8 节。尚无本版本性能结论；预注册配置中的历史状态字段不得为反映实现进度而改写。
+- 本版本在任何 `Verify_NegativeTailCalibration_1.1` outer 指标可见前冻结。首次 Ibex fold array 完成但依赖聚合认证失败，历史终态见第8节；随后 validation-only hardening 和 clean rerun 的权威性能终态见第9节。预注册配置中的历史状态字段不得为反映实现或结果进度而改写。
 
 ## 8. Ibex 首次运行终态（不含 outer metrics）
 
@@ -156,3 +156,48 @@ authenticated spatial score does not match tail transform
 随后 job `51064646` 在同一 `cn504-17`、32线程环境中完成全部五折的完整 label-free query replay。Folds 0–3 的全部字段逐位一致；Boeing fold仍只有 `spatial_score` 和 `spatial_denominator` 不同，最大分别为6和5 ULP。`raw_negative_distance`、tail probability/anomaly、全部 identity/support/mode/imputation、group audit和最终 prediction逐位一致。结合 Intel Xeon Gold 6248 上 alternate-SIMD 的同类无标签复现，根因是 `np.exp` 生成 Gaussian kernel及后续 NumPy 运算在不同CPU/SIMD路径上的少量 ULP 差异，而当前认证错误地对连续 `float64` 数组要求 `np.array_equal`。
 
 因此认证修订只允许 `spatial_score` 和 `spatial_denominator` 各最多8 ULP，并继续要求它们的dtype、shape、finite、nonnegative和zero mask完全一致；artifact/manifest SHA-256以及 raw distance、tail values、全部离散状态、group audit和最终 prediction仍为exact。这是validation-only hardening，不改变Gaussian scorer、分数、候选、split或指标。边界在读取任何 outer metrics 前由jobs `51064502/51064646`冻结。旧fold与失败聚合保持不变；必须从新的clean commit重跑五折及聚合后才能读取指标，目前仍无性能结论。
+
+## 9. Clean rerun、认证结果与停止结论
+
+Validation-hardened clean rerun 使用 exact commit
+`e919c2e27b8c8157435d40da350866864721ac51`。Array
+`51064965_[0-4]` 的五项均 `COMPLETED 0:0` 且
+`label_free_postvalidation=passed`。聚合 `51064966` 于
+2026-08-31 02:06:25--02:09:33 +03:00 在 `cn604-11` 完成，exit
+`0:0`，32 CPU、32 GB，batch MaxRSS `12023788K`。聚合重新执行 scaler、
+calibrator、outer query、prediction authentication、label gate、逐组指标和层级宏平均，
+而不是信任 fold 内嵌 summary。
+
+| Outer physical family | Selected candidate | AP | F1 | BA | Precision | Recall |
+|---|---|---:|---:|---:|---:|---:|
+| `half_cylinder` | `chirality_all35`, `k=5`, `sigma=1.5`, top 5% | 0.568894 | 0.542668 | 0.744518 | 0.582349 | 0.511196 |
+| `delta_wing` | `real_neighbor36`, `k=15`, `sigma=1.0`, top 5% | 0.901151 | 0.781242 | 0.936346 | 0.703648 | 0.888110 |
+| `f22_raptor` | `real_neighbor36`, `k=31`, `sigma=0.5`, top 5% | 0.495125 | 0.503504 | 0.753988 | 0.477131 | 0.535359 |
+| `channel` | `real_neighbor36`, `k=5`, `sigma=1.0`, top 5% | 0.179057 | 0.244366 | 0.633502 | 0.202731 | 0.308229 |
+| `boeing_747` | `real_neighbor36`, `k=5`, `sigma=1.0`, top 5% | 0.703612 | 0.618757 | 0.857668 | 0.546225 | 0.738860 |
+| equal-family macro | — | 0.569568 | 0.538108 | 0.785204 | 0.502417 | 0.596351 |
+
+停止规则只有 balanced accuracy 通过；macro F1、Average Precision、precision、
+recall、至少4/5 family达到0.65及任一family不低于0.50均失败。相对直接父版本
+`Verify_NegativeTailCalibration_1.1` 的 macro F1 `0.540472`，本版本为
+`0.538108`，变化 `−0.002364`。因此逐尺度 diagonal variance 没有解决主要问题，
+不得继续在这个版本上选择 lambda、方差公式或阈值。
+
+认证证据：
+
+- config/input/input-rows SHA-256：`b469b909…` / `e57d6b52…` /
+  `ceb6d0e3…`；
+- aggregate completion/manifest/summary/table file SHA-256：
+  `b6621789…` / `1bbd13bf…` / `60a8dcbd…` / `c5262c87…`；
+- remote复核五折精确75个文件的size/SHA、所有JSON self-hash、commit/config/family/
+  input引用链均PASS；
+- 本地下载后重新认证4个aggregate文件、五份outer-group CSV artifact hash，按每个
+  `dataset×source×block` 重新计算family F1与五family等权宏平均，误差小于
+  `1e-12`；本地路径为
+  `outputs/Verify_PerScaleNegativeMetric_1.1_job51064966_download` 与
+  `outputs/Verify_PerScaleNegativeMetric_1.1_job51064966_fold_metrics_download`。
+
+当前结论是负结论：瓶颈不在全局方差与逐尺度方差之间的选择。下一步仅进入在本
+版本 outer 指标可见前已冻结的两个表示级验证：
+`Verify_EarlyOppositePairKinematics_1.1` 与
+`Verify_RawPCANegativeMetric_1.1`。Tangaroa 与 Smoke 继续禁止访问。

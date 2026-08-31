@@ -1,0 +1,171 @@
+experiment: Verify_DimensionlessDeformationFMT_1.1
+phase: exposed_train_only_nested_family_validation
+status: frozen_pre_run_not_implemented
+frozen_date: 2026-08-31
+
+freeze_provenance:
+  parent_experiment: Verify_PerScaleNegativeMetric_1.1
+  parent_config_sha256: b469b909466dda941d122629ba43cf94e872faceed73c5f0970e3cf66697dd79
+  timing: before_reading_any_outer_result_from_Verify_EarlyOppositePairKinematics_1.1_or_Verify_RawPCANegativeMetric_1.1
+  historical_status_is_immutable: true
+
+research_question: >-
+  Does removing physical length units and common-advection amplitude from each
+  independent pathline primitive improve complete-physical-family transfer?
+only_numerical_change_from_parent: >-
+  Normalize the center path by its realized spatial arc length and normalize
+  every neighbor-minus-center deformation by the realized initial opposite-pair
+  distance before applying the unchanged independent FMT descriptor.
+
+evidence_scope:
+  allowed_inputs: mainExp_TemplateMatching_3.1_train_caches_only
+  input_manifest:
+    path: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/train_coverage/slurm_50998592_260a07ad380d/train_cache_input_manifest.json
+    size_bytes: 24009
+    sha256: e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393
+    rows_content_sha256: ceb6d0e3fb7a2c90fcaae98583f8d1def7ee75fa7968f38d2821ee3040ae156f
+    row_count: 32
+    test_dataset_access: false
+  forbidden_datasets:
+    - tangaroa
+    - smokeBuoyancy
+  formal_confirmation: false
+
+primitive_contract:
+  input_member: raw_features
+  input_dtype: float32
+  input_shape: [N, 672]
+  reshape_order: C
+  reshaped_shape: [N, 7, 32, 3]
+  primitive_order:
+    - center
+    - x_plus
+    - x_minus
+    - y_plus
+    - y_minus
+    - z_plus
+    - z_minus
+  centered_origin_contract: center_path_sample_0_is_exact_zero
+
+dimensionless_transform:
+  arithmetic_dtype: float64
+  serialization_dtype: float32
+  center_arc_length:
+    formula: sum_t_norm2(center[t+1]-center[t])
+    sample_interval: t_0_to_t_31
+    require_finite_and_strictly_positive: true
+    forbidden_source: configured_arc_level_or_scale_table
+  realized_initial_dx:
+    relative_vectors: neighbor_j[0]-center[0]
+    formula: mean_of_six_relative_vector_l2_norms
+    require_finite_and_strictly_positive: true
+    require_six_norms_equal_within:
+      rtol: 0.00005
+      atol: 0.0000001
+    require_opposite_pair_midpoint_within:
+      rtol: 0.00005
+      atol: 0.0000001
+    forbidden_source: scale_id_or_dataset_grid_metadata
+  output_coordinates:
+    center: center_path / center_arc_length
+    neighbor: center_path / center_arc_length + (neighbor_path-center_path) / realized_initial_dx
+  invariants:
+    output_shape: [N, 7, 32, 3]
+    row_local_only: true
+    query_batch_statistics: forbidden
+    flow_statistics: forbidden
+    labels_or_ivd: forbidden
+    train_fit: none
+    hidden_clipping_or_log: forbidden
+
+descriptor:
+  implementation: unchanged_independent_FMT
+  parent_descriptor_id: fmt_independent_3d_161d_sha256_25fce29499c9089e
+  full_width: 161
+  representations:
+    - fmt161_dimensionless_deformation
+    - real_neighbor36_dimensionless_deformation
+    - chirality_all35_dimensionless_deformation
+  parent_coordinate_index_sets_are_unchanged: true
+  descriptor_weights: 1.0
+  trainable_parameters: none
+
+families:
+  half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+  delta_wing: [deltaWing_resampled, deltaWing_LBM]
+  f22_raptor: [f22raptor]
+  channel: [channel]
+  boeing_747: [boeing747]
+
+nested_split:
+  outer_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  inner_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  split_unit: complete_physical_family
+  random_seed_split: forbidden
+  outer_features_available_to_selection: false
+  outer_labels_available_to_selection: false
+
+inherited_negative_metric_and_calibration:
+  source: Verify_PerScaleNegativeMetric_1.1
+  library_population: all_natural_negative_rows_from_fit_families
+  exact_same_scale_retrieval: true
+  per_scale_variance_ddof: 0
+  variance_shrinkage_lambda: 64.0
+  tail_reference: fit_negative_leave_one_out
+  query_rank: forbidden
+  query_distribution_calibration: forbidden
+
+candidate_grid:
+  representation_count: 3
+  k: [1, 5, 15, 31]
+  spatial_sigma_grid_cells: [0.0, 0.5, 1.0, 1.5, 2.0]
+  fixed_top_fraction: [0.05]
+  calibrated_tail_threshold:
+    start: 0.50
+    stop_inclusive: 0.99
+    step: 0.01
+  candidate_count: 3060
+  selection_unit: equal_weighted_complete_inner_family
+  outer_metrics_in_selection: forbidden
+
+access_gates:
+  fold:
+    - authenticate_clean_exact_commit_and_config_before_cache_access
+    - fit_transform_and_select_on_nonouter_families_only
+    - write_and_authenticate_label_free_outer_prediction_before_outer_labels
+    - fresh_reload_transform_and_prediction_replay_before_outer_labels
+    - read_outer_labels_and_metrics_only_after_replay_passes
+  aggregate:
+    - stage_only_label_free_artifacts_before_fresh_replay
+    - never_open_result_or_outer_metric_artifacts_before_fresh_replay
+    - open_outer_labels_only_after_prediction_replay
+    - recompute_group_family_and_five_family_metrics
+  artifact_overwrite: forbidden
+  publish_semantics: same_directory_fsync_then_hard_link_no_replace_then_parent_fsync
+
+success_rule:
+  five_family_macro_f1_min: 0.70
+  families_with_f1_at_least_0_65_min: 4
+  single_family_f1_min: 0.50
+  five_family_macro_average_precision_min: 0.60
+  five_family_macro_balanced_accuracy_min: 0.70
+  five_family_macro_precision_min: 0.60
+  five_family_macro_recall_min: 0.60
+  all_conditions_required: true
+
+early_stop_rule:
+  permitted_only_for_mathematical_impossibility: true
+  conditions:
+    - any_completed_family_f1_below_0_50
+    - two_completed_families_f1_below_0_65
+    - optimistic_remaining_family_bound_cannot_meet_any_macro_threshold
+
+forbidden_changes_within_version:
+  - alternate_normalization_formula
+  - learned_or_label_fitted_transform
+  - descriptor_weight_scan
+  - PCA_or_whitening
+  - scale_grid_or_assignment_change
+  - k_sigma_threshold_or_stop_rule_change
+  - query_unlabeled_adaptation
+  - Tangaroa_or_Smoke_access

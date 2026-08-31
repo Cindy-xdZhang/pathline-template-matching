@@ -1,0 +1,87 @@
+{
+  "schema": "pathline_template_matching.documented_per_scale_negative_metric_evidence.v1",
+  "experiment": "Verify_PerScaleNegativeMetric_1.1",
+  "status": "completed_stopped_after_authenticated_five_fold_failure",
+  "evidence_scope": "exposed_train_only_nested_family_validation",
+  "formal_confirmation": false,
+  "config_sha256": "b469b909466dda941d122629ba43cf94e872faceed73c5f0970e3cf66697dd79",
+  "input_manifest_sha256": "e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393",
+  "input_manifest_rows_sha256": "ceb6d0e3fb7a2c90fcaae98583f8d1def7ee75fa7968f38d2821ee3040ae156f",
+  "numerical_git_commit": "e919c2e27b8c8157435d40da350866864721ac51",
+  "validation_hardening_git_commit": "eba96eb8bb2a20e0e41318cee0a6406e70605b66",
+  "slurm": {
+    "fold_array_job_id": "51064965_[0-4]",
+    "aggregate_job_id": "51064966",
+    "aggregate_state": "COMPLETED",
+    "aggregate_exit_code": "0:0",
+    "aggregate_start_local": "2026-08-31T02:06:25+03:00",
+    "aggregate_end_local": "2026-08-31T02:09:33+03:00",
+    "aggregate_elapsed": "00:03:08",
+    "aggregate_node": "cn604-11",
+    "aggregate_cpu_count": 32,
+    "aggregate_memory_request_gb": 32,
+    "aggregate_batch_max_rss_kb": 12023788
+  },
+  "family_order": [
+    "half_cylinder",
+    "delta_wing",
+    "f22_raptor",
+    "channel",
+    "boeing_747"
+  ],
+  "family_f1": {
+    "half_cylinder": 0.5426684234330027,
+    "delta_wing": 0.7812422930335164,
+    "f22_raptor": 0.5035044707174333,
+    "channel": 0.24436633814370054,
+    "boeing_747": 0.6187573991550112
+  },
+  "family_macro": {
+    "accuracy": 0.9577647531096518,
+    "average_precision": 0.5695680067797989,
+    "f1": 0.5381077848965329,
+    "balanced_accuracy": 0.7852043500376482,
+    "auroc": 0.9458112079216534,
+    "precision": 0.5024167105630587,
+    "recall": 0.5963510115756023,
+    "retrieval_support_fraction": 1.0,
+    "calibration_support_fraction": 1.0,
+    "spatial_imputed_fraction": 0.0,
+    "spatial_unimputable_fraction": 0.0
+  },
+  "success_stop_rule": {
+    "all_success_conditions_pass": false,
+    "passed": [
+      "outer_family_macro_balanced_accuracy_minimum"
+    ],
+    "failed": [
+      "minimum_single_outer_family_f1",
+      "outer_families_at_or_above_0_65_minimum",
+      "outer_family_macro_average_precision_minimum",
+      "outer_family_macro_f1_minimum",
+      "outer_family_macro_precision_minimum",
+      "outer_family_macro_recall_minimum"
+    ]
+  },
+  "aggregate_files": {
+    "AGGREGATE_COMPLETE.json": "b6621789fc61f7e9139a6c84ff0306aab7174514f893f01068d1f789a4596597",
+    "aggregate_manifest.json": "1bbd13bf0a4d6180bd4a2148c10e1de4601594142b7bb5ebe9cb2eb29927ed83",
+    "aggregate_summary.json": "60a8dcbda9d1f93d93bc2e07dc8315bc09262ed4d31a3ff5959e93227e44b617",
+    "outer_family_summary.csv": "c5262c87925e744f73aec31480d44649c4024e4ecad3750cf45d30c644504c90"
+  },
+  "log_sha256": {
+    "stdout": "403a48ec9aa4994ea66ebada14ba9af37904c4e41694b28184b79b518d47b1f0",
+    "stderr": "1ad4d90eeee0fdaa22801a677a766303221a85413adebc37541250a0e2eb328e"
+  },
+  "authentication": {
+    "remote_fold_file_count": 75,
+    "remote_fold_size_sha_self_hash_reference_chain": "PASS",
+    "aggregate_exact_file_set_and_self_hash": "PASS",
+    "downloaded_outer_group_csv_hashes": "PASS",
+    "local_family_and_equal_family_macro_recomputation_tolerance": 1e-12,
+    "local_recomputation": "PASS"
+  },
+  "parent_negative_tail_family_macro_f1": 0.540472,
+  "f1_change_from_parent": -0.0023642151034671,
+  "conclusion": "Exact-per-scale negative variance weighting does not improve the complete-family-held-out template classifier; stop this version and change the representation."
+}

@@ -1,11 +1,49 @@
 # `Verify_RawPCANegativeMetric_1.1`
 
-状态：`frozen_pre_run_not_implemented`。本版本已经冻结方法、候选集、输入、
-产物和停止规则，但尚未实现、尚未提交 Ibex、尚未运行，因此没有性能结论。
+状态：`IMPLEMENTED_LOCAL_TESTED_PRE_IBEX`。本版本已冻结方法、候选集、输入、
+产物和停止规则；Raw PCA 数值核心、nested runner、单折/五折共用 authenticator 与四个
+Ibex wrapper 均已实现并通过定向本地测试。尚未产生 numerical Git commit，
+尚未提交 Ibex job，因此没有 metric 或性能结论。
+
+冻结 config 中的历史字段 `status: frozen_pre_run_not_implemented`、
+`frozen_before_first_read_of_any_parent_outer_result: true` 与
+`parent_outer_results_visible_at_freeze: false` 保持不变：它们记录预注册时点，
+不是当前实现状态。
 
 冻结配置：`config/Verify_RawPCANegativeMetric_1.1.yaml`
 
 配置 SHA-256：`6f4718ce6d6385bd0bd5b41a7a04e74cb8f2064fee64097f162999e9eefe6440`
+
+当前实现身份为：
+
+- Raw PCA 核心 `src/pathline_template_matching/raw_pca_representation.py`：
+  `cc20652714654c93d409097f0c3af75dea669c40268e2301a4ecf4b9df49c4bf`；
+- nested runner `scripts/run_verify_raw_pca_negative_metric_1_1.py`：
+  `12785cae503d4a64fff838ad6a377c91ac7191adcfe856147a7009fb5e307dee`；
+- 单折/五折 authenticator 与 aggregator
+  `scripts/aggregate_verify_raw_pca_negative_metric_1_1.py`：
+  `cf6fc43100db62d45f5f83f4d9ecf449c7ed96cad736462f250898659250b2aa`。
+
+Ibex 部署层已实现 `verify_raw_pca_negative_metric_1.1_first_fold.sh`、
+`verify_raw_pca_negative_metric_1.1_first_fold_auth.sh`、
+`verify_raw_pca_negative_metric_1.1_all_folds.sh` 和
+`verify_raw_pca_negative_metric_1.1_aggregate_five.sh` 四个 wrapper，其 SHA-256
+依次为：
+
+- `634254bc2b45912f01e20e6b94da75465f385f3abe5771df1bcff692890a1fa8`；
+- `c0ef0698777905dafc1c2ef99097a6b83b09abd6cc9cb2e0cc34d3681e8e1df1`；
+- `565c23ad7f6de71550aa419ff65cab0ebedfcd67f424a9e17d4dbb1f6dacf26d`；
+- `f3c88a1b25e925f95d091f9cebc5f1d879f7f1b655d83831049011ab2e7920a8`。
+
+核心实现固定
+672→161维、两遍float64 scatter、完整 `numpy.linalg.eigh`、stable降序、固定
+component sign、无whitening、严格float32 fit input、七数组NPZ认证和真正不可
+重新开启写权限的bytes-backed模型数组。
+
+2026-08-31 在当前工作树复跑 Raw PCA 核心、runner 与 aggregator 定向测试，
+`26/26 PASS`（`8 + 9 + 9`）。这些测试只使用 synthetic 或伪造 artifact，
+没有读取真实 cache 或 outer 结果。同一工作树的提交前统一回归为
+`303/303 PASS`（185.236 s）。
 
 冻结发生在第一次读取 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer
 feature、label、prediction、metric 或 summary 之前。冻结时没有读取该父实验的
@@ -262,6 +300,35 @@ Final/outer 访问顺序固定为：
 Aggregator 必须再次执行相同的 file-set、commit/config/input、PCA/scaler/calibrator、
 label-free prediction 与 fresh-label metric 认证；不能只汇总 runner 写出的 summary。
 
+已实现的 runner 和 aggregator 在认证输入时使用单一已打开文件描述符
+（single file descriptor）完成读取与 SHA-256，并比较读取前后的文件描述符/路径身份；
+输出先写同目录临时文件、`fsync`并认证，再以 hard-link no-replace 发布，
+竞态中已存在的 artifact 不会被覆盖。每折必须恰好有17个文件，
+`result_manifest.json` 必须认证恰好15个 result artifacts。无论 runner 还是
+aggregator，都只有在 fresh label-free Raw672→PCA→prediction replay 完全通过后，
+才能首次打开 outer `valid_labels`/`metadata_json` 或 performance-bearing metric files。
+
+首折不能只停在 label-free postvalidation。`half_cylinder` fold 完成后，独立
+`first_fold_auth` stage 必须用上述同一个 authenticator 完整重放该折；只有 fresh
+prediction 认证通过后，它才能打开 outer label/metric，并以 hard-link no-replace
+发布以下五个文件：
+
+```text
+outer_family_summary.csv
+early_stop_certificate.json
+single_fold_authentication_report.json
+aggregate_manifest.json
+AGGREGATE_COMPLETE.json
+```
+
+其中三个JSON认证链固定为：用户传入的 `AGGREGATE_COMPLETE.json` file SHA-256
+绑定 report、certificate 和 aggregate manifest 的 file SHA-256；三者各自都有
+content self-hash。剩余折 wrapper 必须重新认证整个文件集合、三个self-hash、commit、
+config、首折run directory和summary CSV SHA-256，再按冻结config从已认证report里的
+family row重算完整certificate。只有重算结果逐字段相同且 `stop_version=false`，才允许
+运行array task 1–4。`stop_version=true` 时，剩余折必须拒绝启动；不能把首折 wrapper
+较早完成的 label-free postvalidation 当成早停认证。
+
 ## 8. 成功、否证与提前停止
 
 完整五折必须同时满足：
@@ -292,9 +359,18 @@ stream PCA passes，并及时释放 Raw arrays，禁止无必要地同时常驻�
 
 直接执行四个 inner PCA 加一个 final PCA 时，每个 outer fold 的 scatter 计算相当于
 处理四倍 nonouter row population，约 `3.0–4.8×10^12` 个 multiply-accumulate terms。
-这是资源估计，不是 wall-time 结果。首次 Ibex profile 应申请32 CPU、128 GB、12 h，
-用 GNU `time -v` 分别记录 PCA、runner postvalidation 与 aggregate 的 elapsed 和 MaxRSS；
-不得因排队或运行时间改用泄漏的全八族 PCA。
+这是资源估计，不是 wall-time 结果。Ibex 执行顺序已固定为：先用
+`verify_raw_pca_negative_metric_1.1_first_fold.sh` 单独 profile array task 0
+（`half_cylinder`，32 CPU、128 GB、12 h，GNU `time -v`）；再用
+`verify_raw_pca_negative_metric_1.1_first_fold_auth.sh` 对该折完成outer-label gate、
+指标重算和数学早停认证。只有其不可覆盖certificate为 `stop_version=false`，才可用
+`verify_raw_pca_negative_metric_1.1_all_folds.sh` 串行提交 `--array=1-4%1`；最后用
+`verify_raw_pca_negative_metric_1.1_aggregate_five.sh` 把首折独立job与剩余四折array
+job的五个唯一family目录交给 `--mode complete-five-fold`。不得因排队或运行时间改用
+泄漏的全八族 PCA，也不得跳过首折完整认证而直接释放剩余折。
+
+Tangaroa 与 Smoke (`tangaroa`, `smokeBuoyancy`) 的 raw field、portable window、
+manifest、cache、feature、label、prediction 和 metric 在本版本全部禁止访问。
 
 PCA 最大化 fit data 的总体方差，不保证保留区分 IVD-p95 正类的低方差方向；161维截断
 可能改善噪声，也可能删除涡旋相关信号。因此当前只有“可运行且无 nested leakage”的

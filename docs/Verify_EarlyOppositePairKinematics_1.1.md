@@ -1,6 +1,6 @@
 # `Verify_EarlyOppositePairKinematics_1.1`
 
-状态：**`FROZEN_PRE_RUN_NOT_IMPLEMENTED`**。唯一配置为
+状态：**`IMPLEMENTED_LOCAL_TESTED_PRE_IBEX`**。唯一配置为
 `config/Verify_EarlyOppositePairKinematics_1.1.yaml`，原始文件 SHA-256 为
 `e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767`。
 本配置冻结于首次读取 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer
@@ -8,8 +8,36 @@
 outer prediction、label、metric、stdout 中的 outer 数值或 aggregate 结果。这个
 历史字段以后不得因实现、提交或运行而改写。
 
-本版本尚无 production implementation、tests、kinematic sidecar、Ibex job 或性能
-结果。本文档只定义后续实现必须满足的合同，不证明方法有效。
+旧状态是“配置已冻结、实现不存在”；当前纯数值核心、label-free sidecar、32-row
+输入/sidecar population preparation、nested runner、单折/五折 aggregator 和分阶段
+Ibex wrappers 均已实现。尚未在 Ibex 冻结真实32-row输入、生成真实 sidecar 或运行
+任何 outer fold，因此没有真实 artifact、metric 或性能结论。
+
+本次实现证据：
+
+- `early_opposite_pair_kinematics.py`：中央差分和固定4D block，源码 SHA-256
+  `a6c449b508319b96c6260d3bb2e8cb9b7098bb7ddf6218e574cc2dda152b0b5f`；
+- `seed_time_kinematic_sidecar.py`：六成员窄读取、production 插值核、2000-scale
+  dx、身份 join 与 sidecar 认证，源码 SHA-256
+  `829fe42fce915da833649121073f13a911836c97a904c73888122f24d7dfa628`；
+- preparation core / CLI SHA-256：
+  `f207aa145338993345822cfa56c0bc223c1fd0a81e8382539c0b89587c5f9927` /
+  `79303ed04c0885d56a57acaad1549a98eed5f88f6155e3ba432a8844ca5420d3`；
+- nested runner / aggregator SHA-256：
+  `1e8b900a4080012118e1a2fe678be3487d50f746b5907a7b7ddf43e6ac4cbf2b` /
+  `20094f2fbb713a1c1749c630975bb6df2b59586c85203dcda3137b6aa6bda0ea`；
+- Early core、sidecar、preparation 与 runner/aggregator 定向 synthetic tests
+  `45/45 PASS`；提交前统一回归 `303/303 PASS`（2026-08-31，185.236 s）；
+- 所有公开数组改为 immutable bytes-backed 视图，不能在认证后重新开启写权限；
+- Early-owned、会影响候选/预测/证据身份的cache、JSON、NPZ与sidecar consumers使用同一已打开文件描述符完成
+  SHA-256和内容读取，并在前后核验文件描述符与path inode；所有发布使用
+  same-directory `fsync` + hard-link no-replace + parent-directory `fsync`；
+- 实现与测试没有读取真实 flow、label、IVD、PerScale outer、Tangaroa 或 Smoke。
+
+九个 wrapper 固定执行顺序为：synthetic/input gate → 单row sidecar profile →
+`0-31%2` sidecar array → 32-row population认证 → outer task 0 → 独立单折fresh-replay
+认证与数学早停证书 → 仅在证书允许时运行`1-4%2` → complete-five aggregate。
+每个stage都要求clean exact commit和固定源码/config SHA；任何旧artifact禁止覆盖。
 
 ## 1. 研究问题与唯一变化
 
@@ -278,12 +306,13 @@ run 都必须保留。
 预计约 0.15–0.35 GB；这是估计，不是运行证据。若错误地保存全部 7×32 line
 times，仅 train valid rows 未压缩就需 2.476 GiB，所以不属于本最小版本。
 
-Sidecar build 只解压每个现有 portable window 的 frame 0、做 trilinear sampling
-和小矩阵运算，不重新进行 H48 integration。建议仍用 32-task CPU array、每 task
-16 CPU/32–64 GB、15–30 min walltime request；全部 tasks 获得资源后预计数分钟内
-完成，但这是依据 3.1 cache jobs 最长 81 s 的工程估计。五折 retrieval 的宽度只
-比父方法多 4，因此预计接近 NegativeTail/PerScale 的 5–13 min/fold 量级；实际
-elapsed、CPU-hours、MaxRSS 必须由 Slurm 登记替代本估计。
+当前 portable NPZ loader 会载入并解压完整49帧 velocity window；sidecar build
+虽然只在 frame 0 做 trilinear sampling，但还会对完整 volume 多次执行 finite 检查，
+因此不能按“只解压 frame 0”估计内存或 I/O。部署必须先以单个 row 请求8 CPU、
+96 GB、4 h 做资源画像；只有该 completion 认证通过后，才允许提交32-row array，
+并发固定上限为`0-31%2`，每 task 8 CPU、96 GB、8 h。五折 retrieval 的宽度只比
+父方法多4，但同样先单跑 outer task 0，再由独立认证 stage决定提前停止或继续
+`1-4%2`；实际 elapsed、CPU-hours、MaxRSS 必须由 Slurm 登记替代本估计。
 
 ## 12. 结论边界与主要风险
 
@@ -302,6 +331,6 @@ elapsed、CPU-hours、MaxRSS 必须由 Slurm 登记替代本估计。
 5. **Transductive 决策。** Positive sigma 与 fixed top-5% 仍依赖完整 query group；
    即使 descriptor 独立，也不能称整个 classifier 是逐 primitive independent。
 
-只有实际实现、synthetic gate、32-sidecar population authentication、五折 Ibex
-运行及 aggregate authentication 全部完成后，才能把本状态改写到运行日志和实验
-版本表；冻结 config 本身不得改写。
+只有从clean numerical commit完成真实 synthetic gate、32-sidecar population
+authentication、五折 Ibex运行及 aggregate authentication 后，才能新增性能结论；
+冻结 config 中记录预注册时点的历史字段不得改写。
