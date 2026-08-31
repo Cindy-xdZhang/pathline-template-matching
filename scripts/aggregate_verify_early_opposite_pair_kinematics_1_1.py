@@ -1073,21 +1073,26 @@ def _authenticate_published_output(
 
 def _aggregate_early_binding(plan: runner.Plan) -> dict[str, Any]:
     runner._require_early_evidence_bound(plan)
+    assert plan.sidecar_population is not None
+    producer_commit = str(plan.sidecar_population["git_commit"])
     return {
         "kinematic_input_manifest": {
             "path": str(plan.kinematic_input_manifest_path),
             "file_sha256": plan.kinematic_input_manifest_file_sha256,
             "content_sha256": plan.kinematic_input_manifest_content_sha256,
+            "producer_git_commit": producer_commit,
         },
         "synthetic_pass": {
             "path": str(plan.synthetic_pass_path),
             "file_sha256": plan.synthetic_pass_file_sha256,
+            "producer_git_commit": producer_commit,
         },
         "sidecar_population_manifest": {
             "path": str(plan.sidecar_population_manifest_path),
             "file_sha256": plan.sidecar_population_manifest_file_sha256,
             "content_sha256": plan.sidecar_population_manifest_content_sha256,
             "sidecar_count": 32,
+            "producer_git_commit": producer_commit,
         },
         "composite_descriptor_ids": dict(plan.composite_descriptor_ids),
         "clean_git_commit": (
@@ -1165,7 +1170,7 @@ def aggregate(
         aggregator_commit == expected_fold_commit
         and plan.source_identity is not None
         and plan.source_identity.git_commit == aggregator_commit,
-        "aggregate, folds, and Early sidecar evidence must use one exact commit",
+        "aggregate and folds must use one exact commit; preparation evidence is separately pinned",
     )
     runner._configure_execution(device)
     folds = tuple(

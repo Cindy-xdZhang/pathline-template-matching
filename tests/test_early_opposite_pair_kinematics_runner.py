@@ -187,6 +187,122 @@ def test_early_plan_candidate_and_independent_schema_contracts_are_exact():
     )
 
 
+def test_canonical_json_descriptor_order_is_rebuilt_and_values_are_authenticated():
+    expected = {
+        name: f"{name}_sha256_{index:064x}"
+        for index, name in enumerate(runner.REPRESENTATIONS, start=1)
+    }
+    observed = dict(sorted(expected.items()))
+    assert tuple(observed) != runner.REPRESENTATIONS
+
+    authenticated = runner._ordered_composite_descriptor_ids(observed, expected)
+    assert tuple(authenticated) == runner.REPRESENTATIONS
+    assert dict(authenticated) == expected
+
+    missing = dict(observed)
+    missing.pop(runner.REPRESENTATIONS[0])
+    _expect_error(
+        ValueError,
+        runner._ordered_composite_descriptor_ids,
+        missing,
+        expected,
+        contains="population changed",
+    )
+    tampered = dict(observed)
+    tampered[runner.REPRESENTATIONS[0]] = "tampered"
+    _expect_error(
+        ValueError,
+        runner._ordered_composite_descriptor_ids,
+        tampered,
+        expected,
+        contains="values drifted",
+    )
+
+
+def test_preparation_evidence_commit_is_pinned_separately_from_fold_commit():
+    current = _fake_source_identity()
+    assert current.git_commit != runner.PREPARATION_ARTIFACT_GIT_COMMIT
+    preparation = runner._preparation_artifact_identity(current)
+    assert preparation.git_commit == runner.PREPARATION_ARTIFACT_GIT_COMMIT
+    assert preparation.worktree_clean is True
+    assert preparation.source_file_sha256_items == current.source_file_sha256_items
+
+
+def test_bind_early_evidence_accepts_sorted_json_keys_but_keeps_current_fold_identity():
+    with tempfile.TemporaryDirectory() as directory:
+        base = Path(directory).resolve()
+        plan = replace(runner.load_plan(CONFIG), output_root=base)
+        current = _fake_source_identity()
+        input_path = base / "KINEMATIC_INPUT.json"
+        synthetic_path = base / "SYNTHETIC_PASS.json"
+        sidecar_root = base / "kinematic_cache" / "train"
+        population_path = sidecar_root / "SIDECAR_POPULATION.json"
+        input_sha = "3" * 64
+        synthetic_sha = "4" * 64
+        population_sha = "5" * 64
+        expected_ids = {
+            name: f"{name}_sha256_{index:064x}"
+            for index, name in enumerate(runner.REPRESENTATIONS, start=1)
+        }
+        input_manifest = {
+            "synthetic_pass": {
+                "path": str(synthetic_path),
+                "file_sha256": synthetic_sha,
+            },
+            "content_sha256": "6" * 64,
+        }
+        population = {
+            "git_commit": runner.PREPARATION_ARTIFACT_GIT_COMMIT,
+            "composite_descriptor_ids": dict(sorted(expected_ids.items())),
+            "sidecar_count": 32,
+            "rows": [{} for _index in range(32)],
+            "content_sha256": "7" * 64,
+        }
+        contracts = {
+            name: {"descriptor_id": descriptor_id}
+            for name, descriptor_id in expected_ids.items()
+        }
+
+        with (
+            patch.object(runner, "capture_clean_source_identity", return_value=current),
+            patch.object(runner, "authenticate_synthetic_pass_marker") as synthetic_auth,
+            patch.object(
+                runner,
+                "authenticate_kinematic_input_manifest",
+                return_value=input_manifest,
+            ) as input_auth,
+            patch.object(
+                runner,
+                "_authenticate_population_envelope_without_sidecar_member_open",
+                return_value=population,
+            ) as population_auth,
+            patch.object(
+                runner,
+                "composite_descriptor_contracts",
+                return_value=contracts,
+            ),
+        ):
+            bound = runner.bind_early_evidence(
+                plan,
+                kinematic_input_manifest_path=input_path,
+                kinematic_input_manifest_file_sha256=input_sha,
+                synthetic_pass_path=synthetic_path,
+                synthetic_pass_file_sha256=synthetic_sha,
+                sidecar_root=sidecar_root,
+                sidecar_population_manifest_path=population_path,
+                sidecar_population_manifest_file_sha256=population_sha,
+            )
+
+        assert bound.source_identity == current
+        assert tuple(bound.composite_descriptor_ids) == runner.REPRESENTATIONS
+        assert dict(bound.composite_descriptor_ids) == expected_ids
+        for mocked in (synthetic_auth, input_auth, population_auth):
+            assert (
+                mocked.call_args.kwargs["identity"].git_commit
+                == runner.PREPARATION_ARTIFACT_GIT_COMMIT
+            )
+
+
 def test_composite_projection_appends_the_same_seed4_without_hidden_transform():
     row = CacheRow("cylinder3d", "half_cylinder", 0, 0, Path("cache.npz"), 1, "0" * 64)
     fmt = np.arange(3 * 161, dtype=np.float32).reshape(3, 161)

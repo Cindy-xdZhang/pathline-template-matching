@@ -55,6 +55,7 @@ from pathline_template_matching.early_kinematic_preparation import (  # noqa: E4
     authenticate_kinematic_input_manifest,
     authenticate_synthetic_pass_marker,
     capture_clean_source_identity,
+    composite_descriptor_contracts,
 )
 from pathline_template_matching.seed_time_kinematic_sidecar import (  # noqa: E402
     load_seed_time_kinematic_sidecar,
@@ -87,6 +88,9 @@ EXPERIMENT = "Verify_EarlyOppositePairKinematics_1.1"
 EXPECTED_CONFIG_SHA256 = (
     "e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767"
 )
+PREPARATION_ARTIFACT_GIT_COMMIT = (
+    "fd0412dc134da9dba88d71d665fc2ad160e78e06"
+)
 FAMILY_ORDER = (
     "half_cylinder",
     "delta_wing",
@@ -113,6 +117,51 @@ COMPOSITE_WIDTH = MappingProxyType(
         "chirality_all35_plus_seed4": 39,
     }
 )
+
+
+def _preparation_artifact_identity(
+    current_identity: CleanSourceIdentity,
+) -> CleanSourceIdentity:
+    """Bind immutable preparation evidence to its exact producer commit.
+
+    The scientific preparation sources are authenticated again from the current
+    clean checkout.  Only the Git commit field is replaced with the exact commit
+    that produced the already sealed input, synthetic, and sidecar artifacts.
+    Their embedded source-hash mapping must still match byte-for-byte during
+    artifact authentication.
+    """
+
+    return replace(
+        current_identity,
+        git_commit=PREPARATION_ARTIFACT_GIT_COMMIT,
+    )
+
+
+def _ordered_composite_descriptor_ids(
+    observed: object,
+    expected: Mapping[str, str],
+) -> Mapping[str, str]:
+    """Authenticate descriptor IDs without trusting JSON object key order."""
+
+    _require(isinstance(observed, Mapping), "composite descriptor population is not a mapping")
+    _require(
+        set(observed) == set(REPRESENTATIONS)
+        and set(expected) == set(REPRESENTATIONS),
+        "composite descriptor population changed",
+    )
+    ordered = {
+        name: str(observed[name])
+        for name in REPRESENTATIONS
+    }
+    expected_ordered = {
+        name: str(expected[name])
+        for name in REPRESENTATIONS
+    }
+    _require(
+        ordered == expected_ordered,
+        "composite descriptor population values drifted",
+    )
+    return MappingProxyType(ordered)
 K_VALUES = (1, 5, 15, 31)
 SIGMAS = (0.0, 0.5, 1.0, 1.5, 2.0)
 TAIL_THRESHOLDS = tuple(round(0.50 + 0.01 * index, 2) for index in range(50))
@@ -943,6 +992,7 @@ def bind_early_evidence(
     """Authenticate all 32 sidecars and bind their immutable identities to a plan."""
 
     identity = capture_clean_source_identity(ROOT)
+    preparation_identity = _preparation_artifact_identity(identity)
     input_path = Path(kinematic_input_manifest_path).resolve()
     synthetic_path = Path(synthetic_pass_path).resolve()
     root = Path(sidecar_root).resolve()
@@ -958,13 +1008,13 @@ def bind_early_evidence(
     authenticate_synthetic_pass_marker(
         synthetic_path,
         expected_file_sha256=synthetic_pass_file_sha256,
-        identity=identity,
+        identity=preparation_identity,
         contract=PRODUCTION_CONTRACT,
     )
     input_manifest = authenticate_kinematic_input_manifest(
         input_path,
         expected_file_sha256=kinematic_input_manifest_file_sha256,
-        identity=identity,
+        identity=preparation_identity,
         contract=PRODUCTION_CONTRACT,
         authenticate_all_referenced_rows=False,
     )
@@ -984,15 +1034,19 @@ def bind_early_evidence(
         input_manifest_file_sha256=kinematic_input_manifest_file_sha256,
         synthetic_pass_path=synthetic_path,
         synthetic_pass_file_sha256=synthetic_pass_file_sha256,
-        identity=identity,
+        identity=preparation_identity,
     )
-    descriptor_ids = {
-        str(name): str(value)
-        for name, value in population["composite_descriptor_ids"].items()
+    descriptor_contracts = composite_descriptor_contracts(
+        preparation_identity,
+        contract=PRODUCTION_CONTRACT,
+    )
+    expected_descriptor_ids = {
+        name: str(descriptor_contracts[name]["descriptor_id"])
+        for name in REPRESENTATIONS
     }
-    _require(
-        tuple(descriptor_ids) == REPRESENTATIONS,
-        "composite descriptor population/order drifted",
+    descriptor_ids = _ordered_composite_descriptor_ids(
+        population["composite_descriptor_ids"],
+        expected_descriptor_ids,
     )
     _require(
         int(population["sidecar_count"]) == 32
@@ -1012,7 +1066,7 @@ def bind_early_evidence(
         sidecar_population_manifest_file_sha256=sidecar_population_manifest_file_sha256,
         sidecar_population_manifest_content_sha256=str(population["content_sha256"]),
         sidecar_population=population,
-        composite_descriptor_ids=MappingProxyType(descriptor_ids),
+        composite_descriptor_ids=descriptor_ids,
     )
 
 
@@ -1022,6 +1076,10 @@ def _require_early_evidence_bound(plan: Plan) -> None:
     _require(plan.sidecar_root is not None, "sidecar root is unbound")
     _require(plan.sidecar_population_manifest_path is not None, "sidecar population is unbound")
     _require(plan.sidecar_population is not None, "sidecar population payload is unbound")
+    _require(
+        plan.sidecar_population.get("git_commit") == PREPARATION_ARTIFACT_GIT_COMMIT,
+        "preparation artifact producer commit is unbound",
+    )
     _require(tuple(plan.composite_descriptor_ids) == REPRESENTATIONS, "descriptor IDs are unbound")
 
 
@@ -1294,17 +1352,21 @@ def _early_artifact_binding(
     _require(representation in plan.composite_descriptor_ids, "descriptor ID is missing")
     assert plan.kinematic_input_manifest_path is not None
     assert plan.sidecar_population_manifest_path is not None
+    assert plan.sidecar_population is not None
+    producer_commit = str(plan.sidecar_population["git_commit"])
     return {
         "kinematic_input_manifest": {
             "path": str(plan.kinematic_input_manifest_path),
             "file_sha256": plan.kinematic_input_manifest_file_sha256,
             "content_sha256": plan.kinematic_input_manifest_content_sha256,
+            "producer_git_commit": producer_commit,
         },
         "sidecar_population_manifest": {
             "path": str(plan.sidecar_population_manifest_path),
             "file_sha256": plan.sidecar_population_manifest_file_sha256,
             "content_sha256": plan.sidecar_population_manifest_content_sha256,
             "sidecar_count": 32,
+            "producer_git_commit": producer_commit,
         },
         "composite_descriptor_id": plan.composite_descriptor_ids[representation],
         "representation": representation,

@@ -201,6 +201,9 @@ from test_early_kinematic_preparation import (
 )
 from test_early_opposite_pair_kinematics_runner import (
     test_early_plan_candidate_and_independent_schema_contracts_are_exact,
+    test_canonical_json_descriptor_order_is_rebuilt_and_values_are_authenticated,
+    test_preparation_evidence_commit_is_pinned_separately_from_fold_commit,
+    test_bind_early_evidence_accepts_sorted_json_keys_but_keeps_current_fold_identity,
     test_composite_projection_appends_the_same_seed4_without_hidden_transform,
     test_composite_features_drive_the_parent_per_scale_tail_model_end_to_end,
     test_population_envelope_authenticates_exact_32_files_without_npz_deserialization,
@@ -428,6 +431,9 @@ TESTS = (
     test_full_population_requires_exact_32_completions_and_authenticates_all,
     test_forbidden_dataset_names_are_rejected_before_any_file_access,
     test_early_plan_candidate_and_independent_schema_contracts_are_exact,
+    test_canonical_json_descriptor_order_is_rebuilt_and_values_are_authenticated,
+    test_preparation_evidence_commit_is_pinned_separately_from_fold_commit,
+    test_bind_early_evidence_accepts_sorted_json_keys_but_keeps_current_fold_identity,
     test_composite_projection_appends_the_same_seed4_without_hidden_transform,
     test_composite_features_drive_the_parent_per_scale_tail_model_end_to_end,
     test_population_envelope_authenticates_exact_32_files_without_npz_deserialization,
