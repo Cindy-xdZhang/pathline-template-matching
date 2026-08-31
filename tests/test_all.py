@@ -113,6 +113,13 @@ from test_negative_distance_spatial_visualization import (
     test_negative_spatial_visualization_plan_freezes_candidate_and_eight_figures,
     test_parent_provenance_closes_scene_candidate_and_prediction_source_chain,
 )
+from test_early_opposite_pair_kinematics_visualization import (
+    test_existing_output_directory_fails_before_checkout_or_input_access,
+    test_fold_authentication_rejects_candidate_schema_and_array_tamper,
+    test_frozen_config_arrays_candidates_eight_figures_and_classification_contract,
+    test_frozen_reporting_config_rejects_any_byte_drift,
+    test_synthetic_fold_chain_and_complete_19_array_projection_authenticate,
+)
 from test_negative_tail_calibration import (
     test_all_supported_k_values_share_one_maximum_k_loo_pass_per_scale,
     test_block_fallback_exact_tail_probability_matches_independent_reference,
@@ -507,6 +514,11 @@ TESTS = (
     test_per_scale_aggregate_complete_five_fold_applies_frozen_stop_rule,
     test_per_scale_aggregate_rejects_incomplete_or_mixed_provenance,
     test_negative_spatial_visualization_plan_freezes_candidate_and_eight_figures,
+    test_frozen_config_arrays_candidates_eight_figures_and_classification_contract,
+    test_frozen_reporting_config_rejects_any_byte_drift,
+    test_synthetic_fold_chain_and_complete_19_array_projection_authenticate,
+    test_fold_authentication_rejects_candidate_schema_and_array_tamper,
+    test_existing_output_directory_fails_before_checkout_or_input_access,
     test_candidate_projection_uses_fixed_columns_and_rejects_duplicate_join_identity,
     test_candidate_projection_rejects_extra_identity_and_reordered_parent_join,
     test_parent_provenance_closes_scene_candidate_and_prediction_source_chain,
