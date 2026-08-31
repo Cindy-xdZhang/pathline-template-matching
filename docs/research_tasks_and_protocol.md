@@ -276,7 +276,7 @@ SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 prediction、label、metric 或 aggregate 结果之前冻结。冻结时 PerScale jobs
 `51063738/51063753` 已提交但 outer 结果尚未读取；配置中的
 `frozen_before_first_read_of_any_per_scale_outer_result: true` 是不可改写的历史事实。
-当前执行状态为 `IBEX_SIDECAR_POPULATION_SEAL_RUNNING`：核心、sidecar、preparation、nested runner、aggregator 与九个 Ibex wrapper 已实现；定向测试 `45/45 PASS`，统一回归 `303/303 PASS`。numerical commit固定为`fd0412dc134da9dba88d71d665fc2ad160e78e06`；production synthetic/input job `51068863` 已完成，11项production oracle全部通过且精确32-row train-only输入已冻结；单row真实sidecar资源画像 `51069125` 已认证通过，固定并发上限为2的生产array `51069178_[0-31]` 已32/32完成；完整population认证与不可覆盖seal `51069336` 正在运行。尚未认证population manifest或运行 outer fold，因此没有性能结论。
+当前执行状态为 `IBEX_FIRST_FOLD_FAILED_CONTRACT_DIAGNOSIS`：核心、sidecar、preparation、nested runner、aggregator 与九个 Ibex wrapper 已实现；定向测试 `45/45 PASS`，统一回归 `303/303 PASS`。numerical commit固定为`fd0412dc134da9dba88d71d665fc2ad160e78e06`；production synthetic/input `51068863`、single-row profile `51069125`、32-row array `51069178_[0-31]`和完整population seal `51069336`均已认证通过。首折`51069363`在任何fold计算前因runner/producer的`composite descriptor population/order drifted`合同不一致关闭失败，依赖认证`51069364`未运行并已取消。该实现缺陷须以测试固定并从新clean numerical commit重跑；没有性能结论。
 
 相对 `Verify_PerScaleNegativeMetric_1.1`，唯一数值变化是把同一个固定 4D
 seed-time kinematic block 无权重追加到三个父 FMT 表示，形成固定顺序的

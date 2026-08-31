@@ -1,6 +1,6 @@
 # `Verify_EarlyOppositePairKinematics_1.1`
 
-状态：**`IBEX_SIDECAR_POPULATION_SEAL_RUNNING`**。唯一配置为
+状态：**`IBEX_FIRST_FOLD_FAILED_CONTRACT_DIAGNOSIS`**。唯一配置为
 `config/Verify_EarlyOppositePairKinematics_1.1.yaml`，原始文件 SHA-256 为
 `e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767`。
 本配置冻结于首次读取 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer
@@ -21,8 +21,12 @@ batch MaxRSS为 `1360716K`，completion SHA-256为
 `d37b96f92408e57164bc2c8b412261e4443837c3ba03ab1ca2f717e00585b54e`。据此固定并发
 上限为2的32-row生产array `51069178_[0-31]` 已于04:44:43全部完成，32/32任务均
 exit 0且发布fresh-authentication状态。完整32-row population认证与不可覆盖seal
-`51069336` 已于04:45:43开始。尚未发布并认证population manifest或运行任何 outer
-fold，因此没有已认证性能结论。
+`51069336` 已于04:46:21完成，32个sidecar、`2,967,612`行全部认证；population
+manifest SHA-256为
+`9f96835b9185218f40df4cc3c52bf3d80a93056681d922a30abfc5c0246f88a7`。首折
+`51069363` 随后在任何fold计算前因`composite descriptor population/order drifted`
+关闭失败；依赖认证占位`51069364`未运行并已取消。该失败说明runner与producer的
+descriptor identity合同不一致，不是性能结果；尚无已认证性能结论。
 
 本次实现证据：
 
