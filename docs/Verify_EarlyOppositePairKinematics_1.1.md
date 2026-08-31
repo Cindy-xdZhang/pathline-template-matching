@@ -1,6 +1,6 @@
 # `Verify_EarlyOppositePairKinematics_1.1`
 
-状态：**`IBEX_SECOND_FIRST_FOLD_RETRY_RUNNING_AUTH_QUEUED`**。唯一配置为
+状态：**`IBEX_COMPLETE_SCHEMA_FIRST_FOLD_RUNNING_AUTH_QUEUED`**。唯一配置为
 `config/Verify_EarlyOppositePairKinematics_1.1.yaml`，原始文件 SHA-256 为
 `e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767`。
 本配置冻结于首次读取 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer
@@ -53,8 +53,19 @@ wrapper”被修订为“input manifest真实字段`composite_descriptors[name].
 可执行Python函数，并新增真实schema及篡改动态回归；Early定向`18/18 PASS`，统一
 `307/307 PASS`（185.351 s）。新clean commit为
 `4ba49f3169c707ebe36d59a093f8f804b350810b`，Ibex 9/9 wrapper再次通过`bash -n`。
-为保证五折exact commit一致，新首折`51070022`于05:34:58开始，认证`51070024`
-依赖排队；认证前不读取其outer结果。
+为保证五折exact commit一致，新首折`51070022`和认证`51070024`已分别完成，fresh
+replay再次得到相同half-cylinder结果且证书`stop_version=false`。第二次remaining array
+`51070145_[1-4]`仍在任何fold计算前关闭失败：runner结果manifest实际使用`sha256`，
+release wrapper错误读取`file_sha256`；依赖聚合`51070165`未运行并已取消。该失败进一步
+说明静态检查release heredoc不足以认证完整真实schema，仍不是方法性能证据。
+
+随后对release gate从当前失败点到证书重算的所有字段做完逐项真实schema审计，同时
+新增result input manifest动态正常/篡改测试、冻结CSV表头，并删除不存在的
+`outer_summary.candidate_id`访问。Early定向测试`19/19 PASS`，统一回归
+`308/308 PASS`（181.586 s）；clean commit
+`2c3774dca0d81db8edd5645e63576526b9e276f7`已推送并部署，Ibex 9/9 wrapper通过
+`bash -n`，runner/aggregator SHA与冻结值一致。新的exact-commit首折`51070299`于
+05:58:32开始，独立认证`51070310`依赖排队；认证前不读取其outer结果。
 
 本次实现证据：
 
@@ -78,6 +89,10 @@ wrapper”被修订为“input manifest真实字段`composite_descriptors[name].
   aggregator SHA-256：
   `e999960ac06d3fedd355e1d6135d9e69316bfe1e798318a22dadf5a8e2063796` /
   `2b5233f8e708d3242ae9191d2eb745aba3294f38b0656d3d81dde4a0074e02bf`；
+- complete release schema修复commit `2c3774dca0d81db8edd5645e63576526b9e276f7`的nested runner /
+  aggregator SHA-256：
+  `e999960ac06d3fedd355e1d6135d9e69316bfe1e798318a22dadf5a8e2063796` /
+  `631909159387cba854f471b3179ff0f0cd97404905e29b74589b2b8cf71f089e`；
 - Early core、sidecar、preparation 与 runner/aggregator 定向 synthetic tests
   `45/45 PASS`；提交前统一回归 `303/303 PASS`（2026-08-31，185.236 s）；
 - 所有公开数组改为 immutable bytes-backed 视图，不能在认证后重新开启写权限；
