@@ -418,3 +418,34 @@ predictions，不重新拟合、选择 candidate、调阈值或按图挑结果�
 权威说明与结构化证据分别为
 `docs/Other_PerScaleNegativeMetricVisualization_1.1.md` 和
 `docs/evidence/Other_PerScaleNegativeMetricVisualization_1.1_local_summary.json`。
+
+## 25. `Other_EarlyOppositePairKinematicsVisualization_1.1` 的最新方法四流场三联图
+
+本版本只报告已认证的 `Verify_EarlyOppositePairKinematics_1.1` 固定 source ordinal 2
+predictions，不重新拟合、选择 candidate、调阈值或按图挑结果。尚未运行的
+`Verify_DimensionlessDeformationFMT_1.1` 没有真实 prediction，禁止冒充当前方法；旧
+PerScale 图也禁止改名冒充 Early 结果。
+
+- query 固定为 `cylinder3d`（Re160）、`halfcylinderRe640`、
+  `halfcylinderRe6400` 与 `boeing747`；每个 flow 对 `legacy_2_1` 与
+  `expanded_3_1` 分别出图，共八张。禁止跨 block 选择、投票或聚合。
+- 父 scenes 固定来自 Ibex job `51029080`。Early predictions 固定来自同一 numerical
+  commit `2c3774dca0d81db8edd5645e63576526b9e276f7` 的 half-cylinder job `51070299`
+  和 Boeing task `51070386_4`，完整五折认证 job 为 `51070392`。
+- half-cylinder 候选固定为 `chirality_all35_plus_seed4, k=31, sigma=0.5, top-5%`；
+  Boeing 候选固定为 `real_neighbor36_plus_seed4, k=31, sigma=0.5, top-5%`。不得为
+  图面统一而改写。
+- 必须先认证 fold result/completion、19-array prediction manifest/NPZ、候选与逐组指标，
+  再按 dataset、source ordinal/index、block、center seed、assigned row、scale ID 与 block
+  index 和父 scene 精确保序连接；duplicate、missing、extra 或 reorder 均失败。
+- 三栏固定为：whole-volume IVD-p95 等值面与未改变的240条中心 pathlines；完整 valid
+  rows 的 EarlyOppositePair template class assignment；同一 rows 的 TP/FP/FN/TN。第二栏
+  是 classification，不得称 clustering。
+- 每图重算指标必须与 authenticated outer group table 在 `1e-12` 绝对误差内一致。交付前
+  必须通过八图 panel alignment、PDF 5 pt文字、PyMuPDF碰撞审计、PNG解码和逐图目视检查。
+- 这些图只作 `family-held-out exposed-development fixed-source` 空间解释；单一 source 无
+  confidence interval，固定 top-5% 判决依赖完整 query group，且父方法未通过完整五-family
+  成功规则，禁止称 sealed confirmation 或独立单primitive classifier。
+
+唯一配置为 `config/Other_EarlyOppositePairKinematicsVisualization_1.1.yaml`；冻结 SHA-256
+为 `0b5053cdd2342fcd65950b82f08b520de4c8a2717c44ad15a5d13babd0caf1c8`。
