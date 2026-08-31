@@ -1,9 +1,12 @@
 # `Verify_RawPCANegativeMetric_1.1`
 
-状态：`IMPLEMENTED_LOCAL_TESTED_PRE_IBEX`。本版本已冻结方法、候选集、输入、
+状态：`IBEX_FIRST_FOLD_RUNNING_AUTH_QUEUED`。本版本已冻结方法、候选集、输入、
 产物和停止规则；Raw PCA 数值核心、nested runner、单折/五折共用 authenticator 与四个
-Ibex wrapper 均已实现并通过定向本地测试。尚未产生 numerical Git commit，
-尚未提交 Ibex job，因此没有 metric 或性能结论。
+Ibex wrapper 均已实现并通过定向本地测试。numerical Git commit 为
+`fd0412dc134da9dba88d71d665fc2ad160e78e06`；首折 job `51068864` 已于
+2026-08-31 04:30:00 +03:00在 `cn509-11-l` 开始，独立认证/数学早停 job
+`51068901` 以 `afterok:51068864` 排队。认证尚未完成，因此没有可接受的 metric
+或性能结论。
 
 冻结 config 中的历史字段 `status: frozen_pre_run_not_implemented`、
 `frozen_before_first_read_of_any_parent_outer_result: true` 与

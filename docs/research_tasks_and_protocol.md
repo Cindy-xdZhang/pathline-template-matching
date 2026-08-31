@@ -276,7 +276,7 @@ SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 prediction、label、metric 或 aggregate 结果之前冻结。冻结时 PerScale jobs
 `51063738/51063753` 已提交但 outer 结果尚未读取；配置中的
 `frozen_before_first_read_of_any_per_scale_outer_result: true` 是不可改写的历史事实。
-当前执行状态为 `IMPLEMENTED_LOCAL_TESTED_PRE_IBEX`：核心、sidecar、preparation、nested runner、aggregator 与九个 Ibex wrapper 已实现；定向测试 `45/45 PASS`，统一回归 `303/303 PASS`。尚未生成真实 sidecar 或运行 outer fold，因此没有性能结论。
+当前执行状态为 `IBEX_PREPARATION_RUNNING`：核心、sidecar、preparation、nested runner、aggregator 与九个 Ibex wrapper 已实现；定向测试 `45/45 PASS`，统一回归 `303/303 PASS`。numerical commit固定为`fd0412dc134da9dba88d71d665fc2ad160e78e06`，production synthetic/input job `51068863` 已开始。尚未生成真实 sidecar 或运行 outer fold，因此没有性能结论。
 
 相对 `Verify_PerScaleNegativeMetric_1.1`，唯一数值变化是把同一个固定 4D
 seed-time kinematic block 无权重追加到三个父 FMT 表示，形成固定顺序的
@@ -332,9 +332,10 @@ schema、3060 candidate 合同、outer label gate、成功规则、成本边界�
 本版本与 `Verify_EarlyOppositePairKinematics_1.1` 一样，已在首次读取
 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer feature、label、prediction、metric
 或 summary 前冻结；冻结时 PerScale jobs 已提交但结果未读。当前执行状态为
-`IMPLEMENTED_LOCAL_TESTED_PRE_IBEX`：Raw-PCA core、nested runner、aggregator 与四个
-Ibex wrapper 已实现；定向测试 `26/26 PASS`，统一回归 `303/303 PASS`。尚未运行真实
-outer fold，没有性能结论。
+`IBEX_FIRST_FOLD_RUNNING_AUTH_QUEUED`：Raw-PCA core、nested runner、aggregator 与四个
+Ibex wrapper 已实现；定向测试 `26/26 PASS`，统一回归 `303/303 PASS`。numerical
+commit固定为`fd0412dc134da9dba88d71d665fc2ad160e78e06`；首折 `51068864` 正在运行，
+独立认证/数学早停 `51068901` 已依赖排队。认证尚未完成，没有可接受的性能结论。
 
 相对 PerScale 父方法，唯一数值变化是把三个可选 FMT 表示整体替换为单一固定
 `raw_pca161`：3.1 cache 的 `raw_features` 是七线 `7×32×3` 坐标减中心线首点后按

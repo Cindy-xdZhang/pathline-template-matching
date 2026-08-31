@@ -1,6 +1,6 @@
 # `Verify_EarlyOppositePairKinematics_1.1`
 
-状态：**`IMPLEMENTED_LOCAL_TESTED_PRE_IBEX`**。唯一配置为
+状态：**`IBEX_PREPARATION_RUNNING`**。唯一配置为
 `config/Verify_EarlyOppositePairKinematics_1.1.yaml`，原始文件 SHA-256 为
 `e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767`。
 本配置冻结于首次读取 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer
@@ -10,8 +10,10 @@ outer prediction、label、metric、stdout 中的 outer 数值或 aggregate 结�
 
 旧状态是“配置已冻结、实现不存在”；当前纯数值核心、label-free sidecar、32-row
 输入/sidecar population preparation、nested runner、单折/五折 aggregator 和分阶段
-Ibex wrappers 均已实现。尚未在 Ibex 冻结真实32-row输入、生成真实 sidecar 或运行
-任何 outer fold，因此没有真实 artifact、metric 或性能结论。
+Ibex wrappers 均已实现。numerical commit 为
+`fd0412dc134da9dba88d71d665fc2ad160e78e06`；production synthetic/input job
+`51068863` 已于2026-08-31 04:30:00 +03:00在 `cn604-03` 开始运行。尚未完成真实
+32-row输入冻结、生成真实 sidecar 或运行任何 outer fold，因此没有已认证性能结论。
 
 本次实现证据：
 
