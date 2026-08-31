@@ -56,6 +56,11 @@ from scripts.run_verify_scale_conditioned_retrieval_1_1 import (  # noqa: E402
 
 
 EXPERIMENT = "Verify_DimensionlessDeformationFMT_1.1"
+# Capture the parent identity before ``dimensionless_parent_runtime``
+# intentionally rebinds ``inherited.EXPERIMENT``.  ``load_plan`` is itself
+# called through the rebound parent runner, so consulting that mutable global
+# here makes the valid frozen child config reject itself in production.
+PARENT_EXPERIMENT = inherited.EXPERIMENT
 EXPECTED_CONFIG_SHA256 = (
     "c689b1d265bbc39327b2ed4147e8ffb22450dcd26f87b7c19ceae346c9ecfe18"
 )
@@ -240,7 +245,7 @@ def load_plan(config_path: str | Path = CONFIG_PATH) -> Plan:
     freeze = raw.get("freeze_provenance")
     _require(isinstance(freeze, Mapping), "freeze provenance is missing")
     _require(
-        freeze.get("parent_experiment") == inherited.EXPERIMENT
+        freeze.get("parent_experiment") == PARENT_EXPERIMENT
         and freeze.get("parent_config_sha256") == EXPECTED_PARENT_CONFIG_SHA256
         and freeze.get("historical_status_is_immutable") is True,
         "parent freeze identity drifted",
@@ -337,7 +342,7 @@ def load_plan(config_path: str | Path = CONFIG_PATH) -> Plan:
         "dimensionless descriptor contract drifted",
     )
     _require(
-        inherited_method.get("source") == inherited.EXPERIMENT
+        inherited_method.get("source") == PARENT_EXPERIMENT
         and inherited_method.get("exact_same_scale_retrieval") is True
         and float(inherited_method.get("variance_shrinkage_lambda", -1)) == 64.0
         and inherited_method.get("query_rank") == "forbidden",
@@ -1050,6 +1055,38 @@ def dimensionless_parent_runtime(
         original_manifest = inherited._manifest_with_self_hash
         original_authenticate_self_hash = inherited._authenticate_self_hash
         original_outer_summary = inherited._outer_summary
+
+        def bound_load_plan(config_path: str | Path = CONFIG_PATH) -> Plan:
+            """Return the already authenticated child plan without parent re-entry.
+
+            The original parent ``load_plan`` reads its constants from the
+            parent module globals.  Those globals must be rebound to the child
+            while ``inherited.run`` executes, so recursively rebuilding the
+            parent plan here would authenticate the parent file against child
+            constants.  Re-authenticate all three immutable source files and
+            return the exact plan built before the transaction instead.
+            """
+
+            active_path = Path(config_path).resolve()
+            _require(
+                active_path == plan.path,
+                "inherited runner requested a different child config path",
+            )
+            _require(
+                sha256_file(active_path) == plan.sha256,
+                "child config changed after pre-transaction authentication",
+            )
+            _require(
+                sha256_file(plan.parent_experiment_config_path)
+                == plan.parent_experiment_config_sha256,
+                "parent config changed after pre-transaction authentication",
+            )
+            _require(
+                sha256_file(plan.core_path) == plan.core_sha256,
+                "dimensionless core changed after pre-transaction authentication",
+            )
+            return plan
+
         replacements: dict[str, Any] = {
             "EXPERIMENT": EXPERIMENT,
             "EXPECTED_CONFIG_SHA256": EXPECTED_CONFIG_SHA256,
@@ -1067,7 +1104,7 @@ def dimensionless_parent_runtime(
             "representation_features": dimensionless_representation_features,
             "load_cache_projection": load_dimensionless_projection,
             "load_cache_rows": load_cache_rows,
-            "load_plan": load_plan,
+            "load_plan": bound_load_plan,
             "_atomic_csv": _atomic_csv,
             "_atomic_json": _atomic_json,
             "_atomic_npz": _atomic_npz,

@@ -299,6 +299,23 @@ def test_runtime_exception_restores_every_parent_global_and_binds_manifests() ->
     )
 
 
+def test_production_load_plan_uses_stable_parent_identity_inside_runtime() -> None:
+    """Reproduce the real inherited.run -> rebound load_plan call path."""
+
+    plan = runner.load_plan()
+    commit = "9" * 40
+    assert runner.PARENT_EXPERIMENT == inherited.EXPERIMENT
+    assert runner.PARENT_EXPERIMENT != runner.EXPERIMENT
+    with runner.dimensionless_parent_runtime(plan, commit):
+        assert inherited.EXPERIMENT == runner.EXPERIMENT
+        rebound = inherited.load_plan(runner.CONFIG_PATH)
+        assert rebound.sha256 == plan.sha256
+        assert rebound.parent_experiment_config_sha256 == (
+            plan.parent_experiment_config_sha256
+        )
+    assert inherited.EXPERIMENT == runner.PARENT_EXPERIMENT
+
+
 def test_parent_patch_install_failure_restores_all_attempts_and_releases_lock() -> None:
     plan = runner.load_plan()
     commit = "e" * 40
