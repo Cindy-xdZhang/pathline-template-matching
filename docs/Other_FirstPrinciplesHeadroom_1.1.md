@@ -1,6 +1,6 @@
 # `Other_FirstPrinciplesHeadroom_1.1`
 
-状态：**`IMPLEMENTED_LOCAL_SYNTHETIC_TESTED_NOT_RUN`**。唯一配置为
+状态：**`COMPLETED_AUTHENTICATED_POSTHOC_DIAGNOSTIC`**。唯一配置为
 `config/Other_FirstPrinciplesHeadroom_1.1.yaml`，冻结 SHA-256 为
 `a76ae95710f72a6432e4d392606fe4ca5ad4c0fb89b8d50e6d3868f546117477`。
 该配置冻结于本诊断首次打开任何真实 `spatial_score` 或 outer reference array 之前；
@@ -181,7 +181,7 @@ Wrapper 固定32 CPU、128 GB、10小时、AMD EPYC 7702（Rome）节点和 `dee
 部分是复用五折 fresh authentication；新增诊断本身只做 CSV stream、每组一维排序和指标
 计算，不重建 FMT features 或模板库。
 
-## 8. 当前验证
+## 8. 运行前验证
 
 - `python -m py_compile scripts/run_other_first_principles_headroom_1_1.py tests/test_first_principles_headroom.py`：PASS；
 - `python tests/test_first_principles_headroom.py`：`9/9 PASS`；
@@ -191,4 +191,37 @@ Wrapper 固定32 CPU、128 GB、10小时、AMD EPYC 7702（Rome）节点和 `dee
   arm boundary、Ibex wrapper 与 immutable nonoverwrite；
 - `bash -n ibex/other_first_principles_headroom_1.1.sh`：PASS；
 - `python tests/test_all.py`：`338/338 PASS`；
-- 未运行真实数据，因而没有 headroom F1、Ibex job 或性能结论。
+- 首次真实运行前没有 headroom F1、Ibex job 或性能结论；以下第9节单独保存运行后证据。
+
+## 9. 已认证结果
+
+Ibex job `51087135` 从 reporting commit
+`2174418a642fd4a41416a7a693b88b8f4b9ea399` 运行，于2026-08-31
+13:29:39–13:35:29 +03:00在`cn514-15-r`完成（`COMPLETED 0:0`，32 CPU，
+128 GB，MaxRSS `13506076K`）。Wrapper 最终报告
+`headroom_output_authentication=passed` 与
+`headroom_status=complete_posthoc_diagnostic_authenticated`。父 current arm 的 all-block
+five-family macro F1 精确复现为`0.6391632765825263`，差值为0。
+
+| 判决臂 / 分块 | five-family macro F1 | 解释 |
+|---|---:|---|
+| current，all-block | `0.6391632765825263` | 已认证父结果；不是新模型 |
+| inner-prevalence，all-block | `0.6352716877863082` | label-free；没有改善 |
+| exact 1D two-means，all-block | `0.23611906536172073` | label-free；明显退化 |
+| outer group oracle，all-block | `0.6736418047419102` | 使用outer label的不可部署乐观上限 |
+| current / oracle，legacy | `0.6980627990650958 / 0.7148507101403403` | 只作已暴露分块诊断 |
+| current / oracle，expanded | `0.5802637540999565 / 0.6324328993434799` | expanded排序更弱 |
+
+核心 headroom `oracle-current` 只有`0.0344785281593839`；all-block oracle 未达到0.70，
+更未达到0.80。由于这个 oracle 已为每个 outer group 使用真实outer label选择max-F1
+threshold，它比任何可部署的统一threshold更乐观。因此本诊断反对继续只修改threshold、
+预测正类比例或同一score的label-free二分规则；下一验证必须改变score ordering或表示。
+这不证明所有未来表示都达不到0.70，也不能把legacy oracle `0.714851`称为部署成功。
+
+发布目录为
+`/ibex/user/zhanx0o/pathline-template-matching/Other_FirstPrinciplesHeadroom_1.1/runs/slurm_51087135_2174418a642f`，
+恰含第6节规定的8个文件。`RUN_COMPLETE.json`、`result_manifest.json`、
+`aggregate_summary.json` 的 SHA-256 分别为
+`a87dc2b45d6ad6644e57d75774c3dcdc00670297f817bd50049529418a0753e3`、
+`47808fafd8bb7dccc420339c456d44c3626d7a25c79d937a2505f012092e9652`、
+`b6b9b3f89ddb7a0c087a9932eb52a5738436c5a06f8f70357b52412fcba66cf7`。

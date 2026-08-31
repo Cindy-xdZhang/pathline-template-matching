@@ -1,6 +1,6 @@
 # `Verify_DimensionlessDeformationFMT_1.1`
 
-当前实现状态：**`PRODUCTION_CHAIN_IMPLEMENTED_LOCAL_TESTED_PRE_RUN`**。唯一配置为
+当前实现状态：**`FIRST_IBEX_ATTEMPT_FAILED_PRE_DATA_VALIDATION_FIX_TESTED`**。唯一配置为
 `config/Verify_DimensionlessDeformationFMT_1.1.yaml`，冻结文件 SHA-256 为
 `c689b1d265bbc39327b2ed4147e8ffb22450dcd26f87b7c19ceae346c9ecfe18`。
 本配置冻结于首次读取 `Verify_EarlyOppositePairKinematics_1.1` 或
@@ -16,11 +16,15 @@ SHA-256为`5fc4acb47c52c6505737e661cac7f8f503c429c5d88910992655e83cdc53a649`；
 退化输入、父FMT ID/坐标索引、Raw-only 4096-row重编码、15-file/19-array事务、fresh replay、
 outer-label gate、数学提前停止、混合provenance拒绝、不可覆盖发布与固定Rome CPU架构。
 冻结YAML中的`status: frozen_pre_run_not_implemented`只记录首次预注册时点，仍保持不变。
-实现commit为`9a48650c219f4cada12df722d780ea383e03bb89`；runner/aggregator SHA-256
-分别为`bd404ace7bfdb476c5e73449977cec724f8353f039bad8171ab05540ceded819`与
+实现commit为`9a48650c219f4cada12df722d780ea383e03bb89`；validation-only修复commit为
+`46f02e60bb345c4e2f7f6ece6aba88cca09f1f6a`。修复后runner/aggregator SHA-256
+分别为`e977fa6754ad3029bfaf3e7e5f5334babac018854daec28a46dc4df11a2e01ea`与
 `ec9a10ce0885542084844815845485837b33fffa428bc85608801f382424d91d`。同一工作树的
-提交前统一回归为`338/338 PASS`（2026-08-31，327.498 s）。尚未打开该版本的真实
-cache member、feature、label、IVD或outer result；没有Ibex job，也没有性能结论。
+修复后统一回归为`339/339 PASS`（2026-08-31，215.429 s）。首次Ibex job
+`51087139`在338项回归与matcher backend门通过后，于首个runner `load_plan`失败；原因是
+runtime rebinding后错误地用可变父模块全局量检查冻结身份。失败发生在创建output目录、
+读取真实cache、拟合、prediction、outer label或metric之前；依赖认证job `51087140`
+从未启动并已取消。因此仍没有任何方法性能结果，不能将该失败解释为支持或反对无量纲表示。
 
 ## 1. 研究问题与单一变化
 
@@ -164,3 +168,19 @@ F1 < 0.50；已有两个 family F1 < 0.65；或把全部剩余 family 的相关�
 
 只有从clean committed revision在Ibex运行现有runner/aggregator/wrapper，并通过五折
 fresh-replay认证后，才能在实验日志新增性能结论。冻结config本身不得改写。
+
+## 9. 首次Ibex尝试与修复
+
+- `51087139`：failed commit `2174418a642fd4a41416a7a693b88b8f4b9ea399`，
+  `FAILED 1:0`，elapsed `00:02:52`，node `cn514-15-r`，MaxRSS `677656K`；
+  output目录不存在。
+- stderr定位到`ValueError: parent freeze identity drifted`。原runner在
+  `dimensionless_parent_runtime`中暂时重绑父模块全局量，随后子`load_plan`又读取这些
+  可变全局量，造成自相矛盾；原父loader还会错误看到子config SHA，这是同一身份绑定问题。
+- commit `46f02e60bb345c4e2f7f6ece6aba88cca09f1f6a`捕获稳定
+  `PARENT_EXPERIMENT`，并在transaction内用闭包固定子config、父config和core哈希，返回进入
+  transaction前已认证的immutable plan。生产路径不再依赖被重绑的父全局量。
+- 新增production regression
+  `test_production_load_plan_uses_stable_parent_identity_inside_runtime`；`py_compile`、
+  `git diff --check`和`339/339`统一回归全部通过。下一次Ibex提交必须从该修复或其后代的
+  exact clean commit运行，并获得新的job ID；禁止覆盖或删除失败记录。

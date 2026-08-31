@@ -390,9 +390,13 @@ batch/flow statistics，也不拟合参数。
 纯数值核心、Raw-only nested runner、独立aggregator与四阶段Ibex wrapper均已实现并通过
 本地合成门禁；runner固定4096-row重编码，aggregator强制fresh Raw→dimensionless→FMT
 重放后才允许outer label，四个Slurm阶段固定到同一Rome CPU架构。实现commit为
-`9a48650c219f4cada12df722d780ea383e03bb89`，提交前统一回归为`338/338 PASS`
-（2026-08-31，327.498 s）。当前仍是pre-run：没有打开本版本真实cache member或outer结果，
-没有Ibex artifact、job或性能结论。
+`9a48650c219f4cada12df722d780ea383e03bb89`。首次Ibex job `51087139`在回归与backend门后、
+首个`load_plan`处因runtime-rebound父身份误读而失败；失败早于output创建和任何真实cache、
+fit、prediction、label或metric，认证job `51087140`未启动并取消，所以没有性能结论。
+validation-only修复commit `46f02e60bb345c4e2f7f6ece6aba88cca09f1f6a`固定父身份与
+transaction内loader，修复后runner SHA为`e977fa6754ad3029bfaf3e7e5f5334babac018854daec28a46dc4df11a2e01ea`，
+统一回归`339/339 PASS`（2026-08-31，215.429 s）。下一运行必须使用新job与修复后clean
+exact commit；旧失败和取消记录不得删除。
 唯一配置为 `config/Verify_DimensionlessDeformationFMT_1.1.yaml`，冻结 SHA-256 为
 `c689b1d265bbc39327b2ed4147e8ffb22450dcd26f87b7c19ceae346c9ecfe18`；完整公式与风险见
 `docs/Verify_DimensionlessDeformationFMT_1.1.md`。
@@ -491,6 +495,12 @@ Re160/Re640/Re6400/Boeing=`0.7367/0.5682/0.6981/0.8338`，expanded=
 `a76ae95710f72a6432e4d392606fe4ca5ad4c0fb89b8d50e6d3868f546117477`；早期
 `f02120bb…` 草案从未提交或运行，因缺失精确 fold/父配置路径和父 F1 复现门
 而在首次真实读取前被取代。实现 commit 为
-`9a48650c219f4cada12df722d780ea383e03bb89`；当前是已实现、已通过本地合成门禁、
-但尚未运行的状态，因此尚无新性能结论。完整合同见
+`9a48650c219f4cada12df722d780ea383e03bb89`；Ibex job `51087135`
+从reporting commit `2174418a642fd4a41416a7a693b88b8f4b9ea399`完成并通过输出认证。
+父current F1精确复现为`0.6391632765825263`；inner-prevalence、two-means、outer-label
+oracle的all-block F1分别为`0.6352716877863082`、`0.23611906536172073`、
+`0.6736418047419102`。Oracle-current gap仅`0.0344785281593839`，即使不可部署的
+逐outer-group max-F1 oracle也低于0.70；因此反对继续只调threshold、prevalence或同一
+score的label-free二分，下一验证必须改变score ordering或表示。Legacy oracle的
+`0.7148507101403403`只属已暴露分块诊断，不能取代all-block规则或称成功。完整合同与哈希见
 `docs/Other_FirstPrinciplesHeadroom_1.1.md`。
