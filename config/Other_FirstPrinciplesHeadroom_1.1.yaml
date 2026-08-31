@@ -1,0 +1,261 @@
+experiment: Other_FirstPrinciplesHeadroom_1.1
+phase: exposed_development_posthoc_headroom_diagnostic
+status: frozen_pre_run_not_run
+freeze_time_utc: 2026-08-31T05:27:27Z
+freeze_timing: before_opening_any_spatial_score_or_outer_reference_array_for_this_diagnostic
+real_result_access_during_design_and_implementation: previously_exposed_metadata_and_public_summary_only_no_spatial_score_or_outer_reference_array
+superseded_pre_run_draft:
+  config_sha256: f02120bbf4e67a69c3ba60d1850aeb5c8b22d50477adc84f1ff4533bc9f22020
+  status: superseded_before_commit_and_before_any_real_run
+  reason: deployment_review_required_exact_fold_paths_exact_parent_config_path_and_parent_f1_reproduction_gate
+
+research_question: >-
+  Does the authenticated EarlyOppositePair spatial score already rank vortex
+  rows well enough for a decision rule to approach F1 0.70-0.80, or is the
+  remaining error primarily in the score ordering rather than calibration?
+
+evidence_scope:
+  class: exposed_development_posthoc_diagnostic_only
+  formal_confirmation: false
+  may_select_or_name_a_new_main_method: false
+  oracle_may_be_reported_as_deployable: false
+  allowed_datasets:
+    - cylinder3d
+    - halfcylinderRe640
+    - halfcylinderRe6400
+    - deltaWing_resampled
+    - deltaWing_LBM
+    - f22raptor
+    - channel
+    - boeing747
+  forbidden_datasets:
+    - tangaroa
+    - smokeBuoyancy
+  forbidden_dataset_access:
+    - raw_field
+    - portable_window
+    - primitive_cache
+    - feature
+    - label
+    - prediction
+    - metric
+
+parent_early_evidence:
+  experiment: Verify_EarlyOppositePairKinematics_1.1
+  numerical_git_commit: 2c3774dca0d81db8edd5645e63576526b9e276f7
+  config_path: config/Verify_EarlyOppositePairKinematics_1.1.yaml
+  config_absolute_path: /home/zhanx0o/pathline-template-matching-early-kinematics/config/Verify_EarlyOppositePairKinematics_1.1.yaml
+  config_sha256: e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767
+  runner_path: scripts/run_verify_early_opposite_pair_kinematics_1_1.py
+  runner_sha256: e999960ac06d3fedd355e1d6135d9e69316bfe1e798318a22dadf5a8e2063796
+  aggregator_path: scripts/aggregate_verify_early_opposite_pair_kinematics_1_1.py
+  aggregator_sha256: 631909159387cba854f471b3179ff0f0cd97404905e29b74589b2b8cf71f089e
+  complete_five_fold_authentication_job: 51070392
+  parent_family_macro_f1: 0.6391632765825263
+  parent_family_macro_f1_reproduction_absolute_tolerance: 1.0e-12
+  fold_order:
+    - half_cylinder
+    - delta_wing
+    - f22_raptor
+    - channel
+    - boeing_747
+  expected_fold_jobs:
+    half_cylinder:
+      job_id: 51070299
+      array_task_id: 0
+      directory_basename: slurm_51070299_0_2c3774dca0d8_outer_half_cylinder
+    delta_wing:
+      job_id: 51070386
+      array_task_id: 1
+      directory_basename: slurm_51070386_1_2c3774dca0d8_outer_delta_wing
+    f22_raptor:
+      job_id: 51070386
+      array_task_id: 2
+      directory_basename: slurm_51070386_2_2c3774dca0d8_outer_f22_raptor
+    channel:
+      job_id: 51070386
+      array_task_id: 3
+      directory_basename: slurm_51070386_3_2c3774dca0d8_outer_channel
+    boeing_747:
+      job_id: 51070386
+      array_task_id: 4
+      directory_basename: slurm_51070386_4_2c3774dca0d8_outer_boeing_747
+  family_datasets:
+    half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+    delta_wing: [deltaWing_resampled, deltaWing_LBM]
+    f22_raptor: [f22raptor]
+    channel: [channel]
+    boeing_747: [boeing747]
+
+fold_authentication:
+  fold_directories_source: five_explicit_cli_arguments
+  reporting_project_root: /home/zhanx0o/pathline-template-matching-headroom
+  reporting_project_root_must_differ_from_parent_early_checkout: true
+  exact_directory_basename_by_family_required: true
+  early_config_absolute_path_must_match_parent_result_manifest: true
+  exact_fold_count: 5
+  exact_outer_family_population_required: true
+  device: cpu
+  replay: frozen_Early_scaler_calibrator_selection_and_outer_prediction_fresh_replay
+  reference_gate: outer_labels_open_only_after_each_fold_prediction_fresh_replay_authenticates
+  current_checkout_policy: clean_committed_checkout_with_exact_frozen_Early_runner_and_aggregator_source_hashes
+  replay_identity_policy: >-
+    Pin only the Early evidence commit field to the authenticated numerical
+    commit after the current checkout has passed exact source-hash checks.
+  exact_fold_files:
+    - inner_group_metrics.csv
+    - inner_candidate_summary.csv
+    - inner_fit_audits.json
+    - final_per_scale_scaler.npz
+    - final_per_scale_scaler_manifest.json
+    - final_tail_calibration.npz
+    - final_tail_calibration_manifest.json
+    - selected_candidate.json
+    - outer_predictions.npz
+    - outer_prediction_manifest.json
+    - outer_group_metrics.csv
+    - outer_summary.json
+    - outer_reference_access_audit.json
+    - result_manifest.json
+    - RUN_COMPLETE.json
+  prediction_array_order:
+    - dataset
+    - source_ordinal
+    - source_index
+    - scale_id
+    - center_seed_index
+    - scale_block_index
+    - assigned_row_index
+    - raw_negative_distance
+    - tail_probability
+    - tail_anomaly
+    - spatial_score
+    - spatial_denominator
+    - retrieval_supported
+    - calibration_supported
+    - spatial_imputed
+    - spatial_unimputable
+    - calibration_mode
+    - scaler_mode
+    - prediction
+  reference_identity_join:
+    - dataset
+    - source_ordinal
+    - source_index
+    - scale_block_index
+    - scale_id
+    - center_seed_index
+    - assigned_row_index
+    - exact_row_order
+  expected_source_ordinals_per_dataset: [0, 1, 2, 3]
+  scale_blocks:
+    legacy_2_1: 0
+    expanded_3_1: 1
+  cross_block_pooling_or_voting: forbidden
+
+score_and_eligibility:
+  score: authenticated_current_spatial_score
+  eligible: calibration_supported_or_spatial_imputed
+  ineligible_prediction: negative
+  zero_score_top_fraction_eligibility: forbidden
+  score_refit_or_recomputation: forbidden
+
+inner_prevalence_estimator:
+  label_source: authenticated_nonouter_inner_group_metrics_only
+  candidate_rows: current_selected_candidate_id_only
+  per_group_prevalence: positive_count_divided_by_sample_count
+  stage_1: equal_dataset_source_groups_within_each_inner_family_and_scale_block
+  stage_2: equal_four_inner_physical_families_within_each_scale_block
+  separate_estimate_per_scale_block: true
+  outer_label_use: forbidden
+
+decision_arms:
+  order:
+    - current_selected_prediction
+    - inner_prevalence_top_fraction
+    - label_free_exact_1d_two_means
+    - outer_group_oracle_max_f1
+  current_selected_prediction:
+    source: authenticated_prediction_boolean_array
+    deployable_under_parent_query_batch_contract: true
+    outer_label_use: false
+  inner_prevalence_top_fraction:
+    fraction: outer_fold_inner_prevalence_estimate_for_same_scale_block
+    target_count: ceil_fraction_times_all_valid_group_rows_capped_by_eligible_positive_score_rows
+    tie_break: descending_score_then_ascending_center_seed_index
+    outer_label_use: false
+    deployable_under_parent_query_batch_contract: true
+  label_free_exact_1d_two_means:
+    population: eligible_rows_within_one_dataset_source_block_group
+    objective: globally_minimum_within_cluster_sum_of_squares_over_all_distinct_value_splits
+    equal_objective_tie_break: lowest_sorted_split
+    positive_cluster: strictly_higher_mean_cluster
+    constant_or_fewer_than_two_eligible_scores: all_negative
+    outer_label_use: false
+    deployable_under_parent_query_batch_contract: true
+  outer_group_oracle_max_f1:
+    population: eligible_rows_with_strictly_positive_spatial_score
+    thresholds: every_distinct_observed_positive_score_plus_all_negative
+    threshold_comparison: score_greater_than_or_equal_to_threshold
+    tied_scores: never_split
+    tie_break: highest_f1_then_fewer_predicted_positives_then_higher_threshold
+    outer_label_use: true
+    diagnostic_only: true
+    deployable: false
+    forbidden_uses:
+      - method_selection
+      - threshold_selection_for_future_data
+      - main_result
+      - confirmation_claim
+  gaussian_mixture:
+    enabled: false
+    reason: omitted_to_avoid_an_additional_unstable_model_in_this_low_cost_ordering_vs_calibration_diagnostic
+
+metrics:
+  classification:
+    - accuracy
+    - f1
+    - balanced_accuracy
+    - precision
+    - recall
+    - true_positive
+    - false_positive
+    - true_negative
+    - false_negative
+  ranking:
+    - average_precision
+    - auroc
+  ranking_score_for_all_arms: authenticated_current_spatial_score
+  per_group_unit: dataset_source_scale_block
+  family_block_macro: equal_dataset_source_groups_within_outer_family_and_scale_block
+  complete_block_macro: equal_five_outer_family_block_macros
+  all_block_macro: equal_ten_outer_family_block_macros
+  required_gaps:
+    - oracle_f1_minus_current_f1
+    - oracle_f1_minus_inner_prevalence_f1
+    - oracle_f1_minus_two_means_f1
+  target_f1_values: [0.70, 0.80]
+
+interpretation:
+  ranking_headroom_supports_calibration_hypothesis_if: outer_group_oracle_family_macro_f1_at_or_above_0_70
+  ranking_headroom_rejects_calibration_only_explanation_if: outer_group_oracle_family_macro_f1_below_0_70
+  label_free_or_inner_prevalence_arm_at_or_above_0_70: candidate_for_new_pre_registered_nested_validation_only
+  no_arm_from_this_posthoc_diagnostic_is_formal_confirmation: true
+  oracle_is_an_optimistic_group_specific_upper_bound_not_a_classifier: true
+
+output:
+  overwrite: forbidden
+  exact_files_before_completion:
+    - frozen_config.yaml
+    - input_manifest.json
+    - inner_prevalence_estimates.csv
+    - group_metrics.csv
+    - family_block_macro_metrics.csv
+    - aggregate_summary.json
+    - result_manifest.json
+  completion_file: RUN_COMPLETE.json
+  schemas:
+    input_manifest: pathline_template_matching.first_principles_headroom_input.v1
+    aggregate_summary: pathline_template_matching.first_principles_headroom_summary.v1
+    result_manifest: pathline_template_matching.first_principles_headroom_result.v1
+    completion: pathline_template_matching.first_principles_headroom_complete.v1
