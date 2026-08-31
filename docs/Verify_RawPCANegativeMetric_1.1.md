@@ -1,12 +1,30 @@
 # `Verify_RawPCANegativeMetric_1.1`
 
-状态：`IBEX_FIRST_FOLD_RUNNING_AUTH_QUEUED`。本版本已冻结方法、候选集、输入、
+状态：`STOPPED_AUTHENTICATED_FIRST_FOLD_F1_BELOW_MINIMUM`。本版本已冻结方法、候选集、输入、
 产物和停止规则；Raw PCA 数值核心、nested runner、单折/五折共用 authenticator 与四个
 Ibex wrapper 均已实现并通过定向本地测试。numerical Git commit 为
-`fd0412dc134da9dba88d71d665fc2ad160e78e06`；首折 job `51068864` 已于
-2026-08-31 04:30:00 +03:00在 `cn509-11-l` 开始，独立认证/数学早停 job
-`51068901` 以 `afterok:51068864` 排队。认证尚未完成，因此没有可接受的 metric
-或性能结论。
+`fd0412dc134da9dba88d71d665fc2ad160e78e06`。首折 `51068864` 与独立认证
+`51068901` 已分别于04:56:32和05:01:57完成。认证后的half-cylinder结果为
+AP/F1/balanced accuracy/precision/recall =
+`0.476919/0.469416/0.707562/0.504993/0.441381`；所选候选为
+`raw_pca161, k=5, sigma=1.0, fixed top 5%`。F1低于冻结的单family最低`0.50`，
+证书据此给出`stop_version=true`和`mathematically_impossible_to_pass=true`。
+因此不得提交剩余四折或五折聚合；该结果反对本Raw-PCA版本达到预注册成功规则，
+但单折不能估计五family macro指标。
+
+认证证据位于
+`/ibex/user/zhanx0o/pathline-template-matching/Verify_RawPCANegativeMetric_1.1/early_stop/slurm_51068901_fd0412dc134d_firstfold_51068864`。
+completion/certificate/report/summary CSV SHA-256依次为
+`eb4b20c4239ec2f24891d78be546a12555deeb57b53b91438a4ee72333458663`、
+`9c895fe4434bd253abe6d05f63b26c9f8020f60c171fe72efd33aee43b20cfb7`、
+`3664b0c5b42bb4b26cbd49ffe622b90c9055e83bde4c68c60568e683297c42e1`、
+`00e964c3c71845fec824e2e550879174122a8c57412957ff0644ca050518d722`。
+首折stdout/stderr SHA-256为
+`e70a3139edaf2fc8f81c650be3ac566c1038b855f1baf498a3f943c29904e2f7` /
+`38f686d6e1a1c47aa4fc43f2bac1c2c8a43ca06d22d6c359388e6e7ffe9ff67c`；
+认证stdout/stderr SHA-256为
+`20b2c2bdc3b28d4b1f33a6d4c3317f8a90b7df33056fef60c7275077fbdc4806` /
+`b0d49af12e824f16e46a5d5436a3d2770ceca2e3902c11dbe933f52d8fb3f7ba`。
 
 冻结 config 中的历史字段 `status: frozen_pre_run_not_implemented`、
 `frozen_before_first_read_of_any_parent_outer_result: true` 与

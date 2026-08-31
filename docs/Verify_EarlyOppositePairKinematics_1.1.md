@@ -1,6 +1,6 @@
 # `Verify_EarlyOppositePairKinematics_1.1`
 
-状态：**`IBEX_FIRST_FOLD_FAILED_CONTRACT_DIAGNOSIS`**。唯一配置为
+状态：**`IBEX_FIRST_FOLD_RETRY_RUNNING_AUTH_QUEUED`**。唯一配置为
 `config/Verify_EarlyOppositePairKinematics_1.1.yaml`，原始文件 SHA-256 为
 `e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767`。
 本配置冻结于首次读取 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer
@@ -10,7 +10,7 @@ outer prediction、label、metric、stdout 中的 outer 数值或 aggregate 结�
 
 旧状态是“配置已冻结、实现不存在”；当前纯数值核心、label-free sidecar、32-row
 输入/sidecar population preparation、nested runner、单折/五折 aggregator 和分阶段
-Ibex wrappers 均已实现。numerical commit 为
+Ibex wrappers 均已实现。preparation producer commit 为
 `fd0412dc134da9dba88d71d665fc2ad160e78e06`；production synthetic/input job
 `51068863` 已于2026-08-31 04:32:21 +03:00完成：production synthetic checks
 `11/11 PASS`，精确32-row train-only输入已冻结；synthetic PASS/input manifest SHA-256
@@ -28,6 +28,19 @@ manifest SHA-256为
 关闭失败；依赖认证占位`51069364`未运行并已取消。该失败说明runner与producer的
 descriptor identity合同不一致，不是性能结果；尚无已认证性能结论。
 
+失败后的实现结论已明确修订：原先判断“producer/consumer descriptor identity不同”
+过宽；实际是producer使用canonical JSON按字母序持久化对象键，而consumer错误地把
+JSON对象键顺序当成冻结representation顺序。当前修复按配置顺序重建映射、逐值认证
+三个完整descriptor ID，并把已封存preparation证据显式固定到producer commit
+`fd0412dc134da9dba88d71d665fc2ad160e78e06`；新fold与aggregator仍必须来自同一新的
+clean commit。数值表示、3060候选、split、停止规则和outer label gate均未改变。
+新增3项回归后Early定向测试`17/17 PASS`，统一回归`306/306 PASS`（218.681 s）。
+修复已作为clean commit `f5f94e6a18e42970f86a5b49424a55fa61b956e2`推送并部署；
+Ibex上的9个wrapper均通过`bash -n`，runner/aggregator远端SHA与冻结值一致。
+重跑首折`51069713`于2026-08-31 05:12:19 +03:00开始，独立fresh-replay认证
+`51069716`以`afterok:51069713`排队。认证完成前不得读取或接受outer metric，故仍
+没有性能结论。
+
 本次实现证据：
 
 - `early_opposite_pair_kinematics.py`：中央差分和固定4D block，源码 SHA-256
@@ -38,9 +51,14 @@ descriptor identity合同不一致，不是性能结果；尚无已认证性能�
 - preparation core / CLI SHA-256：
   `f207aa145338993345822cfa56c0bc223c1fd0a81e8382539c0b89587c5f9927` /
   `79303ed04c0885d56a57acaad1549a98eed5f88f6155e3ba432a8844ca5420d3`；
-- nested runner / aggregator SHA-256：
+- 旧失败commit `fd0412dc134da9dba88d71d665fc2ad160e78e06`的nested runner /
+  aggregator SHA-256：
   `1e8b900a4080012118e1a2fe678be3487d50f746b5907a7b7ddf43e6ac4cbf2b` /
   `20094f2fbb713a1c1749c630975bb6df2b59586c85203dcda3137b6aa6bda0ea`；
+- 修复重跑commit `f5f94e6a18e42970f86a5b49424a55fa61b956e2`的nested runner /
+  aggregator SHA-256：
+  `e999960ac06d3fedd355e1d6135d9e69316bfe1e798318a22dadf5a8e2063796` /
+  `d999c2bfefdb7170a97526af28f95f52a3589896ae8f924c360ce7f382971d86`；
 - Early core、sidecar、preparation 与 runner/aggregator 定向 synthetic tests
   `45/45 PASS`；提交前统一回归 `303/303 PASS`（2026-08-31，185.236 s）；
 - 所有公开数组改为 immutable bytes-backed 视图，不能在认证后重新开启写权限；
