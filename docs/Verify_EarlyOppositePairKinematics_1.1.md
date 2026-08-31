@@ -1,6 +1,6 @@
 # `Verify_EarlyOppositePairKinematics_1.1`
 
-状态：**`IBEX_SIDECAR_POPULATION_RUNNING`**。唯一配置为
+状态：**`IBEX_SIDECAR_POPULATION_SEAL_RUNNING`**。唯一配置为
 `config/Verify_EarlyOppositePairKinematics_1.1.yaml`，原始文件 SHA-256 为
 `e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767`。
 本配置冻结于首次读取 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer
@@ -19,8 +19,10 @@ Ibex wrappers 均已实现。numerical commit 为
 sidecar资源画像 `51069125` 已在04:37:52完成：row 0生成和fresh authentication通过，
 batch MaxRSS为 `1360716K`，completion SHA-256为
 `d37b96f92408e57164bc2c8b412261e4443837c3ba03ab1ca2f717e00585b54e`。据此固定并发
-上限为2的32-row生产array `51069178_[0-31]` 已于04:40:16开始。尚未认证完整
-sidecar population或运行任何 outer fold，因此没有已认证性能结论。
+上限为2的32-row生产array `51069178_[0-31]` 已于04:44:43全部完成，32/32任务均
+exit 0且发布fresh-authentication状态。完整32-row population认证与不可覆盖seal
+`51069336` 已于04:45:43开始。尚未发布并认证population manifest或运行任何 outer
+fold，因此没有已认证性能结论。
 
 本次实现证据：
 
