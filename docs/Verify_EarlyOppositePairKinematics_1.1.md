@@ -1,6 +1,6 @@
 # `Verify_EarlyOppositePairKinematics_1.1`
 
-状态：**`IBEX_COMPLETE_SCHEMA_FIRST_FOLD_RUNNING_AUTH_QUEUED`**。唯一配置为
+状态：**`IBEX_REMAINING_FOLDS_RUNNING_AGGREGATE_QUEUED`**。唯一配置为
 `config/Verify_EarlyOppositePairKinematics_1.1.yaml`，原始文件 SHA-256 为
 `e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767`。
 本配置冻结于首次读取 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer
@@ -64,8 +64,14 @@ release wrapper错误读取`file_sha256`；依赖聚合`51070165`未运行并已
 `outer_summary.candidate_id`访问。Early定向测试`19/19 PASS`，统一回归
 `308/308 PASS`（181.586 s）；clean commit
 `2c3774dca0d81db8edd5645e63576526b9e276f7`已推送并部署，Ibex 9/9 wrapper通过
-`bash -n`，runner/aggregator SHA与冻结值一致。新的exact-commit首折`51070299`于
-05:58:32开始，独立认证`51070310`依赖排队；认证前不读取其outer结果。
+`bash -n`，runner/aggregator SHA与冻结值一致。新的exact-commit首折`51070299`与
+独立认证`51070310`均完成；第三次fresh replay仍精确得到half-cylinder
+AP/F1/balanced accuracy=`0.692985/0.628171/0.787448`，认证completion/certificate
+SHA-256分别为`8ee3e54b0dfd3e3f6bdd4199687bbf3072bc5d71feca01661d5d72e31ec1b162`与
+`b1e24d2e34aaa861aa0737e9a64f5682bc40c829dbd1b15307a5d48e0471025a`，证书再次给出
+`stop_version=false`。因此remaining array `51070386_[1-4]`已按固定`%2`并发上限
+释放，完整五折聚合`51070392`以`afterok`依赖排队；聚合成功认证前不读取remaining
+outer指标。
 
 本次实现证据：
 
