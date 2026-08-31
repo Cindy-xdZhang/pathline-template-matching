@@ -1,6 +1,6 @@
 # `Verify_DimensionlessDeformationFMT_1.1`
 
-当前实现状态：**`FIRST_IBEX_ATTEMPT_FAILED_PRE_DATA_VALIDATION_FIX_TESTED`**。唯一配置为
+当前实现状态：**`VALIDATION_FIXED_RERUN_FIRST_FOLD_SUBMITTED`**。唯一配置为
 `config/Verify_DimensionlessDeformationFMT_1.1.yaml`，冻结文件 SHA-256 为
 `c689b1d265bbc39327b2ed4147e8ffb22450dcd26f87b7c19ceae346c9ecfe18`。
 本配置冻结于首次读取 `Verify_EarlyOppositePairKinematics_1.1` 或
@@ -182,5 +182,10 @@ fresh-replay认证后，才能在实验日志新增性能结论。冻结config�
   transaction前已认证的immutable plan。生产路径不再依赖被重绑的父全局量。
 - 新增production regression
   `test_production_load_plan_uses_stable_parent_identity_inside_runtime`；`py_compile`、
-  `git diff --check`和`339/339`统一回归全部通过。下一次Ibex提交必须从该修复或其后代的
-  exact clean commit运行，并获得新的job ID；禁止覆盖或删除失败记录。
+  `git diff --check`和`339/339`统一回归全部通过。下一次Ibex提交必须从exact修复commit，
+  或保持runner、aggregator、config和core上述精确SHA不变的纯报告后代运行，并获得新的
+  job ID；禁止覆盖或删除失败记录。
+- 修复后专用Ibex checkout已在clean detached HEAD
+  `de130540d050984e14247e0f4db4cbbf1eefd77f`复核config/core/runner/aggregator哈希与
+  4/4 wrapper语法。新首折job为`51088712`，依赖它成功的独立认证job为`51088726`；
+  两者未完成前仍无方法性能结论。
