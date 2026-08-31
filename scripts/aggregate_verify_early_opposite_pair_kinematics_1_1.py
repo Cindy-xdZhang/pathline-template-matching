@@ -1102,6 +1102,83 @@ def _aggregate_early_binding(plan: runner.Plan) -> dict[str, Any]:
     }
 
 
+def _require_preparation_release_binding(
+    *,
+    early: Mapping[str, Any],
+    input_manifest: Mapping[str, Any],
+    synthetic_marker: Mapping[str, Any],
+    population_manifest: Mapping[str, Any],
+    current_fold_commit: str,
+) -> None:
+    """Bind sealed preparation evidence to its producer and a new fold commit."""
+
+    _require(
+        _is_lower_hex(current_fold_commit, 40),
+        "current fold commit is invalid",
+    )
+    _require(
+        early.get("clean_git_commit") == current_fold_commit,
+        "Early evidence is not bound to the current fold commit",
+    )
+    producer_commit = runner.PREPARATION_ARTIFACT_GIT_COMMIT
+    for name in (
+        "kinematic_input_manifest",
+        "synthetic_pass",
+        "sidecar_population_manifest",
+    ):
+        record = early.get(name)
+        _require(isinstance(record, Mapping), f"Early {name} binding is invalid")
+        _require(
+            record.get("producer_git_commit") == producer_commit,
+            f"Early {name} producer commit drifted",
+        )
+
+    descriptors = input_manifest.get("composite_descriptors")
+    _require(
+        isinstance(descriptors, Mapping)
+        and set(descriptors) == set(runner.REPRESENTATIONS),
+        "input composite descriptor population changed",
+    )
+    input_descriptor_ids: dict[str, str] = {}
+    for name in runner.REPRESENTATIONS:
+        descriptor = descriptors[name]
+        _require(
+            isinstance(descriptor, Mapping)
+            and descriptor.get("composite_representation") == name,
+            f"input composite descriptor contract is invalid: {name}",
+        )
+        descriptor_id = descriptor.get("descriptor_id")
+        _require(
+            isinstance(descriptor_id, str) and descriptor_id,
+            f"input composite descriptor ID is invalid: {name}",
+        )
+        input_descriptor_ids[name] = descriptor_id
+
+    early_descriptor_ids = early.get("composite_descriptor_ids")
+    synthetic_descriptor_ids = synthetic_marker.get("composite_descriptor_ids")
+    population_descriptor_ids = population_manifest.get("composite_descriptor_ids")
+    for observed, source in (
+        (early_descriptor_ids, "Early aggregate evidence"),
+        (synthetic_descriptor_ids, "synthetic marker"),
+        (population_descriptor_ids, "sidecar population"),
+    ):
+        _require(isinstance(observed, Mapping), f"{source} descriptor IDs are invalid")
+        _require(
+            dict(observed) == input_descriptor_ids,
+            f"{source} descriptor IDs drifted",
+        )
+
+    for artifact, source in (
+        (input_manifest, "input manifest"),
+        (synthetic_marker, "synthetic marker"),
+        (population_manifest, "sidecar population"),
+    ):
+        _require(
+            artifact.get("git_commit") == producer_commit,
+            f"{source} producer commit drifted",
+        )
+
+
 def aggregate(
     config_path: str | Path,
     run_directories: Sequence[str | Path],

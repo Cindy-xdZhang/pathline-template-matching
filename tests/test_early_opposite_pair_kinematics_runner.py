@@ -788,6 +788,9 @@ def test_remaining_fold_release_recomputes_certificate_and_binds_source_fold():
     assert 'certificate["stop_version"] is False' in gate
     assert 'result_early["kinematic_input_manifest"] == early["kinematic_input_manifest"]' in gate
     assert 'result_early["sidecar_population_manifest"] == early["sidecar_population_manifest"]' in gate
+    assert "aggregate._require_preparation_release_binding(" in gate
+    assert 'input_manifest["composite_descriptor_ids"]' not in gate
+    assert 'input_manifest["git_commit"] == commit' not in gate
 
     plan = runner.load_plan(CONFIG)
     fold = {field: 0.8 for field in aggregate_module.FAMILY_METRIC_FIELDS}
@@ -821,6 +824,106 @@ def test_remaining_fold_release_recomputes_certificate_and_binds_source_fold():
     forged.pop("content_sha256")
     forged = runner._manifest_with_self_hash(forged)
     assert forged != expected
+
+
+def test_remaining_release_binding_uses_real_input_schema_and_pinned_producer():
+    producer = runner.PREPARATION_ARTIFACT_GIT_COMMIT
+    current = "1" * 40
+    descriptor_ids = {
+        name: f"{name}_sha256_{index:064x}"
+        for index, name in enumerate(runner.REPRESENTATIONS, start=1)
+    }
+    early = {
+        "clean_git_commit": current,
+        "composite_descriptor_ids": dict(descriptor_ids),
+        "kinematic_input_manifest": {"producer_git_commit": producer},
+        "synthetic_pass": {"producer_git_commit": producer},
+        "sidecar_population_manifest": {"producer_git_commit": producer},
+    }
+    input_manifest = {
+        "git_commit": producer,
+        "composite_descriptors": {
+            name: {
+                "composite_representation": name,
+                "descriptor_id": descriptor_id,
+            }
+            for name, descriptor_id in descriptor_ids.items()
+        },
+    }
+    synthetic = {
+        "git_commit": producer,
+        "composite_descriptor_ids": dict(descriptor_ids),
+    }
+    population = {
+        "git_commit": producer,
+        "composite_descriptor_ids": dict(descriptor_ids),
+    }
+
+    def authenticate(
+        early_value=early,
+        input_value=input_manifest,
+        synthetic_value=synthetic,
+        population_value=population,
+    ):
+        aggregate_module._require_preparation_release_binding(
+            early=early_value,
+            input_manifest=input_value,
+            synthetic_marker=synthetic_value,
+            population_manifest=population_value,
+            current_fold_commit=current,
+        )
+
+    authenticate()
+
+    tampered_input = json.loads(json.dumps(input_manifest))
+    tampered_input["composite_descriptors"][runner.REPRESENTATIONS[0]][
+        "descriptor_id"
+    ] = "tampered"
+    _expect_error(ValueError, authenticate, input_value=tampered_input, contains="drifted")
+
+    tampered_synthetic = json.loads(json.dumps(synthetic))
+    tampered_synthetic["composite_descriptor_ids"][runner.REPRESENTATIONS[0]] = "tampered"
+    _expect_error(
+        ValueError,
+        authenticate,
+        synthetic_value=tampered_synthetic,
+        contains="drifted",
+    )
+
+    tampered_population = json.loads(json.dumps(population))
+    tampered_population["composite_descriptor_ids"][runner.REPRESENTATIONS[0]] = "tampered"
+    _expect_error(
+        ValueError,
+        authenticate,
+        population_value=tampered_population,
+        contains="drifted",
+    )
+
+    tampered_nested = json.loads(json.dumps(early))
+    tampered_nested["synthetic_pass"]["producer_git_commit"] = current
+    _expect_error(
+        ValueError,
+        authenticate,
+        early_value=tampered_nested,
+        contains="producer commit drifted",
+    )
+
+    for artifact_name, artifact in (
+        ("input", input_manifest),
+        ("synthetic", synthetic),
+        ("population", population),
+    ):
+        tampered = json.loads(json.dumps(artifact))
+        tampered["git_commit"] = current
+        kwargs = {f"{artifact_name}_value": tampered}
+        if artifact_name == "population":
+            kwargs = {"population_value": tampered}
+        _expect_error(
+            ValueError,
+            authenticate,
+            contains="producer commit drifted",
+            **kwargs,
+        )
 
 
 def test_aggregate_stop_rule_requires_complete_five_families_and_early_schemas():

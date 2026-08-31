@@ -218,13 +218,15 @@ assert population_path == sidecar_root / "SIDECAR_POPULATION.json"
 assert early["sidecar_population_manifest"]["file_sha256"] == population_sha
 assert early["sidecar_population_manifest"]["content_sha256"] == population_manifest["content_sha256"]
 assert early["sidecar_population_manifest"]["sidecar_count"] == 32
-assert early["composite_descriptor_ids"] == input_manifest["composite_descriptor_ids"]
-assert early["composite_descriptor_ids"] == population_manifest["composite_descriptor_ids"]
 assert early["clean_git_commit"] == commit
 assert early["config_sha256"] == config_sha
-assert input_manifest["git_commit"] == commit
-assert synthetic_marker["git_commit"] == commit
-assert population_manifest["git_commit"] == commit
+aggregate._require_preparation_release_binding(
+    early=early,
+    input_manifest=input_manifest,
+    synthetic_marker=synthetic_marker,
+    population_manifest=population_manifest,
+    current_fold_commit=commit,
+)
 
 plan = aggregate.runner.load_plan(config_path)
 assert plan.sha256 == config_sha

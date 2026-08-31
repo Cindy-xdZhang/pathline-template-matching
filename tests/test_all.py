@@ -217,6 +217,7 @@ from test_early_opposite_pair_kinematics_runner import (
     test_preparation_json_consumers_use_authenticated_single_fd_snapshots,
     test_selection_evidence_swap_restore_cannot_parse_path_bytes_or_open_outer,
     test_remaining_fold_release_recomputes_certificate_and_binds_source_fold,
+    test_remaining_release_binding_uses_real_input_schema_and_pinned_producer,
 )
 from test_dimensionless_deformation_freeze import (
     test_dimensionless_freeze_identity_input_and_forbidden_scope_are_exact,
@@ -447,6 +448,7 @@ TESTS = (
     test_preparation_json_consumers_use_authenticated_single_fd_snapshots,
     test_selection_evidence_swap_restore_cannot_parse_path_bytes_or_open_outer,
     test_remaining_fold_release_recomputes_certificate_and_binds_source_fold,
+    test_remaining_release_binding_uses_real_input_schema_and_pinned_producer,
     test_dimensionless_freeze_identity_input_and_forbidden_scope_are_exact,
     test_dimensionless_raw_shape_order_and_transform_formula_are_exact,
     test_dimensionless_representations_and_3060_candidate_grid_are_exact,
