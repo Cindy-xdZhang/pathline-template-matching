@@ -185,6 +185,23 @@ FAMILY_COUNT_FIELDS = (
     "scaler_mode_2_count",
     "scaler_mode_3_count",
 )
+FAMILY_SUMMARY_FIELDS = (
+    "outer_family",
+    "run_directory",
+    "numerical_git_commit",
+    "config_sha256",
+    "input_manifest_sha256",
+    "input_manifest_rows_sha256",
+    "requested_device",
+    "selected_candidate_id",
+    *FAMILY_METRIC_FIELDS,
+    *FAMILY_COUNT_FIELDS,
+    "completion_file_sha256",
+    "completion_content_sha256",
+    "result_manifest_file_sha256",
+    "result_manifest_content_sha256",
+    "outer_group_metrics_file_sha256",
+)
 CSV_STRING_FIELDS = {
     "outer_family",
     "inner_family",
@@ -1179,6 +1196,32 @@ def _require_preparation_release_binding(
         )
 
 
+def _require_result_input_manifest_binding(
+    result: Mapping[str, Any],
+    plan: runner.Plan,
+) -> None:
+    """Authenticate the parent-cache input identity in a fold result."""
+
+    observed = result.get("input_manifest")
+    _require(isinstance(observed, Mapping), "result input manifest is invalid")
+    _require(
+        set(observed)
+        == {"schema", "path", "size_bytes", "sha256", "rows_content_sha256"},
+        "result input manifest schema drifted",
+    )
+    _require(observed.get("schema") == plan.manifest_schema, "result input schema drifted")
+    _require(
+        Path(str(observed.get("path"))).resolve() == plan.manifest_path.resolve(),
+        "result input path drifted",
+    )
+    _require(observed.get("size_bytes") == plan.manifest_size, "result input size drifted")
+    _require(observed.get("sha256") == plan.manifest_sha256, "result input SHA-256 drifted")
+    _require(
+        observed.get("rows_content_sha256") == plan.manifest_rows_sha256,
+        "result input rows SHA-256 drifted",
+    )
+
+
 def aggregate(
     config_path: str | Path,
     run_directories: Sequence[str | Path],
@@ -1353,7 +1396,7 @@ def aggregate(
     table_path = destination / "outer_family_summary.csv"
     table_sha = runner._atomic_csv(
         table_path,
-        tuple(family_rows[0]),
+        FAMILY_SUMMARY_FIELDS,
         family_rows,
     )
     if effective_mode == "complete_five_fold_aggregate":

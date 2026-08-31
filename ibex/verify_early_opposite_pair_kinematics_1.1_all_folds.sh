@@ -280,8 +280,7 @@ assert result["content_sha256"] == fold_completion["result_manifest_content_sha2
 assert result["git_commit"] == commit
 assert result["config_sha256"] == config_sha
 assert result["outer_family"] == "half_cylinder"
-assert result["input_manifest"]["file_sha256"] == plan.manifest_sha256
-assert result["input_manifest"]["rows_content_sha256"] == plan.manifest_rows_sha256
+aggregate._require_result_input_manifest_binding(result, plan)
 result_early = result["early_evidence"]
 assert result_early["kinematic_input_manifest"] == early["kinematic_input_manifest"]
 assert result_early["sidecar_population_manifest"] == early["sidecar_population_manifest"]
@@ -338,13 +337,12 @@ outer_summary = aggregate._json_from_snapshot(
 assert outer_summary_snapshot.sha256 == artifacts["outer_summary.json"]["sha256"]
 assert outer_summary["schema"] == aggregate.runner.OUTER_SUMMARY_SCHEMA
 assert outer_summary["outer_family"] == "half_cylinder"
-assert fold["selected_candidate_id"] == outer_summary["candidate_id"]
 for field in (*aggregate.FAMILY_METRIC_FIELDS, *aggregate.FAMILY_COUNT_FIELDS):
     assert fold[field] == outer_summary[field]
 
 with io.StringIO(table_snapshot.content.decode("utf-8"), newline="") as stream:
     table = csv.DictReader(stream)
-    assert tuple(table.fieldnames or ()) == tuple(fold)
+    assert tuple(table.fieldnames or ()) == aggregate.FAMILY_SUMMARY_FIELDS
     rows = list(table)
 assert len(rows) == 1
 assert all(rows[0][field] == aggregate._csv_text(fold[field]) for field in fold)

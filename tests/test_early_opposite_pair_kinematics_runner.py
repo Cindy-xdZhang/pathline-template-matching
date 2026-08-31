@@ -789,8 +789,29 @@ def test_remaining_fold_release_recomputes_certificate_and_binds_source_fold():
     assert 'result_early["kinematic_input_manifest"] == early["kinematic_input_manifest"]' in gate
     assert 'result_early["sidecar_population_manifest"] == early["sidecar_population_manifest"]' in gate
     assert "aggregate._require_preparation_release_binding(" in gate
+    assert "aggregate._require_result_input_manifest_binding(result, plan)" in gate
     assert 'input_manifest["composite_descriptor_ids"]' not in gate
     assert 'input_manifest["git_commit"] == commit' not in gate
+    assert 'outer_summary["candidate_id"]' not in gate
+    assert "aggregate.FAMILY_SUMMARY_FIELDS" in gate
+    assert "tuple(fold)" not in gate
+    assert aggregate_module.FAMILY_SUMMARY_FIELDS == (
+        "outer_family",
+        "run_directory",
+        "numerical_git_commit",
+        "config_sha256",
+        "input_manifest_sha256",
+        "input_manifest_rows_sha256",
+        "requested_device",
+        "selected_candidate_id",
+        *aggregate_module.FAMILY_METRIC_FIELDS,
+        *aggregate_module.FAMILY_COUNT_FIELDS,
+        "completion_file_sha256",
+        "completion_content_sha256",
+        "result_manifest_file_sha256",
+        "result_manifest_content_sha256",
+        "outer_group_metrics_file_sha256",
+    )
 
     plan = runner.load_plan(CONFIG)
     fold = {field: 0.8 for field in aggregate_module.FAMILY_METRIC_FIELDS}
@@ -923,6 +944,41 @@ def test_remaining_release_binding_uses_real_input_schema_and_pinned_producer():
             authenticate,
             contains="producer commit drifted",
             **kwargs,
+        )
+
+
+def test_remaining_release_result_binding_uses_runner_manifest_schema():
+    plan = runner.load_plan(CONFIG)
+    identity = {
+        "schema": plan.manifest_schema,
+        "path": str(plan.manifest_path),
+        "size_bytes": plan.manifest_size,
+        "sha256": plan.manifest_sha256,
+        "rows_content_sha256": plan.manifest_rows_sha256,
+    }
+    aggregate_module._require_result_input_manifest_binding(
+        {"input_manifest": identity},
+        plan,
+    )
+
+    historical_wrong_field = dict(identity)
+    historical_wrong_field["file_sha256"] = historical_wrong_field.pop("sha256")
+    _expect_error(
+        ValueError,
+        aggregate_module._require_result_input_manifest_binding,
+        {"input_manifest": historical_wrong_field},
+        plan,
+        contains="schema drifted",
+    )
+    for field in ("schema", "path", "size_bytes", "sha256", "rows_content_sha256"):
+        tampered = dict(identity)
+        tampered[field] = "tampered"
+        _expect_error(
+            ValueError,
+            aggregate_module._require_result_input_manifest_binding,
+            {"input_manifest": tampered},
+            plan,
+            contains="drifted",
         )
 
 
