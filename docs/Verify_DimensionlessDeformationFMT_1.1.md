@@ -1,6 +1,6 @@
 # `Verify_DimensionlessDeformationFMT_1.1`
 
-当前实现状态：**`VALIDATION_FIXED_RERUN_FIRST_FOLD_SUBMITTED`**。唯一配置为
+当前实现状态：**`RERUN_FAILED_REAL_INPUT_CONTRACT_DIAGNOSING`**。唯一配置为
 `config/Verify_DimensionlessDeformationFMT_1.1.yaml`，冻结文件 SHA-256 为
 `c689b1d265bbc39327b2ed4147e8ffb22450dcd26f87b7c19ceae346c9ecfe18`。
 本配置冻结于首次读取 `Verify_EarlyOppositePairKinematics_1.1` 或
@@ -187,5 +187,8 @@ fresh-replay认证后，才能在实验日志新增性能结论。冻结config�
   job ID；禁止覆盖或删除失败记录。
 - 修复后专用Ibex checkout已在clean detached HEAD
   `de130540d050984e14247e0f4db4cbbf1eefd77f`复核config/core/runner/aggregator哈希与
-  4/4 wrapper语法。新首折job为`51088712`，依赖它成功的独立认证job为`51088726`；
-  两者未完成前仍无方法性能结论。
+  4/4 wrapper语法。新首折job `51088712`通过身份门后，在读取真实Raw672并执行第一批
+  无量纲编码时触发`six realized initial neighbor distances are unequal`，于14:04:16失败；
+  output目录已创建但为空。依赖认证job `51088726`从未启动，于14:06:20取消。失败仍早于
+  model fit、prediction、outer label和metric，所以没有方法性能结论；下一步必须先用
+  label-free诊断量化六邻距误差及其生产来源，不能静默放宽冻结公式或容差。
