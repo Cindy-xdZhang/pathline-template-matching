@@ -1,0 +1,154 @@
+experiment: Other_DimensionlessInputGeometryAudit_1.1
+status: frozen_after_job_51088712_before_full_32_shard_audit
+category: label_free_input_compatibility_diagnostic
+research_question: >-
+  Are the initial-neighbor equality failures observed by
+  Verify_DimensionlessDeformationFMT_1.1 job 51088712 explained by the frozen
+  parent cache's absolute-coordinate float32 storage and subsequent float32
+  centering, or do any rows require a non-quantization geometry explanation?
+
+diagnostic_origin:
+  failed_job: "51088712"
+  failed_experiment: Verify_DimensionlessDeformationFMT_1.1
+  failed_config_sha256: c689b1d265bbc39327b2ed4147e8ffb22450dcd26f87b7c19ceae346c9ecfe18
+  observed_exception: the_six_realized_initial_neighbor_distances_are_unequal
+  interpretation_before_this_audit: pre_fit_real_cache_compatibility_failure_not_performance_evidence
+  frozen_method_may_be_changed_by_this_audit: false
+
+evidence_scope:
+  level: exposed_development_label_free_geometry_only
+  formal_confirmation: false
+  allowed_datasets:
+    - cylinder3d
+    - halfcylinderRe640
+    - halfcylinderRe6400
+    - deltaWing_resampled
+    - deltaWing_LBM
+    - f22raptor
+    - channel
+    - boeing747
+  physical_families:
+    half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+    delta_wing: [deltaWing_resampled, deltaWing_LBM]
+    f22_raptor: [f22raptor]
+    channel: [channel]
+    boeing_747: [boeing747]
+  forbidden_datasets: [tangaroa, smokeBuoyancy]
+  forbidden_inputs:
+    - test_cache
+    - raw_flow
+    - portable_flow
+    - cache_sidecar
+    - prediction
+    - metric
+    - label
+    - IVD
+
+parent_identity:
+  experiment: mainExp_TemplateMatching_3.1
+  cache_builder_git_commit: 260a07ad380d64fc300cabe8926244e92d8ba04a
+  main_config_sha256: 771980f14a6019a1f6e4bf03668d9f37dcf63495ae2dafa866312b12fc71855e
+  cache_schema: pathline_template_matching.phase31_cache.v1
+  cache_input_manifest:
+    path: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/train_coverage/slurm_50998592_260a07ad380d/train_cache_input_manifest.json
+    size_bytes: 24009
+    sha256: e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393
+    schema: pathline_template_matching.long_arc_train_cache_input.v1
+    rows_content_sha256: ceb6d0e3fb7a2c90fcaae98583f8d1def7ee75fa7968f38d2821ee3040ae156f
+    row_count: 32
+    input_scope: exactly_32_train_cache_shards_and_sidecars
+    test_dataset_access: false
+
+cache_member_access:
+  allowed_members_in_exact_order:
+    - raw_features
+    - valid_scale_id
+    - valid_center_seed_index
+    - valid_scale_block_index
+    - valid_assigned_row_index
+    - seeds_xyz
+  forbidden_members:
+    - valid_labels
+    - reference_labels_all
+    - metadata_json
+    - fmt_features
+    - ivd_values_all
+    - ivd_volume
+    - valid_mask
+    - center_sample_time
+    - line_steps
+    - line_travel
+    - line_end_time
+    - line_reached_target
+    - scale_assignment
+  whole_cache_file_authentication_before_member_access: true
+  member_hash_source: whole_npz_file_sha256_from_frozen_input_manifest
+
+array_contract:
+  raw_features: {dtype: float32, shape: [N, 672]}
+  valid_scale_id: {dtype: int32, shape: [N], valid_range: [0, 1999]}
+  valid_center_seed_index: {dtype: int64, shape: [N], valid_range: [0, 63999]}
+  valid_scale_block_index: {dtype: int8, shape: [N], valid_range: [0, 1]}
+  valid_assigned_row_index: {dtype: int64, shape: [N], valid_range: [0, 127999]}
+  seeds_xyz: {dtype: float64, shape: [128000, 3]}
+  assigned_row_formula: block_index_times_64000_plus_center_seed_index
+  block_formula: one_iff_scale_id_at_least_1000
+  primitive_shape_after_C_reshape: [N, 7, 32, 3]
+  primitive_order: [center, x_plus, x_minus, y_plus, y_minus, z_plus, z_minus]
+
+frozen_geometry_gate_replay:
+  arithmetic_dtype: float64
+  six_norm_equality: {rtol: 0.00005, atol: 0.0000001}
+  opposite_pair_midpoint: {rtol: 0.00005, atol: 0.0000001}
+  zero_center_sample_0: exact
+  axis_support_sample_0: exact
+  realized_dx: mean_of_six_initial_relative_l2_norms
+  relative_spread: (maximum_norm_minus_minimum_norm)_divided_by_mean_norm
+
+quantization_hypothesis:
+  producer_expression: >-
+    raw_initial = float32(float32(seed_float64 plus_or_minus common_h) -
+    float32(seed_float64))
+  metadata_free_test: >-
+    For each row, invert the observed float32 subtraction into a conservative
+    closed IEEE-754 round-to-nearest envelope for one common positive h across
+    x+/x-/y+/y-/z+/z-. For each shard and scale ID, intersect all row envelopes.
+  grouping: [dataset, source_ordinal, scale_id]
+  scale_table_or_grid_metadata_use: forbidden
+  midpoint_tie_policy: closed_conservative_envelope
+  conclusion_if_any_gate_failure_is_outside_envelope: quantization_only_hypothesis_falsified
+  conclusion_if_all_gate_failures_are_inside_envelope: >-
+    quantization_explanation_supported_for_observed_failures_but_frozen_verify_tolerance_unchanged
+
+output_contract:
+  overwrite: forbidden
+  exact_files_before_completion:
+    - per_shard_geometry.csv
+    - per_scale_geometry.csv
+    - summary.json
+  completion_file_written_last: RUN_COMPLETE.json
+  csv_order: frozen_dataset_order_then_source_ordinal_then_scale_id
+  csv_hashes_bound_by_summary: true
+  json_self_hash_field: content_sha256
+  completion_binds_summary_file_and_content_sha256: true
+  allow_nan_or_infinity: false
+
+claim_boundary:
+  allowed_claims:
+    - frozen_input_geometry_error_distribution
+    - whether_observed_gate_failures_are_consistent_with_float32_cache_production
+    - whether_a_new_pre_registered_verify_version_is_required
+  forbidden_claims:
+    - classifier_performance
+    - descriptor_improvement
+    - tolerance_change_authorization
+    - successful_validation_of_Verify_DimensionlessDeformationFMT_1.1
+    - formal_confirmation
+
+execution:
+  platform: Ibex_CPU
+  required_cpu_constraint: cpu_amd_epyc_7702
+  required_threads: 32
+  required_memory_gib: 128
+  exact_committed_clean_checkout: true
+  python_assertions_required: true

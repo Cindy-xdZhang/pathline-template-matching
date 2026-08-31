@@ -1,0 +1,571 @@
+schema: pathline_template_matching.verify_class_conditional_template_score_config.v1
+experiment: Verify_ClassConditionalTemplateScore_1.1
+phase: exposed_train_only_nested_family_validation
+status: frozen_pre_run_not_implemented
+freeze:
+  date: 2026-08-31
+  frozen_before_first_read_of_any_new_version_real_array_or_result: true
+  new_version_runner_exists: false
+  new_version_real_feature_label_valid_rate_prediction_or_metric_read: false
+  superseded_uncommitted_draft:
+    sha256: 19be180258e791aab8a14705294d80030feb543eccc3bad76148fac4c7de5cbd
+    reason: >-
+      The first uncommitted text draft incorrectly disabled the already
+      pre-specified same-family same-class cross-scale calibration prior and
+      therefore made n equals k calibration unsupported even when a valid
+      same-family same-class prior existed.  This was corrected before any
+      implementation commit, resource smoke, or new-version real array read.
+  immutable_history_note: >-
+    These fields record the state at configuration freeze and must not be
+    rewritten after implementation, smoke testing, or execution begins.
+
+research_question: >-
+  Relative to the authenticated Verify_EarlyOppositePairKinematics_1.1 direct
+  parent, does a family-conditional, class-conditional, exact-scale k-nearest-
+  neighbour conformity score improve held-out-family vortex classification when
+  the descriptor, fit-negative exact-scale scaler, nested family split, spatial
+  transform, candidate grid, success gates, and stop gates stay frozen?
+
+direct_parent:
+  experiment: Verify_EarlyOppositePairKinematics_1.1
+  inheritance: direct_only
+  numerical_git_commit: 2c3774dca0d81db8edd5645e63576526b9e276f7
+  config_path: config/Verify_EarlyOppositePairKinematics_1.1.yaml
+  config_sha256: e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767
+  runner_sha256: e999960ac06d3fedd355e1d6135d9e69316bfe1e798318a22dadf5a8e2063796
+  aggregator_sha256: 631909159387cba854f471b3179ff0f0cd97404905e29b74589b2b8cf71f089e
+  authenticated_five_fold_aggregate_job: 51070392
+  authenticated_parent_family_macro_f1: 0.6391632765825263
+  parent_metric_role: historical_context_only_not_an_input_to_selection_or_scoring
+  inherited_representations: exact_parent_FMT_plus_seed4_arrays
+  inherited_unchanged:
+    - allowed_data_population_and_identity
+    - representation_definitions_widths_and_order
+    - exact_scale_negative_scaler_arithmetic
+    - k_grid
+    - spatial_grouping_grid_sigma_and_truncation
+    - fixed_top_5_percent_decision
+    - threshold_value_grid
+    - nested_family_split_and_macro_aggregation
+    - outer_label_gate
+    - success_and_early_stop_rules
+  not_inherited:
+    - parent_negative_only_tail_score
+    - parent_tail_calibration_artifacts
+    - parent_selected_candidates
+    - parent_outer_predictions_or_metrics
+  prohibited_indirect_parents:
+    - Verify_PerScaleNegativeMetric_1.1_as_the_claimed_direct_parent
+    - Other_FirstPrinciplesHeadroom_1.1
+    - any_dimensionless_or_posthoc_oracle_experiment
+
+single_mechanism_change:
+  parent: negative_only_exact_scale_tail_anomaly
+  current: family_and_class_exact_scale_conformity_contrast
+  family_score_formula: S_f=0.5*(1+q_positive-q_negative)
+  final_score_formula: S=mean_over_jointly_supported_families(S_f)
+  equivalent_final_score_formula: S=0.5*(1+mean_J(q_positive)-mean_J(q_negative))
+  score_is_ratio: false
+  score_is_family_vote: false
+  strict_threshold_comparator_change: score_strictly_greater_than_threshold
+  forbidden_concurrent_changes:
+    - descriptor_or_feature_change
+    - learned_metric_or_feature_weight_search
+    - class_specific_family_specific_or_query_fitted_scaler
+    - class_or_family_balancing_subsampling_or_template_budget
+    - cross_scale_or_cross_family_retrieval_template_pooling
+    - representation_k_sigma_or_threshold_grid_change
+    - spatial_group_or_smoothing_change
+    - split_macro_success_or_stop_rule_change
+    - outer_label_prevalence_orientation_threshold_or_support_tuning
+
+evidence_scope:
+  level: exposed_development_only
+  formal_confirmation: false
+  allowed_datasets:
+    - cylinder3d
+    - halfcylinderRe640
+    - halfcylinderRe6400
+    - deltaWing_resampled
+    - deltaWing_LBM
+    - f22raptor
+    - channel
+    - boeing747
+  allowed_inputs: exact_authenticated_Early_parent_FMT_plus_seed4_train_sidecars_and_matching_parent_labels
+  forbidden_datasets: [tangaroa, smokeBuoyancy]
+  forbidden_access:
+    - Tangaroa_or_Smoke_raw_fields
+    - Tangaroa_or_Smoke_portable_windows
+    - Tangaroa_or_Smoke_primitive_caches
+    - Tangaroa_or_Smoke_features_labels_predictions_or_metrics
+  forbidden_claims:
+    - sealed_confirmation
+    - formal_confirmation
+    - independent_test_set_generalization
+    - performance_improvement_before_authenticated_five_fold_completion
+
+input_identity:
+  cache_builder_git_commit: 260a07ad380d64fc300cabe8926244e92d8ba04a
+  main_config_sha256: 771980f14a6019a1f6e4bf03668d9f37dcf63495ae2dafa866312b12fc71855e
+  descriptor_id: fmt_independent_3d_161d_sha256_25fce29499c9089e
+  cache_schema: pathline_template_matching.phase31_cache.v1
+  train_cache_input_manifest:
+    path: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/train_coverage/slurm_50998592_260a07ad380d/train_cache_input_manifest.json
+    size_bytes: 24009
+    sha256: e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393
+    schema: pathline_template_matching.long_arc_train_cache_input.v1
+    row_count: 32
+    rows_content_sha256: ceb6d0e3fb7a2c90fcaae98583f8d1def7ee75fa7968f38d2821ee3040ae156f
+  kinematic_input_manifest:
+    path: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/preparation/slurm_51068863_fd0412dc134d/kinematic_input_manifest.json
+    sha256: 1b9df53a9010c6c3c46345639cfbf1d5ab2fe3a43187c79c7dfa0f7d840b102f
+  parent_synthetic_pass:
+    path: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/preparation/slurm_51068863_fd0412dc134d/SYNTHETIC_PASS.json
+    sha256: 78d0990352777e488f26bb84f3b0fc16e18845fc7cedb8a7d7fc598f32c0afe3
+  sidecar_root: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/kinematic_cache/train
+  sidecar_population:
+    path: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/kinematic_cache/train/SIDECAR_POPULATION.json
+    sha256: 9f96835b9185218f40df4cc3c52bf3d80a93056681d922a30abfc5c0246f88a7
+    sidecar_count: 32
+    total_valid_rows: 2967612
+  allowed_sidecar_members_before_outer_label_gate:
+    - identity arrays required for exact join
+    - three frozen composite representation arrays
+  parent_valid_labels_open_only_after_fresh_outer_prediction_authentication: true
+
+families:
+  half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+  delta_wing: [deltaWing_resampled, deltaWing_LBM]
+  f22_raptor: [f22raptor]
+  channel: [channel]
+  boeing_747: [boeing747]
+
+nested_split:
+  outer_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  inner_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  outer_unit: complete_physical_family
+  inner_unit: complete_physical_family
+  source_window_unit: complete_source_plus_48_future_frame_horizon
+  random_spatial_seed_split: forbidden
+  outer_fit_family_count: 4
+  inner_fit_family_count: 3
+  outer_labels_available_to_fit_or_selection: false
+  selection_aggregation: equal_dataset_source_block_groups_within_family_then_equal_inner_families
+
+representations:
+  order: [fmt161_plus_seed4, real_neighbor36_plus_seed4, chirality_all35_plus_seed4]
+  fmt161_plus_seed4:
+    definition: all_seven_contiguous_23d_FMT_line_blocks_then_frozen_seed_kinematic4
+    width: 165
+  real_neighbor36_plus_seed4:
+    definition: six_neighbor_lines_times_local_indices_0_3_6_9_12_15_then_frozen_seed_kinematic4
+    width: 40
+  chirality_all35_plus_seed4:
+    definition: seven_lines_times_local_indices_18_through_22_then_frozen_seed_kinematic4
+    width: 39
+  order_width_or_value_recomputation: forbidden
+
+labels:
+  source: authenticated_parent_valid_labels
+  definition: inherited_IVD_p95_boolean_reference
+  classes: [negative, positive]
+  negative_value: false
+  positive_value: true
+  label_use_before_outer_prediction_authentication: nonouter_fit_and_inner_selection_only
+
+shared_negative_scaler:
+  fit_population: every_valid_natural_negative_row_from_all_current_fit_families
+  population_is_shared_across_fit_families: true
+  population_is_shared_across_both_class_libraries_and_queries: true
+  balancing: none
+  subsampling: none
+  dtype_fit_and_storage: float64
+  distance_dtype_after_transform: float32
+  conditioning: exact_numeric_scale_id
+  scale_blocks:
+    legacy_2_1: [0, 999]
+    expanded_3_1: [1000, 1999]
+  local_mean: arithmetic_mean_of_all_fit_negative_rows_at_exact_scale
+  local_variance: population_variance_ddof_0_about_exact_scale_local_mean
+  block_other_prior: same_block_other_scales_after_each_other_scale_is_centered_by_its_own_local_mean
+  global_other_prior: both_blocks_other_scales_with_same_per_scale_centering_only_if_block_other_has_zero_rows
+  shrinkage_lambda: 64
+  local_weight_formula: n_s/(n_s+64)
+  variance_shrinkage_formula: local_weight*local_variance+(1-local_weight)*prior_variance
+  shrinkage_domain: variance_before_square_root
+  std_floor_exclusive: 1.0e-12
+  zero_or_subfloor_effective_std: 1.0
+  no_local_negative_scaler_row_policy: exact_scale_transform_and_retrieval_unsupported_so_calibration_cannot_activate
+  transform_application: same_fitted_mean_and_effective_std_to_positive_library_negative_library_and_query
+  scaler_refit_per_leave_one_out_row: false
+  forbidden:
+    - positive_fitted_scaler
+    - class_specific_scaler
+    - family_specific_scaler
+    - query_or_outer_fitted_scaler
+    - legacy_expanded_pooling_before_exact_scale_centering
+
+family_class_exact_scale_conformity:
+  distance: exact_euclidean_after_shared_negative_exact_scale_diagonal_standardization
+  conditioning_fields: [fit_physical_family, class, exact_numeric_scale_id]
+  ks: [1, 5, 15, 31]
+  library_population: every_valid_natural_row_matching_fit_family_class_and_exact_scale
+  library_balancing_or_subsampling: forbidden
+  cross_family_pooling: forbidden
+  cross_class_pooling: forbidden
+  cross_scale_retrieval_library_pooling_or_fallback: forbidden
+  cross_scale_calibration_reference_prior: same_family_same_class_only_as_frozen_below
+  retrieval:
+    query_distance: kth_nearest_distance_to_matching_family_class_exact_scale_library
+    minimum_class_scale_count: k
+    query_chunk_size: 1024
+    library_chunk_size: 8192
+  calibration:
+    local_reference_population: leave_one_out_kth_nearest_distances_for_every_matching_library_row
+    self_exclusion: set_only_current_row_distance_to_positive_infinity
+    duplicate_policy: retain_all_other_rows_including_equal_and_zero_distance_duplicates
+    scaler_refit_per_leave_one_out_row: false
+    retrieval_minimum_class_scale_count: k
+    local_reference_minimum_class_scale_count: k_plus_1
+    empirical_upper_tail_formula: q=(1+count(reference_distance>=query_kth_distance))/(reference_count+1)
+    equal_distance_policy: greater_than_or_equal_count_is_conservative_for_conformity
+    shrinkage_lambda: 64
+    local_weight_formula: local_reference_count/(local_reference_count+64)
+    same_class_same_family_prior_order:
+      - same_block_other_scale_LOO_references
+      - other_block_LOO_references_only_if_same_block_other_is_empty
+    reference_multisets:
+      local: exact_scale_LOO_kth_distances
+      block: all_same_block_scale_LOO_kth_distances_for_the_same_family_and_class
+      block_other: multiset_difference_of_block_minus_local
+      global_other: opposite_block_LOO_kth_distances_for_the_same_family_and_class
+    local_reference_present_policy: >-
+      Shrink the local empirical upper-tail conformity toward the first
+      available same-family same-class prior; if no prior exists, use local
+      conformity only.
+    n_equals_k_policy: >-
+      Exact-scale retrieval is supported but the local LOO reference is empty;
+      calibration is supported only when the same family and same class has a
+      same-block-other or other-block LOO prior.
+    no_local_or_prior_reference_q: undefined
+    calibration_modes:
+      - local_block_shrink
+      - local_global_shrink
+      - local_only
+      - block_fallback
+      - global_fallback
+      - none
+    exact_mode_formulas:
+      local_block_shrink:
+        condition: local_nonempty_and_block_other_nonempty
+        formula: q=local_weight*q(local)+(1-local_weight)*q(block_other)
+      local_global_shrink:
+        condition: local_nonempty_and_block_other_empty_and_global_other_nonempty
+        formula: q=local_weight*q(local)+(1-local_weight)*q(global_other)
+      local_only:
+        condition: local_nonempty_and_block_other_and_global_other_empty
+        formula: q=q(local)
+      block_fallback:
+        condition: local_empty_and_current_block_reference_nonempty
+        formula: q=q(current_block_reference)
+      global_fallback:
+        condition: local_and_current_block_reference_empty_and_global_other_nonempty
+        formula: q=q(global_other)
+      none:
+        condition: local_current_block_and_global_other_all_empty
+        formula: q=undefined_and_calibration_unsupported
+    every_q_reference_formula: (1+count(reference_distance>=query_kth_distance))/(reference_count+1)
+  class_scores: [q_negative, q_positive]
+  retrieval_fallback: forbidden
+  calibration_prior_scope: same_family_and_same_class_only
+  forbidden_calibration_prior_pooling:
+    - cross_family
+    - cross_class
+
+joint_family_support_and_score:
+  jointly_supported_family_definition: >-
+    The same fit family has supported positive retrieval, positive conformity
+    calibration, negative retrieval, and negative conformity calibration for
+    the query representation, exact scale, and k.
+  inner_gate:
+    available_fit_families: 3
+    minimum_jointly_supported_families: 2
+    name: 2_of_3_joint_support
+  final_outer_gate:
+    available_fit_families: 4
+    minimum_jointly_supported_families: 3
+    name: 3_of_4_joint_support
+  J: exact_set_of_jointly_supported_fit_families
+  per_family_score: S_f=0.5*(1+q_positive-q_negative)
+  final_raw_score: equal_weight_arithmetic_mean_of_S_f_over_J
+  equivalent_final_raw_score: 0.5*(1+equal_mean_J_q_positive-equal_mean_J_q_negative)
+  family_weights: exactly_equal
+  row_count_reference_count_distance_prevalence_or_dataset_weighting: forbidden
+  voting_or_ratio_interpretation: forbidden
+  below_gate:
+    raw_supported: false
+    raw_score: 0.0
+    prediction: negative_unless_later_mask_normalized_spatial_imputation_has_nonzero_support_denominator
+
+group_transform:
+  group_fields: [dataset, source_ordinal, scale_block]
+  grid_shape_zyx: [40, 40, 40]
+  input_score: raw_class_conditional_score_S
+  input_support: passed_joint_family_support_gate
+  gaussian_sigmas_grid_indices: [0.0, 0.5, 1.0, 1.5, 2.0]
+  gaussian_truncate: 3.0
+  sigma_zero_policy: joint_support_failure_score_zero_and_explicit_negative_rejection
+  positive_sigma_policy: joint_support_mask_normalized_spatial_imputation
+  positive_sigma_formula: G(S*joint_support)/G(joint_support)
+  zero_denominator_policy: score_zero_and_explicit_negative_rejection
+  cross_dataset_source_or_block_smoothing: forbidden
+  classifier_minimum_query_batch: complete_valid_source_times_scale_block_grid
+
+decision_candidates:
+  fixed_top_fraction:
+    enabled: true
+    fraction: 0.05
+    count: ceil_fraction_times_all_valid_group_rows_capped_by_eligible_count
+    eligible: joint_supported_or_spatially_imputed_rows_with_strictly_positive_score
+    ineligible_prediction: negative
+    tie_break: descending_score_then_ascending_center_index
+  class_conditional_score_threshold:
+    enabled: true
+    serialized_compatibility_name: calibrated_tail_anomaly_threshold
+    scientific_semantics: class_conditional_template_score_strictly_greater_than_threshold
+    compatibility_name_does_not_mean_negative_tail_anomaly: true
+    comparison: score_strictly_greater_than_threshold
+    equality_prediction: negative
+    eligible: joint_supported_or_spatially_imputed_rows
+    ineligible_prediction: negative
+    values:
+      - 0.50
+      - 0.51
+      - 0.52
+      - 0.53
+      - 0.54
+      - 0.55
+      - 0.56
+      - 0.57
+      - 0.58
+      - 0.59
+      - 0.60
+      - 0.61
+      - 0.62
+      - 0.63
+      - 0.64
+      - 0.65
+      - 0.66
+      - 0.67
+      - 0.68
+      - 0.69
+      - 0.70
+      - 0.71
+      - 0.72
+      - 0.73
+      - 0.74
+      - 0.75
+      - 0.76
+      - 0.77
+      - 0.78
+      - 0.79
+      - 0.80
+      - 0.81
+      - 0.82
+      - 0.83
+      - 0.84
+      - 0.85
+      - 0.86
+      - 0.87
+      - 0.88
+      - 0.89
+      - 0.90
+      - 0.91
+      - 0.92
+      - 0.93
+      - 0.94
+      - 0.95
+      - 0.96
+      - 0.97
+      - 0.98
+      - 0.99
+  decision_count_per_representation_k_sigma: 51
+  candidate_count_formula: 3_representations_times_4_k_times_5_sigma_times_51_decisions
+  frozen_candidate_count: 3060
+  candidate_id_must_encode: [representation, k, sigma, decision_type, threshold_value_and_strict_comparator_if_threshold]
+
+inner_selection:
+  refit_rule: for_each_outer_and_inner_family_fit_scaler_libraries_and_calibrators_on_the_remaining_three_families_only
+  query: complete_held_out_inner_physical_family
+  support_gate: 2_of_3_joint_support
+  eligible_evidence: inner_out_of_family_groups_only
+  aggregation_stage_1: equal_dataset_source_block_groups_within_each_inner_family
+  aggregation_stage_2: equal_four_inner_family_macro
+  expected_inner_family_count_per_outer_fold: 4
+  primary: highest_equal_inner_family_macro_f1
+  tie_break_order:
+    - highest_equal_inner_family_macro_average_precision
+    - highest_equal_inner_family_macro_balanced_accuracy
+    - highest_equal_inner_family_macro_precision
+    - highest_equal_inner_family_macro_recall
+    - lexicographically_smallest_candidate_id
+  outer_family_feature_label_metric_prevalence_or_support_use: forbidden
+
+final_refit_and_outer_label_gate:
+  refit_population: all_four_nonouter_physical_families
+  support_gate: 3_of_4_joint_support
+  final_artifacts_required_before_any_outer_sidecar_feature_member_opens:
+    - final_shared_negative_exact_scale_scaler
+    - final_family_class_exact_scale_template_and_LOO_calibration_bundle
+    - selected_candidate
+    - final_support_policy
+  every_final_artifact_must_be_atomically_written_closed_and_freshly_authenticated: true
+  final_artifacts_must_bind:
+    - new_config_sha256
+    - clean_git_commit
+    - direct_parent_commit_config_and_source_hashes
+    - train_cache_input_manifest_and_rows_sha256
+    - kinematic_input_manifest_sha256
+    - complete_32_sidecar_population_manifest_sha256
+    - representation_and_composite_descriptor_id
+    - exact_four_fit_family_set
+    - exact_scale_class_family_counts
+    - shared_scaler_hash
+    - template_and_calibration_bundle_hash
+    - selected_candidate_and_joint_support_policy
+  outer_feature_projection:
+    source: authenticated_Early_parent_FMT_plus_seed4_sidecars
+    labels_opened: false
+    parent_predictions_or_metrics_opened: false
+  outer_prediction_must_be_freshly_recomputed_written_closed_and_authenticated_before_parent_valid_labels_open: true
+  outer_reference_source_after_prediction_authentication: parent_valid_labels
+  identity_join: exact_dataset_source_scale_center_block_assigned_row_and_order
+  fit_selection_support_orientation_prevalence_or_threshold_use_of_outer_labels: forbidden
+  audit_file_required: true
+
+metrics:
+  decision:
+    - accuracy
+    - f1
+    - balanced_accuracy
+    - precision
+    - recall
+    - true_positive
+    - false_positive
+    - true_negative
+    - false_negative
+  continuous_score:
+    - average_precision
+    - auroc
+  support_and_population:
+    - joint_support_fraction
+    - spatial_imputed_fraction
+    - spatial_unimputable_fraction
+    - joint_supported_family_count_histogram
+    - per_family_positive_retrieval_and_calibration_support_fraction
+    - per_family_negative_retrieval_and_calibration_support_fraction
+    - sample_count
+    - positive_count
+    - negative_count
+
+success_stop_rule:
+  outer_family_macro_f1_minimum: 0.70
+  outer_families_at_or_above_0_65_minimum: 4
+  minimum_single_outer_family_f1: 0.50
+  outer_family_macro_average_precision_minimum: 0.60
+  outer_family_macro_balanced_accuracy_minimum: 0.70
+  outer_family_macro_precision_minimum: 0.60
+  outer_family_macro_recall_minimum: 0.60
+  method_or_threshold_changes_after_any_outer_result: forbidden
+  success_requires_complete_five_unique_outer_families: true
+  single_fold_success_claim: forbidden
+  authenticated_early_stop_conditions:
+    - any_completed_outer_family_f1_strictly_below_0_50
+    - two_completed_outer_family_f1_values_strictly_below_0_65
+    - setting_every_remaining_family_metric_to_one_still_cannot_reach_any_five_family_macro_threshold
+  early_stop_certificate_schema: pathline_template_matching.verify_class_conditional_template_score_early_stop_certificate.v1
+
+pre_run_gates:
+  required_before_resource_smoke:
+    - clean_committed_git_revision_and_exact_config_sha256
+    - production_source_hashes_recorded
+    - exact_arithmetic_unit_tests_for_shared_scaler_LOO_conformity_joint_support_score_and_strict_ties
+    - synthetic_identity_join_and_outer_member_access_tests
+    - synthetic_full_3060_candidate_enumeration_test
+  required_before_first_real_outer_fold:
+    - resource_smoke_PASS_marker_authenticated
+    - no_new_version_outer_feature_label_prediction_or_metric_read_during_smoke
+    - exact_parent_input_manifests_reauthenticated
+  required_after_first_outer_fold_before_remaining_folds:
+    - first_fold_fresh_replay_authentication_PASS
+    - first_fold_artifact_call_order_and_outer_label_gate_PASS
+    - first_fold_early_stop_certificate_evaluated
+
+resource_smoke:
+  mandatory: true
+  purpose: memory_runtime_and_exact_path_validation_only_not_performance_evidence
+  fixed_split_identity:
+    reserved_outer_family_not_opened: half_cylinder
+    reserved_inner_family_not_opened: delta_wing
+    fit_families_opened: [f22_raptor, channel, boeing_747]
+  real_inputs_allowed: fit_family_parent_sidecar_features_identity_and_labels_only
+  worst_case_path:
+    representation: fmt161_plus_seed4
+    k: 31
+    scales: all_exact_scales_present_in_the_three_fit_families
+    operation: build_full_shared_negative_scaler_and_all_family_class_exact_scale_library_and_LOO_calibration_references
+    query_exercise: deterministic_label_free_synthetic_queries_only
+  forbidden_outputs:
+    - accuracy_f1_average_precision_balanced_accuracy_auroc_precision_or_recall
+    - inner_or_outer_predictions
+    - selected_candidate
+    - any_method_performance_conclusion
+  slurm:
+    partition: cpu
+    constraint: rome
+    account: deepvortex
+    nodes: 1
+    cpus_per_task: 32
+    memory_gb: 128
+    walltime: "04:00:00"
+    gpu: none
+  pass_conditions:
+    - exit_code_zero
+    - peak_memory_strictly_below_128_GB
+    - elapsed_time_at_or_below_4_hours
+    - all_constructed_scaler_library_and_calibration_arrays_finite
+    - exact_self_exclusion_duplicate_and_support_count_audits_pass
+    - no_forbidden_dataset_or_reserved_family_member_opened
+    - immutable_resource_smoke_PASS_marker_written_last
+  failure_policy: >-
+    Chunking, streaming, or storage plumbing may change only if exact arithmetic
+    and outputs remain byte-authenticated; any numerical or method change requires
+    a new experiment version before another real-data read.
+
+execution:
+  platform: Ibex
+  host: glogin.ibex.kaust.edu.sa
+  environment: deepvortex
+  full_fold_slurm:
+    partition: cpu
+    constraint: rome
+    account: deepvortex
+    nodes: 1
+    cpus_per_task: 32
+    memory_gb: 128
+    walltime: "12:00:00"
+    gpu: none
+  deployment_contract:
+    - push_exact_commit_then_use_clean_Ibex_checkout
+    - verify_commit_config_parent_source_and_input_manifest_hashes_before_array_access
+    - never_depend_on_uncommitted_local_files
+    - register_every_Slurm_process_immediately
+
+output:
+  root: /ibex/user/zhanx0o/pathline-template-matching/Verify_ClassConditionalTemplateScore_1.1
+  smoke_directory_pattern: resource_smoke/slurm_JOBID_COMMIT12
+  fold_directory_pattern: runs/slurm_JOBID_ARRAYTASK_COMMIT12_outer_FAMILY
+  aggregate_directory_pattern: aggregate/slurm_JOBID_COMMIT12
+  overwrite: forbidden
+  atomic_publish: hard_link_without_replace
+  current_state: configuration_frozen_implementation_absent_no_run_no_performance_result

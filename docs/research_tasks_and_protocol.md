@@ -508,3 +508,49 @@ oracle的all-block F1分别为`0.6352716877863082`、`0.23611906536172073`、
 score的label-free二分，下一验证必须改变score ordering或表示。Legacy oracle的
 `0.7148507101403403`只属已暴露分块诊断，不能取代all-block规则或称成功。完整合同与哈希见
 `docs/Other_FirstPrinciplesHeadroom_1.1.md`。
+
+## 27. `Other_DimensionlessInputGeometryAudit_1.1` 的无标签真实输入几何审计
+
+本诊断只回答 `Verify_DimensionlessDeformationFMT_1.1` job `51088712` 的真实 Raw672
+输入为何违反冻结初始几何合同；它不改变1.1的公式或容差，也不产生分类性能结论。
+
+- 唯一输入是 SHA-256 为 `e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393`
+  的32-row train-cache manifest。每个 NPZ 必须先认证完整文件 size/SHA，再且仅按顺序打开
+  `raw_features, valid_scale_id, valid_center_seed_index, valid_scale_block_index,
+  valid_assigned_row_index, seeds_xyz`；label、metadata、FMT、IVD、sidecar、test cache 与
+  raw flow 全部禁止。
+- 逐row重放 center-origin、axis-support、zero-dx、六距离相等及opposite-pair检查，并反演
+  `float32(float32(seed±h)-float32(seed))` 的保守closed rounding envelope。严格正`h`
+  量化为零差值仍允许反演；center非零或off-axis不能由该producer解释。
+- 逐row存在共同`h`只是必要条件；同一 `dataset×source×exact scale` 的全部rows还必须有
+  非空共同`h`交集。只有两级都通过的失败才记为量化可解释。
+- 输出目录不可覆盖；两个CSV和自哈希summary先写，production入口在最后一次clean-commit
+  门禁通过后才原子写 `RUN_COMPLETE.json`。失败、partial与否定结果都保留。
+
+唯一配置 SHA-256 为
+`c874a8d9f6abbab452c6543139073eea2ac88e3db99ea13f78e0c3d43e03f566`。完整合同见
+`docs/Other_DimensionlessInputGeometryAudit_1.1.md`。当前状态为实现完成、真实32-shard审计尚未运行。
+
+## 28. `Verify_ClassConditionalTemplateScore_1.1` 的正负类模板一致度分数
+
+本版本直接继承已认证的 `Verify_EarlyOppositePairKinematics_1.1`，唯一科学变化是把
+negative-only anomaly改为每个fit family内正类与负类的exact-scale模板一致度对比；FMT+seed4
+三种表示、共享负类逐尺度scaler、nested complete-family split、空间处理、3060候选以及成功和停止门
+全部保持不变。
+
+- 每个fit family/class/exact scale分别做第`k`近邻检索；leave-one-out第`k`距离给本地
+  upper-tail reference，同family同class的其他尺度只允许作冻结calibration prior，不能进入
+  retrieval library。经验一致度为`q=(1+count(reference>=distance))/(N+1)`。
+- 同一family的正负retrieval与calibration四项都支持才进入共同集合`J`；分数为
+  `S_f=0.5*(1+q_positive-q_negative)`，再对`J`中的families严格等权。Inner门为2/3，final门为
+  3/4；这是支持门，不是family投票。Threshold严格使用`S>t`，相等判负。
+- Outer feature和label保持两阶段隔离：final scaler/library/calibrator、candidate与support policy
+  必须写闭并重新认证，outer prediction也必须写闭并fresh replay后，才允许打开outer labels。
+- 任一真实fold前必须先通过固定的Rome CPU资源smoke：只打开f22/channel/Boeing三个fit families，
+  用165D表示、`k=31`和全部observed scales构建完整模型，只查询确定性无标签synthetic rows；禁止
+  metric、prediction或candidate selection。
+
+最终冻结配置 SHA-256 为
+`814f95d2ec58f751a91082d588f790b3592a891963810013ad92ab704febbdea`。本版本仍在实现和纯合成验证，
+尚未打开任何本版本真实数组或产生性能结果；完整合同见
+`docs/Verify_ClassConditionalTemplateScore_1.1.md`。
