@@ -449,3 +449,14 @@ PerScale 图也禁止改名冒充 Early 结果。
 
 唯一配置为 `config/Other_EarlyOppositePairKinematicsVisualization_1.1.yaml`；冻结 SHA-256
 为 `0b5053cdd2342fcd65950b82f08b520de4c8a2717c44ad15a5d13babd0caf1c8`。
+
+终态为 `COMPLETED_LOCAL_REPORTING_QA_PASS`。报告器由 commit
+`7e2d7c7e44385f91414c6e4ec347f88e16da7466` 固定；它认证并连接全部406,177个 valid
+rows，生成8张 PNG/SVG/PDF 三联图。8/8 ordered identity join 与 `1e-12` 指标重算、
+8/8 panel alignment、PDF文字、PNG解码和逐图视觉检查均通过，collision audit 为0 FAIL；
+图内没有独立图例，交付 caption 必须说明 panel b 和 panel c 的颜色/符号。legacy F1
+Re160/Re640/Re6400/Boeing=`0.7367/0.5682/0.6981/0.8338`，expanded=
+`0.6406/0.4928/0.6610/0.6873`。同一已暴露 source 2 上八行均高于旧 PerScale，只能作
+描述性比较；父 Early 五-family macro F1=`0.639163<0.70` 的失败结论不变。权威结果见
+`docs/Other_EarlyOppositePairKinematicsVisualization_1.1.md` 与
+`docs/evidence/Other_EarlyOppositePairKinematicsVisualization_1.1_local_summary.json`。
