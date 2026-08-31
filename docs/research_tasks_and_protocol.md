@@ -396,10 +396,11 @@ fit、prediction、label或metric，认证job `51087140`未启动并取消，所
 validation-only修复commit `46f02e60bb345c4e2f7f6ece6aba88cca09f1f6a`固定父身份与
 transaction内loader，修复后runner SHA为`e977fa6754ad3029bfaf3e7e5f5334babac018854daec28a46dc4df11a2e01ea`，
 统一回归`339/339 PASS`（2026-08-31，215.429 s）。修复后clean rerun `51088712`
-通过身份门，但在首批真实Raw672的无量纲编码中发现六个实现初始邻距不满足冻结等距合同；
-它在fit、prediction、outer label和metric之前失败并保留空partial目录，认证`51088726`
-未启动后取消。当前没有性能结论。必须先做label-free误差分布与producer来源诊断，禁止
-静默放宽冻结公式或容差；旧失败和取消记录不得删除。
+通过身份门，但在首批真实nonouter Raw672的无量纲编码中发现六个实现初始邻距不满足
+冻结等距合同；nonouter labels已随cache载入内存，但尚未用于inner metric。它在fit、
+candidate selection、prediction、outer cache/label和真实metric之前失败并保留空partial目录，
+认证`51088726`未启动后取消。当前没有性能结论。必须先做不读取label的误差分布与producer
+来源诊断，禁止静默放宽冻结公式或容差；旧失败和取消记录不得删除。
 唯一配置为 `config/Verify_DimensionlessDeformationFMT_1.1.yaml`，冻结 SHA-256 为
 `c689b1d265bbc39327b2ed4147e8ffb22450dcd26f87b7c19ceae346c9ecfe18`；完整公式与风险见
 `docs/Verify_DimensionlessDeformationFMT_1.1.md`。

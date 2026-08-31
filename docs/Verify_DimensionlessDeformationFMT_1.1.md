@@ -190,5 +190,7 @@ fresh-replay认证后，才能在实验日志新增性能结论。冻结config�
   4/4 wrapper语法。新首折job `51088712`通过身份门后，在读取真实Raw672并执行第一批
   无量纲编码时触发`six realized initial neighbor distances are unequal`，于14:04:16失败；
   output目录已创建但为空。依赖认证job `51088726`从未启动，于14:06:20取消。失败仍早于
-  model fit、prediction、outer label和metric，所以没有方法性能结论；下一步必须先用
-  label-free诊断量化六邻距误差及其生产来源，不能静默放宽冻结公式或容差。
+  model fit、candidate selection、prediction、outer cache/label和真实metric。需要明确：
+  nonouter `valid_labels`已随cache members载入内存，但错误发生在它们进入inner metric之前。
+  因此没有方法性能结论；下一步只允许用不读取label的诊断量化六邻距误差及其生产来源，
+  不能静默放宽冻结公式或容差。
