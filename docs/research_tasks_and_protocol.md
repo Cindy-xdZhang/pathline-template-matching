@@ -529,7 +529,10 @@ score的label-free二分，下一验证必须改变score ordering或表示。Leg
 
 唯一配置 SHA-256 为
 `c874a8d9f6abbab452c6543139073eea2ac88e3db99ea13f78e0c3d43e03f566`。完整合同见
-`docs/Other_DimensionlessInputGeometryAudit_1.1.md`。当前状态为实现完成、真实32-shard审计尚未运行。
+`docs/Other_DimensionlessInputGeometryAudit_1.1.md`。Job `51092739` 已认证完成：2,967,612行中
+57,446行失败，全部57,446行满足逐row和同尺度共同`h`量化解释，无不可解释、center、off-axis或
+zero-`dx`失败。旧结论“原因未知”因此收窄为“全部观察失败与absolute-float32后中心化一致”；
+Dimensionless 1.1仍因冻结输入合同不兼容而停止，任何修复必须新建版本。
 
 ## 28. `Verify_ClassConditionalTemplateScore_1.1` 的正负类模板一致度分数
 

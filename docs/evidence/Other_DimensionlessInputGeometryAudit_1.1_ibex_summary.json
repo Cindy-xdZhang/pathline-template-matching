@@ -1,0 +1,55 @@
+{
+  "schema": "pathline_template_matching.dimensionless_input_geometry_audit_ibex_evidence.v1",
+  "experiment": "Other_DimensionlessInputGeometryAudit_1.1",
+  "status": "completed_authenticated_label_free_audit",
+  "formal_confirmation": false,
+  "job_id": "51092739",
+  "git_commit": "f7ce798d57d86cb47a05d3664b2d896059682cc6",
+  "config_sha256": "c874a8d9f6abbab452c6543139073eea2ac88e3db99ea13f78e0c3d43e03f566",
+  "node": "cn514-14-r",
+  "elapsed": "00:01:39",
+  "slurm_max_rss_kib": 8583488,
+  "counts": {
+    "shard_count": 32,
+    "row_count": 2967612,
+    "observed_shard_scale_count": 52665,
+    "center_origin_fail_count": 0,
+    "axis_support_fail_count": 0,
+    "zero_dx_count": 0,
+    "six_norm_fail_count": 55686,
+    "opposite_pair_fail_count": 57238,
+    "either_gate_fail_count": 57446,
+    "rounding_envelope_feasible_count": 2967612,
+    "rounding_envelope_infeasible_count": 0,
+    "gate_fail_explained_by_rounding_count": 57446,
+    "gate_fail_unexplained_count": 0
+  },
+  "per_dataset": {
+    "cylinder3d": {"row_count": 416006, "gate_fail_count": 2194},
+    "halfcylinderRe640": {"row_count": 412323, "gate_fail_count": 2192},
+    "halfcylinderRe6400": {"row_count": 481037, "gate_fail_count": 41181},
+    "deltaWing_resampled": {"row_count": 294504, "gate_fail_count": 0},
+    "deltaWing_LBM": {"row_count": 294547, "gate_fail_count": 248},
+    "f22raptor": {"row_count": 437257, "gate_fail_count": 0},
+    "channel": {"row_count": 315580, "gate_fail_count": 9115},
+    "boeing747": {"row_count": 316358, "gate_fail_count": 2516}
+  },
+  "hypothesis_status": "quantization_explanation_supported_for_all_observed_gate_failures",
+  "access_audit": {
+    "authenticated_cache_file_count": 32,
+    "forbidden_cache_member_open_count": 0,
+    "label_access": false,
+    "metric_access": false,
+    "raw_flow_access": false,
+    "test_dataset_access": false
+  },
+  "artifacts": {
+    "RUN_COMPLETE.json": "2585126e4341a20c8f7b18553fdea25fcdca7fc36b2ed6793b359d381a8d7f6d",
+    "summary.json": "4e00a2598d783f5c7de61d1d7f5750b3fadebde000ecf70f77a55640f852a8dd",
+    "per_shard_geometry.csv": "cad911358e65b714cb766635f96784a32d0469b4098aae99480e81fde222a2c2",
+    "per_scale_geometry.csv": "9c58963a8e00cd68527f7d6015428580992d3ee1f4848c3f7be8be728b3dad22",
+    "stdout": "50f676ba5a5961c5d2900d690dd01ce0e6a71fe9b073820c011efc0d328aad98",
+    "stderr": "6423f113a456c67a3f62566e26ac7a7f8f1ec8e957ad4ac79daeb2ee22f51068"
+  },
+  "claim_boundary": "This is a label-free input-geometry diagnosis, not classifier performance or formal confirmation."
+}

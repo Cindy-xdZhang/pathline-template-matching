@@ -1,6 +1,6 @@
 # `Other_DimensionlessInputGeometryAudit_1.1`
 
-当前状态：**`IMPLEMENTED_NOT_YET_RUN_ON_ALL_32_SHARDS`**。唯一配置为
+当前状态：**`COMPLETED_AUTHENTICATED_LABEL_FREE_AUDIT`**。唯一配置为
 `config/Other_DimensionlessInputGeometryAudit_1.1.yaml`，冻结 SHA-256 为
 `c874a8d9f6abbab452c6543139073eea2ac88e3db99ea13f78e0c3d43e03f566`。
 
@@ -143,5 +143,40 @@ mkdir -p slurm_logs
 EXPECTED_GIT_COMMIT=<FULL_COMMIT> sbatch ibex/other_dimensionless_input_geometry_audit_1.1.sh
 ```
 
-提交后必须按项目协议立即把job登记到`docs/ibex_run_registry.md`；本实现任务按要求没有修改
-共享registry、experiment log、research protocol或`tests/test_all.py`。
+提交后必须按项目协议立即把job登记到`docs/ibex_run_registry.md`。
+
+## 7. Ibex结果与结论
+
+Job `51092739` 从clean detached commit
+`f7ce798d57d86cb47a05d3664b2d896059682cc6`运行，2026-08-31 15:30:56--15:32:35
++03:00在`cn514-14-r`完成，exit code `0:0`，elapsed `00:01:39`，Slurm MaxRSS
+`8,583,488 KiB`。Wrapper 的7项合成/认证测试与最后fresh authentication均通过。
+
+完整32 shards包含2,967,612个valid rows与52,665个observed shard-scale groups。结果为：
+
+| 检查 | 行数 |
+|---|---:|
+| 任一冻结初始几何门失败 | 57,446（1.935765%） |
+| 六距离不等 | 55,686 |
+| opposite-pair不闭合 | 57,238 |
+| center-origin / off-axis / zero-`dx`失败 | 0 / 0 / 0 |
+| 逐row rounding envelope不可行 | 0 |
+| 失败且无法由逐row+同尺度共同`h`解释 | 0 |
+
+按dataset的失败行数为：Re160 `2,194/416,006`，Re640 `2,192/412,323`，Re6400
+`41,181/481,037`，`deltaWing_resampled` `0/294,504`，`deltaWing_LBM` `248/294,547`，
+F22 `0/437,257`，channel `9,115/315,580`，Boeing 747 `2,516/316,358`。Re6400占全部
+失败的71.69%，其自身失败率为8.560879%；这说明问题不是只有最初观察到的
+`deltaWing_LBM`，也不是单一flow特例。
+
+认证结论是
+`quantization_explanation_supported_for_all_observed_gate_failures`：父cache先存absolute
+float32坐标、再做float32中心化的生产顺序足以解释全部冻结初始几何失败。这个结果把此前
+“原因未知”修订为“全部观察失败与该量化机制一致”，但不授权修改1.1。若继续验证无量纲表示，
+必须新建预注册版本，明确选择producer-aware acceptance、从冻结scale构造逻辑初始几何，或重建
+float64-before-centering cache；三者是不同方法/输入合同，不能把任一方案静默写回1.1。
+
+四个artifact SHA-256为：`per_shard_geometry.csv` `cad91135...`，
+`per_scale_geometry.csv` `9c58963a...`，`summary.json` `4e00a259...`，
+`RUN_COMPLETE.json` `2585126e...`。完整结构化摘要见
+`docs/evidence/Other_DimensionlessInputGeometryAudit_1.1_ibex_summary.json`。

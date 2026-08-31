@@ -194,3 +194,25 @@ fresh-replay认证后，才能在实验日志新增性能结论。冻结config�
   nonouter `valid_labels`已随cache members载入内存，但错误发生在它们进入inner metric之前。
   因此没有方法性能结论；下一步只允许用不读取label的诊断量化六邻距误差及其生产来源，
   不能静默放宽冻结公式或容差。
+
+## 10. 无标签输入审计后的终态
+
+`Other_DimensionlessInputGeometryAudit_1.1` job `51092739`随后从commit
+`f7ce798d57d86cb47a05d3664b2d896059682cc6`完成完整32-shard审计。它在每个NPZ整文件认证后
+仅打开Raw672、四个identity arrays和`seeds_xyz`，没有打开label、FMT、IVD、metadata、sidecar、
+test cache或raw flow。
+
+2,967,612行中有57,446行违反冻结初始几何门；其中55,686行六距离不等、57,238行
+opposite-pair不闭合。全部57,446行既有逐row共同正`h`，其所在
+`dataset×source×exact-scale`也有能同时解释全部rows的共同`h`；无法解释的失败为0，center、
+off-axis和zero-`dx`失败也均为0。完整summary/RUN_COMPLETE SHA-256为
+`4e00a2598d783f5c7de61d1d7f5750b3fadebde000ecf70f77a55640f852a8dd` /
+`2585126e4341a20c8f7b18553fdea25fcdca7fc36b2ed6793b359d381a8d7f6d`。
+
+结论修订为：**此前“真实cache与冻结门不兼容但来源未知” → “全部观察失败与先存absolute
+float32、再做float32中心化的生产量化机制一致” → 因为完整32-shard、逐row和同scale共同`h`
+审计均通过且无反例。** 旧结论并非错误，而是范围较窄，只能定位pre-fit合同失败，不能解释来源。
+
+本版本仍保持`STOPPED_PRE_FIT_REAL_CACHE_COMPATIBILITY_FAILURE`，没有分类性能结果，冻结容差与
+公式不改。若继续，必须新建版本并预先固定是采用producer-aware接受、逻辑初始几何重构，还是
+重建float64-before-centering cache；这些选择不能混为同一个验证。
