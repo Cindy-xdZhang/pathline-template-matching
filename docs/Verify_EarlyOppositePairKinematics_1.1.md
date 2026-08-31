@@ -1,6 +1,6 @@
 # `Verify_EarlyOppositePairKinematics_1.1`
 
-状态：**`IBEX_REMAINING_FOLDS_RUNNING_AGGREGATE_QUEUED`**。唯一配置为
+状态：**`COMPLETED_STOPPED_AFTER_AUTHENTICATED_FIVE_FOLD_FAILURE`**。唯一配置为
 `config/Verify_EarlyOppositePairKinematics_1.1.yaml`，原始文件 SHA-256 为
 `e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767`。
 本配置冻结于首次读取 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer
@@ -69,9 +69,21 @@ release wrapper错误读取`file_sha256`；依赖聚合`51070165`未运行并已
 AP/F1/balanced accuracy=`0.692985/0.628171/0.787448`，认证completion/certificate
 SHA-256分别为`8ee3e54b0dfd3e3f6bdd4199687bbf3072bc5d71feca01661d5d72e31ec1b162`与
 `b1e24d2e34aaa861aa0737e9a64f5682bc40c829dbd1b15307a5d48e0471025a`，证书再次给出
-`stop_version=false`。因此remaining array `51070386_[1-4]`已按固定`%2`并发上限
-释放，完整五折聚合`51070392`以`afterok`依赖排队；聚合成功认证前不读取remaining
-outer指标。
+`stop_version=false`。因此remaining array `51070386_[1-4]`按固定`%2`并发上限
+释放并全部`COMPLETED 0:0`，完整五折聚合`51070392`也已`COMPLETED 0:0`；只有
+aggregate authentication成功后才首次读取remaining outer指标。
+
+最终五-family macro Accuracy/AP/F1/balanced accuracy/AUROC/precision/recall为
+`0.966668/0.699746/0.639163/0.847897/0.977888/0.591419/0.717102`。逐family F1按
+冻结顺序为`0.628171,0.785752,0.505591,0.552549,0.723753`。相对父PerScale的
+macro F1 `0.538108`提高`0.101055`，说明固定4D seed-time局部运动学是有实质作用的
+表示变化；但macro F1未达到0.70，只有delta-wing与Boeing 747达到0.65，macro
+precision也低于0.60，所以`all_success_conditions_pass=false`并停止本版本。禁止在
+这些结果可见后扫描block权重、阈值或候选。aggregate completion/manifest/summary/table
+SHA-256分别为`3870889c1db13687bf1f5deea0aa78bfcd049c7b96f4ee90b766a9a39ed5d817`、
+`5e0e2b40fc12fc4a20257f93da70e3dd21e17eccae20c5c148f51ee6be70f024`、
+`f2527de26dad17ad65627c44925f484a83e6a31d3678fa36aed9fac16a4dcc56`、
+`facf6eba86418c361728f0998eca2ffa3ae06f8a9cace49a30387a37d0bbefd9`。
 
 本次实现证据：
 
@@ -404,6 +416,8 @@ times，仅 train valid rows 未压缩就需 2.476 GiB，所以不属于本最�
 5. **Transductive 决策。** Positive sigma 与 fixed top-5% 仍依赖完整 query group；
    即使 descriptor 独立，也不能称整个 classifier 是逐 primitive independent。
 
-只有从clean numerical commit完成真实 synthetic gate、32-sidecar population
-authentication、五折 Ibex运行及 aggregate authentication 后，才能新增性能结论；
-冻结 config 中记录预注册时点的历史字段不得改写。
+clean numerical commit、真实synthetic gate、32-sidecar population authentication、
+五折Ibex运行和aggregate authentication均已完成。当前结论只属于八个已暴露train
+flows的nested-family development证据，不是formal confirmation；冻结config中记录
+预注册时点的历史字段不得改写。结构化证据见
+`docs/evidence/Verify_EarlyOppositePairKinematics_1.1_ibex_summary.json`。

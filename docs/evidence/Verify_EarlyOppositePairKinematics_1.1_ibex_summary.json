@@ -1,0 +1,96 @@
+{
+  "schema": "pathline_template_matching.documented_early_opposite_pair_kinematics_evidence.v1",
+  "experiment": "Verify_EarlyOppositePairKinematics_1.1",
+  "status": "completed_stopped_after_authenticated_five_fold_failure",
+  "evidence_scope": "exposed_train_only_nested_family_validation",
+  "formal_confirmation": false,
+  "config_sha256": "e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767",
+  "input_manifest_sha256": "e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393",
+  "input_manifest_rows_sha256": "ceb6d0e3fb7a2c90fcaae98583f8d1def7ee75fa7968f38d2821ee3040ae156f",
+  "kinematic_input_manifest_sha256": "1b9df53a9010c6c3c46345639cfbf1d5ab2fe3a43187c79c7dfa0f7d840b102f",
+  "sidecar_population_manifest_sha256": "9f96835b9185218f40df4cc3c52bf3d80a93056681d922a30abfc5c0246f88a7",
+  "numerical_git_commit": "2c3774dca0d81db8edd5645e63576526b9e276f7",
+  "slurm": {
+    "first_fold_job_id": "51070299",
+    "first_fold_auth_job_id": "51070310",
+    "remaining_fold_array_job_id": "51070386_[1-4]",
+    "aggregate_job_id": "51070392",
+    "aggregate_state": "COMPLETED",
+    "aggregate_exit_code": "0:0",
+    "aggregate_start_local": "2026-08-31T06:40:14+03:00",
+    "aggregate_end_local": "2026-08-31T06:48:38+03:00",
+    "aggregate_elapsed": "00:08:24",
+    "aggregate_node": "cn512-07-r",
+    "aggregate_cpu_count": 32,
+    "aggregate_memory_request_gb": 128,
+    "aggregate_batch_max_rss_kb": 4216616
+  },
+  "family_order": [
+    "half_cylinder",
+    "delta_wing",
+    "f22_raptor",
+    "channel",
+    "boeing_747"
+  ],
+  "family_f1": {
+    "half_cylinder": 0.6281710485127744,
+    "delta_wing": 0.7857522697201801,
+    "f22_raptor": 0.5055908274948733,
+    "channel": 0.5525494062392791,
+    "boeing_747": 0.7237528309455239
+  },
+  "family_macro": {
+    "accuracy": 0.9666679411754252,
+    "average_precision": 0.6997456375975248,
+    "f1": 0.6391632765825263,
+    "balanced_accuracy": 0.8478967074064832,
+    "auroc": 0.9778880261704186,
+    "precision": 0.5914188886730086,
+    "recall": 0.717101630258347,
+    "retrieval_support_fraction": 1.0,
+    "calibration_support_fraction": 1.0,
+    "spatial_imputed_fraction": 0.0,
+    "spatial_unimputable_fraction": 0.0
+  },
+  "success_stop_rule": {
+    "all_success_conditions_pass": false,
+    "passed": [
+      "minimum_single_outer_family_f1",
+      "outer_family_macro_average_precision_minimum",
+      "outer_family_macro_balanced_accuracy_minimum",
+      "outer_family_macro_recall_minimum"
+    ],
+    "failed": [
+      "outer_families_at_or_above_0_65_minimum",
+      "outer_family_macro_f1_minimum",
+      "outer_family_macro_precision_minimum"
+    ]
+  },
+  "aggregate_files": {
+    "AGGREGATE_COMPLETE.json": "3870889c1db13687bf1f5deea0aa78bfcd049c7b96f4ee90b766a9a39ed5d817",
+    "aggregate_manifest.json": "5e0e2b40fc12fc4a20257f93da70e3dd21e17eccae20c5c148f51ee6be70f024",
+    "aggregate_summary.json": "f2527de26dad17ad65627c44925f484a83e6a31d3678fa36aed9fac16a4dcc56",
+    "outer_family_summary.csv": "facf6eba86418c361728f0998eca2ffa3ae06f8a9cace49a30387a37d0bbefd9"
+  },
+  "aggregate_log_sha256": {
+    "stdout": "e0f83dddfe610d20db05b9e79e9c075a8a7072049fe9316a576c5d7bd10131a1",
+    "stderr": "795b5b2ce5699c3df83712ad5118b85ed1de83c812be9d72002eb1aff815fead"
+  },
+  "authentication": {
+    "first_fold_fresh_replay": "PASS",
+    "remaining_release_complete_schema_gate": "PASS",
+    "complete_five_fresh_replay_and_outer_label_gate": "PASS",
+    "aggregate_exact_file_set_and_self_hash": "PASS"
+  },
+  "parent_per_scale_family_macro_f1": 0.5381077848965329,
+  "family_macro_change_from_parent": {
+    "accuracy": 0.008903188065773393,
+    "average_precision": 0.13017763081772593,
+    "f1": 0.10105549168599337,
+    "balanced_accuracy": 0.06269235736883494,
+    "auroc": 0.03207681824876518,
+    "precision": 0.08900217810994993,
+    "recall": 0.12075061868274461
+  },
+  "conclusion": "The fixed seed-time four-dimensional opposite-pair kinematic block materially improves complete-family-held-out performance over PerScale, but macro F1 remains below 0.70 and only two families reach F1 0.65; stop this version without post-result tuning."
+}

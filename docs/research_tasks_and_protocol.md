@@ -276,7 +276,18 @@ SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 prediction、label、metric 或 aggregate 结果之前冻结。冻结时 PerScale jobs
 `51063738/51063753` 已提交但 outer 结果尚未读取；配置中的
 `frozen_before_first_read_of_any_per_scale_outer_result: true` 是不可改写的历史事实。
-当前执行状态为 `IBEX_SECOND_FIRST_FOLD_RETRY_RUNNING_AUTH_QUEUED`：production证据均通过。首个合同失败`51069363/51069364`保留；JSON顺序修复commit `f5f94e6a18e42970f86a5b49424a55fa61b956e2`的首折/认证`51069713/51069716`完成，认证half-cylinder F1=`0.628171`且`stop_version=false`。remaining array `51069778_[1-4]`因release wrapper使用不存在的input字段`composite_descriptor_ids`在fold计算前失败，聚合`51069782`取消；该失败无性能含义。release绑定已抽为动态测试函数，精确认证真实`composite_descriptors[name].descriptor_id`、synthetic/population IDs、固定producer commit与当前fold commit；Early定向`18/18 PASS`，统一回归`307/307 PASS`。新commit `4ba49f3169c707ebe36d59a093f8f804b350810b`与Ibex 9/9 `bash -n`通过；为保持五fold exact commit一致，新首折/认证`51070022/51070024`运行/依赖排队。数值方法、候选、split、停止规则与outer label gate未改变；新认证完成前不读取其outer结果。
+当前执行状态为 `COMPLETED_STOPPED_AFTER_AUTHENTICATED_FIVE_FOLD_FAILURE`。所有历史
+合同失败与取消均保留：`51069363/51069364`为canonical JSON对象键顺序错误，
+`51069778/51069782`为preparation input schema错误，`51070145/51070165`为runner result
+manifest schema错误；三类失败都发生在新fold计算前，不是性能证据。完整字段动态审计后的
+clean numerical commit为`2c3774dca0d81db8edd5645e63576526b9e276f7`，定向测试
+`19/19 PASS`、统一回归`308/308 PASS`。首折/认证`51070299/51070310`与remaining/
+聚合`51070386/51070392`全部完成，五-family macro F1为`0.6391632766`，相对PerScale
+父方法`0.5381077849`提高`0.1010554917`，但低于冻结最低`0.70`；只有delta-wing与
+Boeing 747两个family达到F1 0.65，macro precision `0.5914188887`也低于0.60。
+`all_success_conditions_pass=false`，本版本停止，禁止结果可见后的block weight、阈值或
+候选调参。完整哈希与逐family结果见
+`docs/evidence/Verify_EarlyOppositePairKinematics_1.1_ibex_summary.json`。
 
 相对 `Verify_PerScaleNegativeMetric_1.1`，唯一数值变化是把同一个固定 4D
 seed-time kinematic block 无权重追加到三个父 FMT 表示，形成固定顺序的
