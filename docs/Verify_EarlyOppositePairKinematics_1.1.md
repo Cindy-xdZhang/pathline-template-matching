@@ -1,6 +1,6 @@
 # `Verify_EarlyOppositePairKinematics_1.1`
 
-状态：**`IBEX_FIRST_FOLD_RETRY_RUNNING_AUTH_QUEUED`**。唯一配置为
+状态：**`IBEX_SECOND_FIRST_FOLD_RETRY_RUNNING_AUTH_QUEUED`**。唯一配置为
 `config/Verify_EarlyOppositePairKinematics_1.1.yaml`，原始文件 SHA-256 为
 `e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767`。
 本配置冻结于首次读取 `Verify_PerScaleNegativeMetric_1.1` 的任何 outer
@@ -37,9 +37,24 @@ clean commit。数值表示、3060候选、split、停止规则和outer label ga
 新增3项回归后Early定向测试`17/17 PASS`，统一回归`306/306 PASS`（218.681 s）。
 修复已作为clean commit `f5f94e6a18e42970f86a5b49424a55fa61b956e2`推送并部署；
 Ibex上的9个wrapper均通过`bash -n`，runner/aggregator远端SHA与冻结值一致。
-重跑首折`51069713`于2026-08-31 05:12:19 +03:00开始，独立fresh-replay认证
-`51069716`以`afterok:51069713`排队。认证完成前不得读取或接受outer metric，故仍
-没有性能结论。
+首折`51069713`与独立fresh-replay认证`51069716`分别完成于05:17:59和05:19:49。
+认证half-cylinder所选候选为
+`chirality_all35_plus_seed4, k=31, sigma=0.5, fixed top 5%`；
+AP/F1/balanced accuracy/precision/recall为
+`0.692985/0.628171/0.787448/0.673493/0.592223`。证书SHA-256
+`4c185885f7c73ff7406b5b927baf324bd00276745f39bfce8eefb332a7dec4e0`给出
+`stop_version=false`，只允许继续，不能作为五family结论。
+
+第一次remaining array `51069778_[1-4]`随后全部在5–13秒的release gate内因
+`KeyError: composite_descriptor_ids`失败，未进入任何新fold计算；依赖聚合
+`51069782`未运行并已取消。原先结论“首折认证链已足以覆盖remaining release
+wrapper”被修订为“input manifest真实字段`composite_descriptors[name].descriptor_id`
+未被动态测试覆盖”。修复将producer/current commit与四份descriptor mapping绑定抽成
+可执行Python函数，并新增真实schema及篡改动态回归；Early定向`18/18 PASS`，统一
+`307/307 PASS`（185.351 s）。新clean commit为
+`4ba49f3169c707ebe36d59a093f8f804b350810b`，Ibex 9/9 wrapper再次通过`bash -n`。
+为保证五折exact commit一致，新首折`51070022`于05:34:58开始，认证`51070024`
+依赖排队；认证前不读取其outer结果。
 
 本次实现证据：
 
@@ -59,6 +74,10 @@ Ibex上的9个wrapper均通过`bash -n`，runner/aggregator远端SHA与冻结值
   aggregator SHA-256：
   `e999960ac06d3fedd355e1d6135d9e69316bfe1e798318a22dadf5a8e2063796` /
   `d999c2bfefdb7170a97526af28f95f52a3589896ae8f924c360ce7f382971d86`；
+- release gate修复commit `4ba49f3169c707ebe36d59a093f8f804b350810b`的nested runner /
+  aggregator SHA-256：
+  `e999960ac06d3fedd355e1d6135d9e69316bfe1e798318a22dadf5a8e2063796` /
+  `2b5233f8e708d3242ae9191d2eb745aba3294f38b0656d3d81dde4a0074e02bf`；
 - Early core、sidecar、preparation 与 runner/aggregator 定向 synthetic tests
   `45/45 PASS`；提交前统一回归 `303/303 PASS`（2026-08-31，185.236 s）；
 - 所有公开数组改为 immutable bytes-backed 视图，不能在认证后重新开启写权限；

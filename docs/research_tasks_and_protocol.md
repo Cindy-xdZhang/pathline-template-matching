@@ -276,7 +276,7 @@ SHA-256为`82b92a52690eab3883287dc71a8ac2c57a691062188b0629ae83e331c6252c5c`。
 prediction、label、metric 或 aggregate 结果之前冻结。冻结时 PerScale jobs
 `51063738/51063753` 已提交但 outer 结果尚未读取；配置中的
 `frozen_before_first_read_of_any_per_scale_outer_result: true` 是不可改写的历史事实。
-当前执行状态为 `IBEX_FIRST_FOLD_RETRY_RUNNING_AUTH_QUEUED`：production synthetic/input `51068863`、single-row profile `51069125`、32-row array `51069178_[0-31]`和完整population seal `51069336`均已认证通过。首折`51069363`在任何fold计算前因consumer错误依赖canonical JSON对象键顺序而关闭失败，依赖认证`51069364`未运行并已取消。修复按配置顺序重建并逐值认证descriptor ID，显式固定preparation producer commit，同时保持新fold/aggregator同一clean commit；Early定向测试`17/17 PASS`，统一回归`306/306 PASS`。修复commit为`f5f94e6a18e42970f86a5b49424a55fa61b956e2`，Ibex 9/9 wrapper `bash -n`通过；首折重跑`51069713`运行中，独立认证`51069716`依赖排队。数值方法、候选、split、停止规则与outer label gate未改变；认证完成前没有性能结论。
+当前执行状态为 `IBEX_SECOND_FIRST_FOLD_RETRY_RUNNING_AUTH_QUEUED`：production证据均通过。首个合同失败`51069363/51069364`保留；JSON顺序修复commit `f5f94e6a18e42970f86a5b49424a55fa61b956e2`的首折/认证`51069713/51069716`完成，认证half-cylinder F1=`0.628171`且`stop_version=false`。remaining array `51069778_[1-4]`因release wrapper使用不存在的input字段`composite_descriptor_ids`在fold计算前失败，聚合`51069782`取消；该失败无性能含义。release绑定已抽为动态测试函数，精确认证真实`composite_descriptors[name].descriptor_id`、synthetic/population IDs、固定producer commit与当前fold commit；Early定向`18/18 PASS`，统一回归`307/307 PASS`。新commit `4ba49f3169c707ebe36d59a093f8f804b350810b`与Ibex 9/9 `bash -n`通过；为保持五fold exact commit一致，新首折/认证`51070022/51070024`运行/依赖排队。数值方法、候选、split、停止规则与outer label gate未改变；新认证完成前不读取其outer结果。
 
 相对 `Verify_PerScaleNegativeMetric_1.1`，唯一数值变化是把同一个固定 4D
 seed-time kinematic block 无权重追加到三个父 FMT 表示，形成固定顺序的
