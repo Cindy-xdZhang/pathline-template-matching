@@ -1,6 +1,6 @@
 # `Verify_DimensionlessDeformationFMT_1.1`
 
-当前实现状态：**`CORE_IMPLEMENTED_LOCAL_TESTED_PRE_RUN`**。唯一配置为
+当前实现状态：**`PRODUCTION_CHAIN_IMPLEMENTED_LOCAL_TESTED_PRE_RUN`**。唯一配置为
 `config/Verify_DimensionlessDeformationFMT_1.1.yaml`，冻结文件 SHA-256 为
 `c689b1d265bbc39327b2ed4147e8ffb22450dcd26f87b7c19ceae346c9ecfe18`。
 本配置冻结于首次读取 `Verify_EarlyOppositePairKinematics_1.1` 或
@@ -11,11 +11,16 @@
 不得因当前进度改写。数值核心
 `src/pathline_template_matching/dimensionless_deformation_fmt.py` 已按冻结公式实现，
 SHA-256为`5fc4acb47c52c6505737e661cac7f8f503c429c5d88910992655e83cdc53a649`；
-冻结合同测试`4/4`与数值核心测试`7/7`均通过。核心测试覆盖解析公式、单位缩放、
-proper rotation、batch/chunk/row permutation、退化输入、父FMT ID/坐标索引与不可变输出。
-同一工作树的提交前统一回归为`303/303 PASS`（2026-08-31，185.236 s）。
-尚未实现nested runner/aggregator或Ibex wrapper；没有打开真实cache、feature、label、
-IVD或outer result，没有Ibex job，也没有性能结论。
+冻结合同、数值核心、production runner、独立aggregator及四阶段Ibex wrapper均已实现并
+通过本地合成门禁；覆盖解析公式、单位缩放、proper rotation、batch/chunk/row permutation、
+退化输入、父FMT ID/坐标索引、Raw-only 4096-row重编码、15-file/19-array事务、fresh replay、
+outer-label gate、数学提前停止、混合provenance拒绝、不可覆盖发布与固定Rome CPU架构。
+冻结YAML中的`status: frozen_pre_run_not_implemented`只记录首次预注册时点，仍保持不变。
+实现commit为`9a48650c219f4cada12df722d780ea383e03bb89`；runner/aggregator SHA-256
+分别为`bd404ace7bfdb476c5e73449977cec724f8353f039bad8171ab05540ceded819`与
+`ec9a10ce0885542084844815845485837b33fffa428bc85608801f382424d91d`。同一工作树的
+提交前统一回归为`338/338 PASS`（2026-08-31，327.498 s）。尚未打开该版本的真实
+cache member、feature、label、IVD或outer result；没有Ibex job，也没有性能结论。
 
 ## 1. 研究问题与单一变化
 
@@ -157,6 +162,5 @@ F1 < 0.50；已有两个 family F1 < 0.65；或把全部剩余 family 的相关�
 4. **证据范围。** 即使达到门槛，也只支持这8个已暴露 train flows 上的 nested-family
    development 结论；formal confirmation 需要未见 physical families。
 
-只有后续另行实现nested runner/aggregator和wrapper、从clean committed revision在
-Ibex运行，并通过五折fresh-replay认证后，才能在实验日志新增性能结论。冻结config
-本身不得改写。
+只有从clean committed revision在Ibex运行现有runner/aggregator/wrapper，并通过五折
+fresh-replay认证后，才能在实验日志新增性能结论。冻结config本身不得改写。

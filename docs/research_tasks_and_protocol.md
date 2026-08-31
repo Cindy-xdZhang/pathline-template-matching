@@ -387,8 +387,12 @@ Raw-PCA 作为第四表示加入 FMT 三臂候选，否则结果会混入候选�
 FMT 和父方法原有三个 coordinate subsets。变换严格逐 primitive，不读取 label、IVD、
 batch/flow statistics，也不拟合参数。
 
-当前只实现了纯数值核心，冻结合同 `4/4`、数值核心 `7/7`、统一回归 `303/303 PASS`；
-nested runner、aggregator 与 Ibex wrapper 尚未实现，因此没有真实 artifact 或性能结论。
+纯数值核心、Raw-only nested runner、独立aggregator与四阶段Ibex wrapper均已实现并通过
+本地合成门禁；runner固定4096-row重编码，aggregator强制fresh Raw→dimensionless→FMT
+重放后才允许outer label，四个Slurm阶段固定到同一Rome CPU架构。实现commit为
+`9a48650c219f4cada12df722d780ea383e03bb89`，提交前统一回归为`338/338 PASS`
+（2026-08-31，327.498 s）。当前仍是pre-run：没有打开本版本真实cache member或outer结果，
+没有Ibex artifact、job或性能结论。
 唯一配置为 `config/Verify_DimensionlessDeformationFMT_1.1.yaml`，冻结 SHA-256 为
 `c689b1d265bbc39327b2ed4147e8ffb22450dcd26f87b7c19ceae346c9ecfe18`；完整公式与风险见
 `docs/Verify_DimensionlessDeformationFMT_1.1.md`。
@@ -460,3 +464,33 @@ Re160/Re640/Re6400/Boeing=`0.7367/0.5682/0.6981/0.8338`，expanded=
 描述性比较；父 Early 五-family macro F1=`0.639163<0.70` 的失败结论不变。权威结果见
 `docs/Other_EarlyOppositePairKinematicsVisualization_1.1.md` 与
 `docs/evidence/Other_EarlyOppositePairKinematicsVisualization_1.1_local_summary.json`。
+
+## 26. `Other_FirstPrinciplesHeadroom_1.1` 的 score-ordering 与 decision-rule 分解
+
+本版本是已暴露 development 结果的 posthoc 机制诊断，不改
+`Verify_EarlyOppositePairKinematics_1.1` 的 FMT 表示、距离、空间平滑或
+`spatial_score`。问题固定为：当前 score 的排序是否已支持 F1 接近 0.70–0.80，
+剩余损失是否主要来自判决规则。
+
+- 输入只允许五个已认证 Early outer folds：`51070299_0` 与
+  `51070386_[1-4]`；必须鲜重放它们的 19-array prediction 和冻结 input/synthetic/
+  sidecar manifests。父 five-family macro F1 必须在 `1e-12` 绝对误差内复现
+  `0.6391632765825263`，否则失败。
+- 四个预注册臂是：父方法 current prediction、只由 inner-family prevalence 定义的
+  top fraction、不使用 outer label 的精确一维 two-means high cluster，以及每 outer
+  group 使用 label 的 max-F1 oracle。结果必须分 legacy/expanded、family/block 与
+  five-family/all-block macro 报告。
+- Oracle 只是 score ordering 的诊断上限，不是 classifier，不能部署、命名新方法或
+  作为达到 0.70–0.80 的证据。若 oracle 仍低于 0.70，反对继续只调 threshold/
+  prevalence，下一版本必须修改 score 或表示；若 oracle 充足但 label-free 臂不足，
+  才能在新的预注册 `Verify_*` 版本中研究判决规则。
+- Tangaroa 与 Smoke 的 raw、portable、cache、feature、label、prediction 和 metric 全部
+  禁止。这些已暴露数据不能用于 formal confirmation 或新方法的无偏选择。
+
+最终冻结 config SHA-256 为
+`a76ae95710f72a6432e4d392606fe4ca5ad4c0fb89b8d50e6d3868f546117477`；早期
+`f02120bb…` 草案从未提交或运行，因缺失精确 fold/父配置路径和父 F1 复现门
+而在首次真实读取前被取代。实现 commit 为
+`9a48650c219f4cada12df722d780ea383e03bb89`；当前是已实现、已通过本地合成门禁、
+但尚未运行的状态，因此尚无新性能结论。完整合同见
+`docs/Other_FirstPrinciplesHeadroom_1.1.md`。
