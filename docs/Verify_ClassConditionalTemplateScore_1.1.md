@@ -323,3 +323,20 @@ aggregator identity 保持有效；execution commit `0e9fe3d4fcfcda9b9e438ad5ba3
 `30bc5a081b46972b25a0e558cbe5584e582e6410` 替代。本次只改文档的后续提交不属于 execution
 checkout；首次真实读取只能在 Ibex detached checkout 该精确提交并逐文件复核上述 SHA。任何 SHA、
 `slurm_logs/.gitkeep` tree identity 或 clean-worktree 门不通过都禁止提交 resource smoke。
+
+## 2026-09-01 Mandatory resource smoke 结果
+
+Ibex job `51144198` 使用 execution commit `30bc5a081b46972b25a0e558cbe5584e582e6410` 在
+`cn513-14-r`（AMD EPYC 7702）完成，Slurm exit `0:0`、elapsed `00:03:48`、MaxRSS
+`8,066,920K`。作业内 427/427 测试通过（仅2项CUDA测试按CPU节点正常skip）；runner 在 audit 发布前
+观察到 peak RSS `4,576,350,208` bytes、elapsed `225.011431 s`，均通过128 GiB exclusive/4 h
+inclusive门。
+
+Public authenticator 独立复核 PASS SHA-256
+`7748bbfbff8bce26e937d35922d8f407851b18c5d758d410ec4db159e8090497` 与 audit SHA-256
+`f2d578c6ec7841fbdeafce1b0b2cc3e9b6d2d723fa42f4f0605782485d80ac7b` 通过。Smoke 只反序列化
+`f22_raptor/channel/boeing_747` 各4个fit rows；`half_cylinder/delta_wing` archive-member open均为0。
+共同negative rows为1,025,596，natural/effective exact scales均为2000/2000；finite、self-exclusion、
+duplicate、support、synthetic-query、forbidden-output与clean-Git门全部通过。该结果只允许释放固定
+half-cylinder首折，不含F1、prediction、selected candidate或任何方法性能结论，也不能上界28-shard
+full-fold资源。

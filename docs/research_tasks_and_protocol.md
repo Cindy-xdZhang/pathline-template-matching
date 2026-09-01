@@ -573,3 +573,8 @@ smoke 的三-family/12-shard population 不是完整 final fit 的资源上界�
 本段仍不构成真实性能证据；`cfa369dd…` 的科学 config/core/runner/aggregator identity 保持有效，
 `0e9fe3d4…` execution revision 因pre-data真实调度格式差异被基础设施提交
 `30bc5a081b46972b25a0e558cbe5584e582e6410` 替代。首次真实读取只能使用该 detached checkout。
+
+2026-09-01 mandatory resource smoke job `51144198` 已通过public authentication：`0:0`、`00:03:48`、
+Slurm MaxRSS `8,066,920K`，PASS/audit SHA=`7748bbfb…/f2d578c6…`。只打开固定三fit families的12 rows，
+保留half-cylinder/delta-wing member-open均0，2000/2000 scales和全部exact-path/resource门通过；该结果无
+F1、prediction、candidate或性能结论，只允许提交固定half-cylinder首折。
