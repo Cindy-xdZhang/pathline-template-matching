@@ -268,7 +268,8 @@ from test_other_class_conditional_template_score_boeing_diagnostic_ibex import (
     test_common_rejects_forbidden_confirmation_dataset_paths,
     test_fold_is_boeing_only_and_all_gates_precede_the_runner,
     test_job_local_tmp_and_full_test_gate_are_part_of_each_job,
-    test_parent_release_auth_uses_an_isolated_local_detached_verify_clone,
+    test_all_boeing_wrappers_use_the_other_checkout_and_leave_producer_root_reserved,
+    test_parent_release_auth_uses_separate_immutable_absolute_checkouts,
 )
 from test_negative_tail_runner import (
     test_batched_tail_threshold_metrics_match_direct_predictions_with_ties,
@@ -801,7 +802,8 @@ TESTS = (
     test_common_rejects_forbidden_confirmation_dataset_paths,
     test_fold_is_boeing_only_and_all_gates_precede_the_runner,
     test_job_local_tmp_and_full_test_gate_are_part_of_each_job,
-    test_parent_release_auth_uses_an_isolated_local_detached_verify_clone,
+    test_all_boeing_wrappers_use_the_other_checkout_and_leave_producer_root_reserved,
+    test_parent_release_auth_uses_separate_immutable_absolute_checkouts,
     test_frozen_resource_smoke_contract_matches_exact_config,
     test_frozen_evidence_fixture_matches_real_runtime_identity_shapes,
     test_reserved_family_selection_fails_closed_before_any_loader_call,
