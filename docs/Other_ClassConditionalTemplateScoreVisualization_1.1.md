@@ -1,7 +1,7 @@
 # Other_ClassConditionalTemplateScoreVisualization_1.1：双认证单折分类三联图
 
-状态：**`ATTEMPT_1_FAILED_BEFORE_FIGURE_RENDER_CONTRACT_FIX_IMPLEMENTED`**。尚无结果图、报告指标或
-`RUN_COMPLETE.json`。本实验只生成用户要求的Cylinder3D Re160、Re640、Re6400和Boeing 747当前
+状态：**`ATTEMPT_2_FAILED_AFTER_RENDER_BEFORE_WRAPPER_ACCEPTANCE_JSON_HASH_FIX_PENDING`**。尚无通过完整
+wrapper认证的结果图或报告指标；第二次尝试虽写出`RUN_COMPLETE.json`，但Slurm终态失败。本实验只生成用户要求的Cylinder3D Re160、Re640、Re6400和Boeing 747当前
 class-conditional template-score分类效果；它不恢复已停止的Verify五折，也不把两个不同实验的单折证据
 伪装成完整五折。
 
@@ -23,6 +23,14 @@ class-conditional template-score分类效果；它不恢复已停止的Verify五
 `read_outer_group_metrics`与metric重算完成端到端比较。production config SHA、两个source numerical commit、
 prediction、候选、阈值、support、block、source ordinal和parent scenes均未改变。失败job及partial output永久保留；
 下一次运行必须使用新output目录。
+
+第二次reporting commit `82c2fd117dccfa62f6225ccdf5c4acf733afb72d`的Ibex job `51155495`完成
+456/456测试、两个release认证、8组prediction/scene exact join、metric重算比较与8张图渲染；reporter本体exit 0，
+并写出预期63文件。随后wrapper第一次重算`visualization_manifest.json`自哈希时失败：部分subset F1为空，内存对象
+包含`NaN`；`_atomic_json`落盘时按固定JSON合同把它规范化为`null`，但manifest自哈希错误地在规范化前计算。
+因此落盘内容与声明哈希不一致，Slurm终态为`FAILED 1:0`。即使图件和`RUN_COMPLETE.json`存在，这一attempt也不
+可发布，且未执行本地QA。下一revision只能在计算自哈希前应用同一JSON-safe规范化，并用真实`NaN→null`持久化
+回归锁定；不得改变config、source prediction、逐图metric、candidate、threshold、support、scene或renderer。
 
 ## 冻结输入
 
