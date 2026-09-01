@@ -67,6 +67,7 @@ BOEING_DIAGNOSTIC_EXPERIMENT = (
     "Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1"
 )
 SOURCE_RELEASE_MODE = "two_authenticated_single_fold_releases"
+OUTER_EVALUATION_IDENTITY = "outer_evaluation_only"
 EXPECTED_RESULT_ARTIFACT_COUNT = 61
 EXPECTED_FINAL_FILE_COUNT = 63
 PREDICTION_SCHEMA = (
@@ -1574,7 +1575,11 @@ def read_outer_group_metrics(
         observed: set[tuple[str, int, str]] = set()
         for raw in rows:
             row = {field: _parse_metric_value(field, raw[field]) for field in METRIC_FIELDS}
-            _require(row["outer_family"] == family and row["inner_family"] == "outer", f"{family}: metric fold identity changed")
+            _require(
+                row["outer_family"] == family
+                and row["inner_family"] == OUTER_EVALUATION_IDENTITY,
+                f"{family}: metric fold identity changed",
+            )
             _require(row["dataset"] in expected_datasets, f"{family}: cross-fold metric row")
             key3 = (row["dataset"], row["source_ordinal"], row["block"])
             _require(key3 not in observed, f"{family}: duplicate metric row {key3}")
@@ -1623,7 +1628,7 @@ def recompute_complete_metric_row(
     decision_metrics.pop("single_class_group", None)
     row: dict[str, Any] = {
         "outer_family": group.outer_family,
-        "inner_family": "outer",
+        "inner_family": OUTER_EVALUATION_IDENTITY,
         "dataset": group.dataset,
         "source_ordinal": group.source_ordinal,
         "block": group.block,

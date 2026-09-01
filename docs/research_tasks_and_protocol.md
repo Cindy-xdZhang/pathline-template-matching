@@ -621,7 +621,7 @@ Boeing描述性诊断，不改变Verify停止结论，也不得与half-cylinder�
 
 ## 30. `Other_ClassConditionalTemplateScoreVisualization_1.1` 的双单折分类三联图
 
-状态：**`frozen_pre_run_not_run`**。本报告不是新的数值训练或五折实验；它只组合两个分别完成并认证的
+状态：**`ATTEMPT_1_FAILED_BEFORE_FIGURE_RENDER_CONTRACT_FIX_IMPLEMENTED`**。本报告不是新的数值训练或五折实验；它只组合两个分别完成并认证的
 single-fold release：Verify停止分支的`half_cylinder` release与独立Other的`boeing_747` release。
 report-time禁止再次执行public fresh replay；reporter只认证冻结completion→manifest→15-file fold→13
 artifact→19-array prediction链，并在打开任何NPZ member前写入完整输入manifest。
@@ -646,3 +646,7 @@ artifact→19-array prediction链，并在打开任何NPZ member前写入完整�
 `docs/Other_ClassConditionalTemplateScoreVisualization_1.1.md`。冻结production config为
 `config/Other_ClassConditionalTemplateScoreVisualization_1.1.yaml`，SHA-256为
 `c69d4a59b4906a32f6e14e100c2fe553cc110c6c08fdb34842f20e198a504a60`。
+首次Ibex job `51155277`在456/456测试与opaque input认证后，因reporter把producer固定的
+`inner_family=outer_evaluation_only`误写为`outer`而在渲染前失败；没有生成图或逐图指标。修复只更正报告读取与
+重算行的outer-evaluation identity并加入真实metric-CSV回归，不改上述config或任何source数值身份；失败记录见
+`docs/ibex_run_registry.md`。

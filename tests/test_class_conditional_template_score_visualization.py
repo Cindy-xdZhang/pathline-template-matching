@@ -283,6 +283,46 @@ def _write_self_hash(path: Path, payload: dict) -> tuple[dict, str]:
     return value, sha256_file(path)
 
 
+def _synthetic_outer_metric_row(
+    *, family: str, dataset: str, ordinal: int, block: str, candidate: dict
+) -> dict:
+    metrics = dict(
+        report._metric_values(
+            np.asarray([False, True]),
+            np.asarray([False, True]),
+            np.asarray([0.25, 0.75]),
+        )
+    )
+    metrics.pop("single_class_group")
+    row = {
+        "outer_family": family,
+        "inner_family": "outer_evaluation_only",
+        "dataset": dataset,
+        "source_ordinal": ordinal,
+        "block": block,
+        **candidate,
+        **metrics,
+        "retrieval_supported_count": 2,
+        "calibration_supported_count": 2,
+        "imputed_count": 0,
+        "unimputable_count": 0,
+        "retrieval_support_fraction": 1.0,
+        "calibration_support_fraction": 1.0,
+        "spatial_imputed_fraction": 0.0,
+        "spatial_unimputable_fraction": 0.0,
+        "retrieval_supported_subset_f1": 1.0,
+        "calibration_supported_subset_f1": 1.0,
+        "imputed_subset_f1": float("nan"),
+        "unimputable_subset_f1": float("nan"),
+    }
+    for mode in range(6):
+        row[f"calibration_mode_{mode}_count"] = 2 if mode == 1 else 0
+    for mode in range(4):
+        row[f"scaler_mode_{mode}_count"] = 2 if mode == 1 else 0
+    assert set(row) == set(report.METRIC_FIELDS)
+    return row
+
+
 def _write_synthetic_fold(spec: report.SourceReleaseSpec, plan: report.ReportPlan) -> dict:
     root = spec.fold_root
     root.mkdir(parents=True)
@@ -291,6 +331,7 @@ def _write_synthetic_fold(spec: report.SourceReleaseSpec, plan: report.ReportPla
     datasets = [d.dataset for d in plan.datasets if d.outer_family == spec.outer_family]
     values = {name: [] for name in report.PREDICTION_ARRAY_NAMES}
     audits = []
+    metric_rows = []
     fit = [family for family in report.FAMILY_ORDER if family != spec.outer_family]
     for dataset_index, dataset in enumerate(datasets):
         for ordinal in range(4):
@@ -320,9 +361,21 @@ def _write_synthetic_fold(spec: report.SourceReleaseSpec, plan: report.ReportPla
                         "joint_supported_family_count_histogram": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 2},
                         "families": {family: {} for family in fit}},
                 })
+                metric_rows.append(
+                    _synthetic_outer_metric_row(
+                        family=spec.outer_family,
+                        dataset=dataset,
+                        ordinal=ordinal,
+                        block=block,
+                        candidate=candidate,
+                    )
+                )
     arrays = {name: np.asarray(values[name], dtype=np.dtype(report.PREDICTION_DTYPES[name]))
               for name in report.PREDICTION_ARRAY_NAMES}
     np.savez(root / "outer_predictions.npz", **arrays)
+    report._atomic_csv(
+        root / "outer_group_metrics.csv", metric_rows, report.METRIC_FIELDS
+    )
     _write_self_hash(root / "selected_candidate.json", {
         "schema": report.PREDICTION_SELECTED_SCHEMA, "experiment": spec.experiment,
         "git_commit": spec.numerical_commit, "config_sha256": spec.config_sha256,
@@ -369,7 +422,9 @@ def test_real_fold_chain_prediction_members_metrics_and_join(tmp_path: Path) -> 
         folds[spec.outer_family] = fold
     releases = report.SourceReleasesEvidence(report.SOURCE_RELEASE_MODE, folds, {}, {}, ())
     groups = report.load_prediction_groups(plan, releases)
+    parent_metrics = report.read_outer_group_metrics(plan, releases)
     assert len(groups) == 8
+    assert len(parent_metrics) == 8
     loaded = groups[("cylinder3d", report.BLOCKS[0])]
     metadata = {"dataset": "cylinder3d", "source_ordinal": 2,
                 "source_index": loaded.group.source_index, "scale_block_id": report.BLOCKS[0]}
@@ -379,8 +434,24 @@ def test_real_fold_chain_prediction_members_metrics_and_join(tmp_path: Path) -> 
               "valid_scale_block_index": loaded.group.scale_block_index.copy()}
     prediction, _score = exact_bind_prediction_group(metadata, parent, loaded.group)
     metric = report.recompute_complete_metric_row(reference=np.asarray([False, True]), loaded=loaded)
-    report.compare_metric_rows(metric, dict(metric))
+    report.compare_metric_rows(metric, parent_metrics[("cylinder3d", report.BLOCKS[0])])
+    assert report.OUTER_EVALUATION_IDENTITY == "outer_evaluation_only"
+    assert metric["inner_family"] == report.OUTER_EVALUATION_IDENTITY
     assert prediction.tolist() == [False, True] and metric["accuracy"] == 1.0
+
+    metric_path = folds["half_cylinder"].root / "outer_group_metrics.csv"
+    metric_text = metric_path.read_text(encoding="utf-8")
+    assert "outer_evaluation_only" in metric_text
+    metric_path.write_text(
+        metric_text.replace("outer_evaluation_only", "outer", 1),
+        encoding="utf-8",
+    )
+    _raises(
+        report.read_outer_group_metrics,
+        plan,
+        releases,
+        contains="metric fold identity changed",
+    )
 
     prediction_path = folds["half_cylinder"].root / "outer_predictions.npz"
     with np.load(prediction_path, allow_pickle=False) as archive:

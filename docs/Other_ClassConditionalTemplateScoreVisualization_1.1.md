@@ -1,6 +1,6 @@
 # Other_ClassConditionalTemplateScoreVisualization_1.1：双认证单折分类三联图
 
-状态：**`frozen_pre_run_not_run`**。截至本文冻结时尚未运行本报告，也没有结果图、报告指标或
+状态：**`ATTEMPT_1_FAILED_BEFORE_FIGURE_RENDER_CONTRACT_FIX_IMPLEMENTED`**。尚无结果图、报告指标或
 `RUN_COMPLETE.json`。本实验只生成用户要求的Cylinder3D Re160、Re640、Re6400和Boeing 747当前
 class-conditional template-score分类效果；它不恢复已停止的Verify五折，也不把两个不同实验的单折证据
 伪装成完整五折。
@@ -9,6 +9,20 @@ class-conditional template-score分类效果；它不恢复已停止的Verify五
 `config/Other_ClassConditionalTemplateScoreVisualization_1.1.yaml`，SHA-256为
 `c69d4a59b4906a32f6e14e100c2fe553cc110c6c08fdb34842f20e198a504a60`。该哈希已由本地parser测试和Ibex
 逐字段只读核查共同验证。
+
+## 运行历史
+
+首次reporting commit `e89fedcfa18757f9b5cfdb5311214a0720b17830`的Ibex job `51155277`在
+`cn514-15-r`完成456/456测试，并在打开NPZ member前认证两个release、parent scenes与report config。
+随后读取已密封`outer_group_metrics.csv`时，reporter错误要求`inner_family=outer`；producer与认证aggregator
+的真实固定合同是`inner_family=outer_evaluation_only`，因此job以
+`half_cylinder: metric fold identity changed`停止。该错误发生在任何scene或figure写入之前；partial output只含
+`frozen_config.yaml`、`input_manifest.json`和`figure_contract.json`，没有逐图指标或性能证据。
+
+修复只新增并复用固定outer-evaluation identity，同时把synthetic 15-file fold fixture改成真实metric CSV，要求
+`read_outer_group_metrics`与metric重算完成端到端比较。production config SHA、两个source numerical commit、
+prediction、候选、阈值、support、block、source ordinal和parent scenes均未改变。失败job及partial output永久保留；
+下一次运行必须使用新output目录。
 
 ## 冻结输入
 
