@@ -291,6 +291,7 @@ Resource smoke 固定只打开 `f22_raptor/channel/boeing_747` 的 12 个 source
 28 shards 的 production final-fit 人口上界。因此 smoke PASS 只能支持代码路径和本次 128 GB/4 h 请求，
 不能单独证明完整 fold 的峰值资源上界；真实 fold 仍按冻结的 128 GB/12 h 请求并保留实际 MaxRSS/elapsed。
 
-本节所在 implementation commit 将作为候选 numerical deployment commit；首次真实读取前，必须用随后
-的 documentation-only commit 记录其精确 40-hex Git identity，并在 Ibex detached checkout 上逐文件
-复核上述 SHA。任何 SHA 或 clean-worktree 门不通过都禁止提交 resource smoke。
+本节所在 implementation/numerical deployment commit 已固定为
+`cfa369dd35ab1b3dd89232b74ead7f3b3c937b40`。本次只改文档的后续提交不属于 numerical checkout；
+首次真实读取必须在 Ibex detached checkout 该精确 commit，并逐文件复核上述 SHA。任何 SHA、
+`slurm_logs/.gitkeep` tree identity 或 clean-worktree 门不通过都禁止提交 resource smoke。

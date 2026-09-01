@@ -564,4 +564,5 @@ negative-only anomaly改为每个fit family内正类与负类的exact-scale模�
 支持的两类 rows、允许自然缺类 family 由 joint-support 门处理、严格重构 artifacts 与发布 CSV/
 certificate/report/manifest/completion，并只从 `scontrol Features=rome` 认证节点约束。Resource
 smoke 的三-family/12-shard population 不是完整 final fit 的资源上界，这一证据边界必须保留。
-本段仍不构成真实性能证据；首次真实读取前还必须记录并部署精确 clean numerical Git commit。
+本段仍不构成真实性能证据；clean numerical deployment commit 已固定为
+`cfa369dd35ab1b3dd89232b74ead7f3b3c937b40`，首次真实读取只能使用该 detached checkout。
