@@ -14,9 +14,14 @@ from pathline_template_matching.negative_tail_calibration import (
     CALIBRATION_BLOCK_FALLBACK,
     CALIBRATION_LOCAL_BLOCK_SHRINK,
     CALIBRATION_LOCAL_ONLY,
+    SCALE_COUNT,
     empirical_upper_tail_probability,
 )
-from pathline_template_matching.per_scale_negative_metric import SCALER_ARRAY_NAMES
+from pathline_template_matching.per_scale_negative_metric import (
+    SCALER_ARRAY_NAMES,
+    PerScaleNegativeScaler,
+    _identity_tail_calibrator,
+)
 
 
 def _expect_value_error(function, *args, **kwargs):
@@ -366,6 +371,130 @@ def test_exact_scale_without_any_fit_negative_disables_both_class_supports():
     assert not result.per_family_positive_calibration_supported[1][0].any()
     assert not result.per_family_negative_retrieval_supported[1][0].any()
     assert not result.per_family_negative_calibration_supported[1][0].any()
+
+
+def test_no_scaler_scale_rows_cannot_pollute_another_scales_class_prior():
+    def batches(*, include_unsupported_positive_scale: bool):
+        result = {}
+        for family_index, family in enumerate(("a", "b", "c")):
+            offset = 0.2 * family_index
+            features = [
+                [0.0 + offset],
+                [1.0 + offset],
+                [2.0 + offset],
+                [10.0 + offset],
+                [11.0 + offset],
+                [12.0 + offset],
+            ]
+            scales = [0] * 6
+            labels = [False, False, False, True, True, True]
+            if include_unsupported_positive_scale:
+                features.extend([[100.0 + offset], [101.0 + offset]])
+                scales.extend([1, 1])
+                labels.extend([True, True])
+            result[family] = _batch(features, scales, labels)
+        return result
+
+    baseline = ClassConditionalTemplateScoreModel(
+        batches(include_unsupported_positive_scale=False),
+        family_order=("a", "b", "c"),
+        ks=(1,),
+    )
+    augmented = ClassConditionalTemplateScoreModel(
+        batches(include_unsupported_positive_scale=True),
+        family_order=("a", "b", "c"),
+        ks=(1,),
+    )
+    baseline_query = baseline.query([[10.5]], [0], ks=(1,))
+    augmented_query = augmented.query([[10.5]], [0], ks=(1,))
+    assert np.array_equal(
+        baseline_query.positive_conformity[1],
+        augmented_query.positive_conformity[1],
+    )
+    assert np.array_equal(baseline_query.scores[1], augmented_query.scores[1])
+
+    for family in ("a", "b", "c"):
+        positive = augmented.calibrator_for(family, positive=True)
+        assert positive is not None
+        arrays = positive.export_arrays()
+        counts = np.diff(arrays["negative_scale_offsets"])
+        assert counts[0] == 3
+        assert counts[1] == 0
+        assert int(counts.sum()) == 3
+        assert len(arrays["negative_features"]) == 3
+        assert augmented.fit_audit["family_class_rows"][family]["positive"] == 3
+
+    unsupported = augmented.query([[100.5]], [1], ks=(1,))
+    assert not unsupported.retrieval_supported[1][0]
+    assert not unsupported.joint_supported[1][0]
+
+
+def test_deserialization_rejects_class_rows_without_pooled_scaler_scale_support():
+    families = ("a", "b", "c")
+    negative_features = np.arange(6, dtype=np.float32).reshape(-1, 1)
+    scale_zero = np.zeros(6, dtype=np.int64)
+    scaler = PerScaleNegativeScaler(negative_features, scale_zero)
+    transformed = scaler.transform(negative_features, scale_zero)
+
+    counts = np.zeros((3, 2, SCALE_COUNT), dtype=np.int64)
+    calibrators = []
+    for family_index in range(3):
+        negative = _identity_tail_calibrator(
+            transformed[2 * family_index : 2 * family_index + 2],
+            np.zeros(2, dtype=np.int64),
+            ks=(1,),
+            shrinkage_lambda=64.0,
+            device="cpu",
+            query_chunk_size=8,
+            library_chunk_size=8,
+        )
+        counts[family_index, 0, 0] = 2
+        positive = None
+        if family_index < 2:
+            # Scale 1 has no pooled natural-negative row.  If these rows were
+            # accepted during deserialization, their cross-scale LOO prior
+            # would make a scale-0 query pass the frozen 2-of-3 support gate.
+            positive = _identity_tail_calibrator(
+                np.asarray([[0.0], [1.0], [2.0]], dtype=np.float32),
+                np.asarray([0, 1, 1], dtype=np.int64),
+                ks=(1,),
+                shrinkage_lambda=64.0,
+                device="cpu",
+                query_chunk_size=8,
+                library_chunk_size=8,
+            )
+            counts[family_index, 1, 0] = 1
+            counts[family_index, 1, 1] = 2
+        calibrators.append((negative, positive))
+
+    family_values = np.asarray(families, dtype="<U1")
+    class_present = counts.sum(axis=2) > 0
+    arrays = {
+        "serialization_version_int16": np.asarray(1, dtype=np.int16),
+        "family_order_unicode": family_values,
+        "family_order_copy_unicode": family_values.copy(),
+        "required_family_count_int64": np.asarray(2, dtype=np.int64),
+        "ks_int64": np.asarray([1], dtype=np.int64),
+        "shrinkage_lambda_float64": np.asarray(64.0, dtype=np.float64),
+        "class_present_bool": class_present,
+        "class_scale_counts_int64": counts,
+    }
+    for family_index, pair in enumerate(calibrators):
+        for class_index, calibrator in enumerate(pair):
+            if calibrator is None:
+                continue
+            arrays.update(
+                {
+                    f"calibrator_f{family_index}_c{class_index}__{name}": value
+                    for name, value in calibrator.export_arrays().items()
+                }
+            )
+
+    _expect_value_error(
+        ClassConditionalTemplateScoreModel.from_artifacts,
+        scaler.export_arrays(),
+        arrays,
+    )
 
 
 def test_query_contract_dtypes_distance_mean_and_batch_chunk_invariance():

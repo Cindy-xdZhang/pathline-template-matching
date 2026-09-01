@@ -254,3 +254,43 @@ process 必须立即登记，且只能从已 push 的 clean Git commit 在 Ibex 
 
 本次运行前审查后的最终配置 SHA-256：
 `814f95d2ec58f751a91082d588f790b3592a891963810013ad92ab704febbdea`。
+
+## 2026-09-01 实现与首次真实读取前审计
+
+冻结配置没有改动。本节只记录配置冻结后的实现、合成验证和部署门；截至本节写入时，本版本仍未打开
+任何真实 feature、label、valid-rate、prediction 或 metric。
+
+| 组件 | 路径 | SHA-256 |
+|---|---|---|
+| class-conditional 数值核心 | `src/pathline_template_matching/class_conditional_template_score.py` | `9c009376f7cea1481f6f47a49362d54d0e78530717f480fda3e8a109f841ef99` |
+| fold runner | `scripts/run_verify_class_conditional_template_score_1_1.py` | `e5063887475029320e66da1f1eb221d7988598e8918d37fbe47ee213e5ff1b48` |
+| fresh-replay aggregator | `scripts/aggregate_verify_class_conditional_template_score_1_1.py` | `49c80993c9704a46f7aa8aa4dd4a0ed7d08599b02edc50d12f3354e036f924cc` |
+| mandatory resource smoke | `scripts/run_verify_class_conditional_template_score_resource_smoke_1_1.py` | `dc42f9ee07f85470034cf543a204461edd2cf98328c6af0b58dd17994599c106` |
+
+提交前最终快照通过 81/81 项 ClassConditional 定向测试、427/427 项项目统一测试、全部相关 Python
+文件编译、六个 Bash wrapper 的 `bash -n` 和 `git diff --check`。其中 aggregator 的 12 项测试包含
+fresh numerical replay、outer-label gate、严格 JSON 类型、canonical CSV、certificate/report/manifest/
+completion 全重构，以及自洽改写发布文件仍必须拒绝的回归。
+
+实现审查发现并在任何本版本真实数组读取前修正了以下问题。它们都是冻结公式的忠实实现或认证/
+部署修复，不是新的科学机制：
+
+| 原实现草案 | 当前实现 | 修正原因 |
+|---|---|---|
+| 没有 pooled negative scaler 的 scale 仍可能把 positive rows 放进其他尺度 calibration prior | 该 scale 的正负 class rows 都从可变换 library/calibration 中排除 | 配置已规定没有本地 negative scaler 时 exact-scale transform 与 retrieval 不支持 |
+| 任一 fit family 缺少一个 class 就让整个 fit 失败 | 保留自然不平衡 population；缺失 class 只让该 family 在相应 query 上不能进入 joint-support 集合 | 冻结 2/3、3/4 门定义的是共同支持，不要求每个 family/scale 人为补齐两类 |
+| 反序列化可能接受没有 scaler 支持的 class rows | artifact reconstruction 对这种 row 直接失败 | 防止被改写 artifact 绕过拟合期的 support 规则 |
+| 发布认证可先信任相互一致但可重写的 outer summary、artifact map 和 stop boolean | public release 重新绑定冻结 Early 证据并调用完整 `_authenticate_fold`；F1、support、13个 artifacts、CSV 与停止证书都由 fresh fold 重构 | wrapper 当场计算 completion SHA，不是独立信任锚；只有 fresh replay 才能证明 source fold 未被改写 |
+| JSON 的普通相等允许 `true==1`、`31==31.0` | method binding、candidate、evidence、support、summary、release 全部递归比较精确 JSON 类型和字段集合 | 防止数值别名掩盖 schema 漂移 |
+| aggregate 临时文件可能落到共享 `/tmp`；新 clone 没有 Slurm 日志目录 | 每个 job 导出 job-local `TMPDIR/TMP/TEMP` 并验证 Python `tempfile`；Git 跟踪 `slurm_logs/.gitkeep` | 避免大 NPZ 暂存和 `#SBATCH -o/-e` 在脚本正文执行前失败 |
+| 可选的 `SLURM_JOB_CONSTRAINTS` 被当作 Rome 证据 | 只接受 `scontrol show job -o` 的 authoritative `Features=rome`，missing、非 Rome 和 `zen3|rome` 均拒绝 | 普通 batch 环境不保证提供该变量，且 OR 表达式不能证明实际冻结请求 |
+| remaining folds 只传递依赖第一折认证 | 每个 remaining task 还直接重新认证 resource-smoke PASS | 防止调度依赖被错误配置时绕过资源门 |
+
+Resource smoke 固定只打开 `f22_raptor/channel/boeing_747` 的 12 个 source shards；它覆盖最宽 165D
+表示、`k=31`、三个 fit families 的全部 natural scales 和完整 library/calibration/query 路径，但不是最多
+28 shards 的 production final-fit 人口上界。因此 smoke PASS 只能支持代码路径和本次 128 GB/4 h 请求，
+不能单独证明完整 fold 的峰值资源上界；真实 fold 仍按冻结的 128 GB/12 h 请求并保留实际 MaxRSS/elapsed。
+
+本节所在 implementation commit 将作为候选 numerical deployment commit；首次真实读取前，必须用随后
+的 documentation-only commit 记录其精确 40-hex Git identity，并在 Ibex detached checkout 上逐文件
+复核上述 SHA。任何 SHA 或 clean-worktree 门不通过都禁止提交 resource smoke。

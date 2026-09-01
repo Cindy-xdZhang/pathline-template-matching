@@ -557,3 +557,11 @@ negative-only anomaly改为每个fit family内正类与负类的exact-scale模�
 `814f95d2ec58f751a91082d588f790b3592a891963810013ad92ab704febbdea`。本版本仍在实现和纯合成验证，
 尚未打开任何本版本真实数组或产生性能结果；完整合同见
 `docs/Verify_ClassConditionalTemplateScore_1.1.md`。
+
+2026-09-01 实现审计已完成，冻结配置未变。最终 core/runner/aggregator/resource-smoke SHA-256
+依次为 `9c009376…`、`e5063887…`、`49c80993…`、`dc42f9ee…`；81/81 项本版本定向测试、
+427/427 项统一测试和六个 Bash wrapper 语法检查通过。实现现在明确排除没有 negative scaler
+支持的两类 rows、允许自然缺类 family 由 joint-support 门处理、严格重构 artifacts 与发布 CSV/
+certificate/report/manifest/completion，并只从 `scontrol Features=rome` 认证节点约束。Resource
+smoke 的三-family/12-shard population 不是完整 final fit 的资源上界，这一证据边界必须保留。
+本段仍不构成真实性能证据；首次真实读取前还必须记录并部署精确 clean numerical Git commit。

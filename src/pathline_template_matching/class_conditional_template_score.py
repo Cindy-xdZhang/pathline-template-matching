@@ -652,9 +652,20 @@ class ClassConditionalTemplateScoreModel:
         ] = []
         for family_index, batch in enumerate(batches):
             transformed = scaler.transform(batch.features, batch.scale_ids)
+            # A scale without any pooled natural-negative row has no fitted
+            # local scaler.  Such rows are outside the frozen retrieval and
+            # calibration population for *both* classes.  Excluding them here
+            # is essential: otherwise their placeholder zero transforms would
+            # enter a same-family/class cross-scale LOO prior and change scores
+            # at otherwise valid scales.
+            scaler_supported_rows = np.asarray(
+                scaler.local_row_counts[batch.scale_ids] > 0, dtype=np.bool_
+            )
             current: list[ScaleConditionedNegativeTailCalibrator | None] = []
             for class_index in (NEGATIVE_CLASS_INDEX, POSITIVE_CLASS_INDEX):
-                selected_rows = batch.labels == bool(class_index)
+                selected_rows = (
+                    (batch.labels == bool(class_index)) & scaler_supported_rows
+                )
                 selected_scales = np.asarray(
                     batch.scale_ids[selected_rows], dtype=np.int64
                 )
@@ -730,6 +741,13 @@ class ClassConditionalTemplateScoreModel:
             scaler.local_row_counts,
         ):
             raise ValueError("pooled negative scaler counts do not match family libraries")
+        unsupported_scales = np.asarray(
+            scaler.local_row_counts == 0, dtype=np.bool_
+        )
+        if np.any(counts[:, :, unsupported_scales] != 0):
+            raise ValueError(
+                "family/class libraries contain rows at a scale without pooled negative scaler support"
+            )
         for family_index, pair in enumerate(calibrators):
             for class_index, calibrator in enumerate(pair):
                 expected = counts[family_index, class_index]
