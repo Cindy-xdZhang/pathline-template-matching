@@ -223,7 +223,7 @@ from test_class_conditional_template_score_resource_smoke import (
 from test_class_conditional_template_score_ibex import (
     test_aggregate_output_directories_match_the_frozen_pattern,
     test_all_numerical_wrappers_enforce_clean_exact_commit_and_no_overwrite,
-    test_class_conditional_ibex_resources_match_the_frozen_config,
+    test_class_conditional_ibex_runtime_resources_apply_the_documented_account_override,
     test_common_slurm_constraint_gate_matches_the_resource_smoke_token_rule,
     test_common_smoke_gate_consumes_the_public_authenticator_return_schema,
     test_first_fold_is_gated_by_the_authenticated_resource_smoke,
@@ -768,7 +768,7 @@ TESTS = (
     test_public_release_authenticator_cross_binds_all_fit_access_identities,
     test_public_release_authenticator_cross_binds_fit_population_and_query_support_arithmetic,
     test_public_release_authenticator_cross_binds_per_family_fit_class_counts,
-    test_class_conditional_ibex_resources_match_the_frozen_config,
+    test_class_conditional_ibex_runtime_resources_apply_the_documented_account_override,
     test_aggregate_output_directories_match_the_frozen_pattern,
     test_common_slurm_constraint_gate_matches_the_resource_smoke_token_rule,
     test_common_smoke_gate_consumes_the_public_authenticator_return_schema,

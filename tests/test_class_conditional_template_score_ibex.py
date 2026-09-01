@@ -11,7 +11,12 @@ def _text(name: str) -> str:
     return (IBEX / name).read_text(encoding="utf-8")
 
 
-def test_class_conditional_ibex_resources_match_the_frozen_config() -> None:
+def test_class_conditional_ibex_runtime_resources_apply_the_documented_account_override() -> None:
+    config_text = (
+        ROOT / "config" / "Verify_ClassConditionalTemplateScore_1.1.yaml"
+    ).read_text(encoding="utf-8")
+    assert config_text.count("account: deepvortex") == 2
+    assert "account: pi-hadwigm" not in config_text
     wrappers = (
         "verify_class_conditional_template_score_1.1_resource_smoke.sh",
         "verify_class_conditional_template_score_1.1_first_fold.sh",
@@ -24,7 +29,7 @@ def test_class_conditional_ibex_resources_match_the_frozen_config() -> None:
         assert "#SBATCH -N 1\n" in text
         assert "#SBATCH --partition=cpu" in text
         assert "#SBATCH --constraint=rome" in text
-        assert "#SBATCH --account=deepvortex" in text
+        assert "#SBATCH --account=pi-hadwigm" in text
         assert "#SBATCH --cpus-per-task=32" in text
         assert "#SBATCH --mem=128G" in text
         assert "cpu_amd_epyc_7702" not in text
@@ -35,6 +40,10 @@ def test_class_conditional_ibex_resources_match_the_frozen_config() -> None:
     for name in wrappers[1:]:
         assert "#SBATCH --time=12:00:00" in _text(name)
     common = _text("verify_class_conditional_template_score_1.1_common.sh")
+    assert "readonly CLASS_RUNTIME_SLURM_ACCOUNT=pi-hadwigm" in common
+    assert '[[ "${SLURM_JOB_ACCOUNT:-}" == "$CLASS_RUNTIME_SLURM_ACCOUNT" ]]' in common
+    assert "conda activate deepvortex" in common
+    assert "conda activate deepvortex" in smoke
     assert 'scontrol show job -o "$job_id"' in common
     assert 'expected_time_limit="12:00:00"' in common
     assert "allocation['num_nodes']" in common

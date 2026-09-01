@@ -12,6 +12,7 @@ readonly CLASS_RUNNER=scripts/run_verify_class_conditional_template_score_1_1.py
 readonly CLASS_AGGREGATOR=scripts/aggregate_verify_class_conditional_template_score_1_1.py
 readonly CLASS_SMOKE=scripts/run_verify_class_conditional_template_score_resource_smoke_1_1.py
 readonly CLASS_COMMON=ibex/verify_class_conditional_template_score_1.1_common.sh
+readonly CLASS_RUNTIME_SLURM_ACCOUNT=pi-hadwigm
 
 readonly CLASS_INPUT_MANIFEST=/ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/preparation/slurm_51068863_fd0412dc134d/kinematic_input_manifest.json
 readonly CLASS_INPUT_MANIFEST_SHA256=1b9df53a9010c6c3c46345639cfbf1d5ab2fe3a43187c79c7dfa0f7d840b102f
@@ -155,7 +156,8 @@ print(
 )
 PY
   [[ "${SLURM_JOB_PARTITION:-}" == cpu ]] || ptm_class_die "Slurm partition must be cpu"
-  [[ "${SLURM_JOB_ACCOUNT:-}" == deepvortex ]] || ptm_class_die "Slurm account must be deepvortex"
+  [[ "${SLURM_JOB_ACCOUNT:-}" == "$CLASS_RUNTIME_SLURM_ACCOUNT" ]] || \
+    ptm_class_die "Slurm account must be $CLASS_RUNTIME_SLURM_ACCOUNT"
   [[ "${SLURM_CPUS_PER_TASK:-}" == 32 ]] || ptm_class_die "Slurm CPUs per task must be 32"
   [[ "${SLURM_MEM_PER_NODE:-}" == 131072 ]] || ptm_class_die "Slurm memory must be exactly 128 GiB"
 }

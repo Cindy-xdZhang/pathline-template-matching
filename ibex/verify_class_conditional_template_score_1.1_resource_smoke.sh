@@ -9,7 +9,7 @@
 #SBATCH --mem=128G
 #SBATCH --constraint=rome
 #SBATCH --partition=cpu
-#SBATCH --account=deepvortex
+#SBATCH --account=pi-hadwigm
 
 set -euo pipefail
 export PTM_RESOURCE_SMOKE_WRAPPER_START_EPOCH

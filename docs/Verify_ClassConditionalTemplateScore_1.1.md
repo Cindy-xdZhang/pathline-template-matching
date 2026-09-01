@@ -216,7 +216,8 @@ exact-scale library 与 leave-one-out calibrator。下面四类 final artifacts 
 family/class libraries 与 leave-one-out references，再用 deterministic label-free synthetic queries
 走查询 path。
 
-Ibex 请求固定为 CPU Rome node、`deepvortex` account、32 CPUs、128 GB、4 小时、无 GPU。只有在
+Ibex 冻结请求记录为 CPU Rome node、`deepvortex` account、32 CPUs、128 GB、4 小时、无 GPU。当前
+Slurm billing account 的部署覆盖在本文 2026-09-01 审计段单独记录。只有在
 exit code 为 0、peak memory 严格小于 128 GB、elapsed 不超过 4 小时、数组全部 finite、self-exclusion/
 duplicate/support audit 全通过、没有打开 forbidden 或 reserved family，并且 PASS marker 最后原子写入
 时才通过。Smoke 禁止输出 accuracy、F1、average precision、AUROC、inner/outer prediction、selected
@@ -257,17 +258,33 @@ process 必须立即登记，且只能从已 push 的 clean Git commit 在 Ibex 
 
 ## 2026-09-01 实现与首次真实读取前审计
 
-冻结配置没有改动。本节只记录配置冻结后的实现、合成验证和部署门；截至本节写入时，本版本仍未打开
-任何真实 feature、label、valid-rate、prediction 或 metric。
+科学方法、拆分、候选和成功/停止门没有改动。本节记录配置冻结后的实现、合成验证和部署门；截至本节
+写入时，本版本仍未打开任何真实 feature、label、valid-rate、prediction 或 metric。
+
+首次 `sbatch` 在创建 job ID 前被调度器拒绝：wrapper 把 Slurm billing account 写为
+`deepvortex`，但 2026-09-01 的只读 `sacctmgr` 关联只返回 `pi-hadwigm||normal`。因此旧数值提交
+`cfa369dd35ab1b3dd89232b74ead7f3b3c937b40` 没有启动进程、没有分配节点，也没有读取实验数据。
+在任何真实读取前，仅把五个 wrapper 的实际 billing account 及对应 runtime 认证从 `deepvortex`
+改为 `pi-hadwigm`；冻结 config 字节及 SHA-256 `814f95d2ec58f751a91082d588f790b3592a891963810013ad92ab704febbdea`
+保持不变，Conda 环境也仍是 `deepvortex`。Artifact 的 `runtime.slurm_job_account` 将记录并认证实际
+`pi-hadwigm`；config 中的旧 account 只保留为冻结时请求记录。这是调度基础设施覆盖，未改变任何
+数值公式、数据成员、表示、尺度、超参数或指标门。
 
 | 组件 | 路径 | SHA-256 |
 |---|---|---|
 | class-conditional 数值核心 | `src/pathline_template_matching/class_conditional_template_score.py` | `9c009376f7cea1481f6f47a49362d54d0e78530717f480fda3e8a109f841ef99` |
 | fold runner | `scripts/run_verify_class_conditional_template_score_1_1.py` | `e5063887475029320e66da1f1eb221d7988598e8918d37fbe47ee213e5ff1b48` |
 | fresh-replay aggregator | `scripts/aggregate_verify_class_conditional_template_score_1_1.py` | `49c80993c9704a46f7aa8aa4dd4a0ed7d08599b02edc50d12f3354e036f924cc` |
-| mandatory resource smoke | `scripts/run_verify_class_conditional_template_score_resource_smoke_1_1.py` | `dc42f9ee07f85470034cf543a204461edd2cf98328c6af0b58dd17994599c106` |
+| mandatory resource smoke | `scripts/run_verify_class_conditional_template_score_resource_smoke_1_1.py` | `131dac5a7b352c839b86cf70bb16d8fa6b2d8f2c736ab9e7bfcfb0e0211426d9` |
 
-提交前最终快照通过 81/81 项 ClassConditional 定向测试、427/427 项项目统一测试、全部相关 Python
+账户覆盖后的 execution hashes：common/resource/first/auth/remaining/aggregate wrappers 依次为
+`56af842c…d19f`、`64c77ae2…c667`、`d5988c3d…9841`、`22a91d47…24d5`、
+`ac7ca7e7…bb61`、`98d524cb…305`；resource-smoke test、Ibex test、统一注册表依次为
+`eca5a960…8d36`、`4fa07ed1…d531`、`1561c78c…9519`。完整值必须由 deployment checkout 重新计算，
+不得只依赖本文缩写。
+
+账户修复后的最终快照通过 42/42 项 resource/Ibex 定向测试；原 81/81 项 ClassConditional 定向测试
+全部包含在随后通过的 427/427 项项目统一测试中。全部相关 Python
 文件编译、六个 Bash wrapper 的 `bash -n` 和 `git diff --check`。其中 aggregator 的 12 项测试包含
 fresh numerical replay、outer-label gate、严格 JSON 类型、canonical CSV、certificate/report/manifest/
 completion 全重构，以及自洽改写发布文件仍必须拒绝的回归。
@@ -291,7 +308,8 @@ Resource smoke 固定只打开 `f22_raptor/channel/boeing_747` 的 12 个 source
 28 shards 的 production final-fit 人口上界。因此 smoke PASS 只能支持代码路径和本次 128 GB/4 h 请求，
 不能单独证明完整 fold 的峰值资源上界；真实 fold 仍按冻结的 128 GB/12 h 请求并保留实际 MaxRSS/elapsed。
 
-本节所在 implementation/numerical deployment commit 已固定为
-`cfa369dd35ab1b3dd89232b74ead7f3b3c937b40`。本次只改文档的后续提交不属于 numerical checkout；
-首次真实读取必须在 Ibex detached checkout 该精确 commit，并逐文件复核上述 SHA。任何 SHA、
+数值基线 commit `cfa369dd35ab1b3dd89232b74ead7f3b3c937b40` 的 config、核心公式、runner 与
+aggregator identity 保持有效；仅含无效 wrapper billing account 的 execution/deployment revision 被
+后续基础设施修复提交取代。该新 execution commit 必须在下一次纯文档提交中精确登记。首次真实读取
+只能在 Ibex detached checkout 新提交，并逐文件复核上述 SHA。任何 SHA、
 `slurm_logs/.gitkeep` tree identity 或 clean-worktree 门不通过都禁止提交 resource smoke。

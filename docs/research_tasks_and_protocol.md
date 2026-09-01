@@ -558,11 +558,16 @@ negative-only anomaly改为每个fit family内正类与负类的exact-scale模�
 尚未打开任何本版本真实数组或产生性能结果；完整合同见
 `docs/Verify_ClassConditionalTemplateScore_1.1.md`。
 
-2026-09-01 实现审计已完成，冻结配置未变。最终 core/runner/aggregator/resource-smoke SHA-256
-依次为 `9c009376…`、`e5063887…`、`49c80993…`、`dc42f9ee…`；81/81 项本版本定向测试、
+2026-09-01 实现审计已完成；科学字段与冻结 config 字节未变。首次 `sbatch` 在生成 job ID 前因旧
+billing account `deepvortex` 不属于当前用户关联而被拒绝，未分配节点、未启动进程、未读取任何实验
+数据；当前唯一关联为 `pi-hadwigm||normal`，所以在真实读取前仅修正五个 wrapper 与 runtime account
+认证，artifact 将记录实际 `pi-hadwigm`，Conda 环境仍为 `deepvortex`。config SHA-256 继续是
+`814f95d2…`。最终 core/runner/aggregator/resource-smoke SHA-256 依次为 `9c009376…`、`e5063887…`、
+`49c80993…`、`131dac5a…`；账户覆盖后的 42/42 项定向测试、原 81/81 项本版本定向测试、
 427/427 项统一测试和六个 Bash wrapper 语法检查通过。实现现在明确排除没有 negative scaler
 支持的两类 rows、允许自然缺类 family 由 joint-support 门处理、严格重构 artifacts 与发布 CSV/
 certificate/report/manifest/completion，并只从 `scontrol Features=rome` 认证节点约束。Resource
 smoke 的三-family/12-shard population 不是完整 final fit 的资源上界，这一证据边界必须保留。
-本段仍不构成真实性能证据；clean numerical deployment commit 已固定为
-`cfa369dd35ab1b3dd89232b74ead7f3b3c937b40`，首次真实读取只能使用该 detached checkout。
+本段仍不构成真实性能证据；`cfa369dd…` 的科学 config/core/runner/aggregator identity 保持有效，只有
+execution/deployment revision 因 pre-job account rejection 被基础设施修复提交取代。首次真实读取只能
+使用随后纯文档提交精确登记的新 detached checkout。

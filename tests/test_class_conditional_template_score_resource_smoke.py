@@ -347,7 +347,7 @@ def _valid_release_payloads() -> tuple[dict[str, object], dict[str, object], str
             "gpu_requested": False,
             "slurm_cpus_per_task": 32,
             "slurm_job_partition": "cpu",
-            "slurm_job_account": "deepvortex",
+            "slurm_job_account": "pi-hadwigm",
             "slurm_scontrol_features": "rome",
             "slurm_memory_per_node": str(smoke.SLURM_MEMORY_PER_NODE_MIB),
             "slurm_num_nodes": 1,
@@ -647,10 +647,12 @@ def test_frozen_resource_smoke_contract_matches_exact_config() -> None:
     assert slurm["memory_gb"] == 128
     assert slurm["walltime"] == "04:00:00"
     assert slurm["gpu"] == "none"
+    assert slurm["account"] == smoke.FROZEN_CONFIG_SLURM_ACCOUNT == "deepvortex"
+    assert smoke.RUNTIME_SLURM_ACCOUNT == "pi-hadwigm"
     wrapper = smoke.SMOKE_WRAPPER_PATH.read_text(encoding="utf-8")
     assert "#SBATCH --constraint=rome\n" in wrapper
     assert "#SBATCH --partition=cpu\n" in wrapper
-    assert "#SBATCH --account=deepvortex\n" in wrapper
+    assert "#SBATCH --account=pi-hadwigm\n" in wrapper
     assert "#SBATCH --cpus-per-task=32\n" in wrapper
     assert "#SBATCH --mem=128G\n" in wrapper
     assert "#SBATCH --time=04:00:00\n" in wrapper
@@ -980,7 +982,7 @@ def test_runtime_payload_rejects_partition_account_constraint_and_memory_drift()
         "slurm_job_id": "123456",
         "slurm_cpus_per_task": 32,
         "slurm_job_partition": "cpu",
-        "slurm_job_account": "deepvortex",
+        "slurm_job_account": "pi-hadwigm",
         "slurm_scontrol_features": "rome",
         "slurm_memory_per_node": str(smoke.SLURM_MEMORY_PER_NODE_MIB),
         "slurm_num_nodes": 1,
@@ -1036,7 +1038,7 @@ def test_runtime_uses_scontrol_features_without_optional_constraint_environment(
         "SLURM_JOB_ID": "123456",
         "SLURM_CPUS_PER_TASK": "32",
         "SLURM_JOB_PARTITION": "cpu",
-        "SLURM_JOB_ACCOUNT": "deepvortex",
+        "SLURM_JOB_ACCOUNT": "pi-hadwigm",
         "SLURM_MEM_PER_NODE": str(smoke.SLURM_MEMORY_PER_NODE_MIB),
     }
     with (
@@ -1062,7 +1064,7 @@ def test_runtime_uses_scontrol_features_without_optional_constraint_environment(
 
 def test_scontrol_parser_rejects_cli_node_gpu_and_time_overrides() -> None:
     base = (
-        "JobId=123456 JobName=PTMClassSmoke Partition=cpu Account=deepvortex "
+        "JobId=123456 JobName=PTMClassSmoke Partition=cpu Account=pi-hadwigm "
         "NumNodes=1 NumCPUs=32 CPUs/Task=32 TimeLimit=04:00:00 Features=rome "
         "ReqTRES=cpu=32,mem=128G,node=1,billing=32 "
         "AllocTRES=cpu=32,mem=128G,node=1,billing=32 "

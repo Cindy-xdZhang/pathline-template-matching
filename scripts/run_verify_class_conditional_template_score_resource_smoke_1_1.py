@@ -86,6 +86,8 @@ MEMORY_LIMIT_BYTES = 128 * 1024**3
 WALLTIME_LIMIT_SECONDS = 4 * 60 * 60
 RESOURCE_SMOKE_TIME_LIMIT = "04:00:00"
 SLURM_MEMORY_PER_NODE_MIB = 128 * 1024
+FROZEN_CONFIG_SLURM_ACCOUNT = "deepvortex"
+RUNTIME_SLURM_ACCOUNT = "pi-hadwigm"
 
 PARENT_ARCHIVE_MEMBERS = (
     "fmt_features",
@@ -449,7 +451,7 @@ def _validate_resource_smoke_contract(plan: runner.Plan) -> None:
     _require(
         slurm.get("partition") == "cpu"
         and slurm.get("constraint") == "rome"
-        and slurm.get("account") == "deepvortex"
+        and slurm.get("account") == FROZEN_CONFIG_SLURM_ACCOUNT
         and int(slurm.get("nodes", -1)) == 1
         and int(slurm.get("cpus_per_task", -1)) == 32
         and int(slurm.get("memory_gb", -1)) == 128
@@ -1654,7 +1656,7 @@ def _validate_frozen_slurm_runtime_payload(runtime: Mapping[str, Any]) -> None:
         and _is_nonbool_int(runtime.get("slurm_cpus_per_task"))
         and runtime.get("slurm_cpus_per_task") == 32
         and runtime.get("slurm_job_partition") == "cpu"
-        and runtime.get("slurm_job_account") == "deepvortex"
+        and runtime.get("slurm_job_account") == RUNTIME_SLURM_ACCOUNT
         and constraint_value == "rome"
         and isinstance(memory_value, str)
         and memory_value.isdigit()

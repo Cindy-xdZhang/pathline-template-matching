@@ -9,7 +9,7 @@
 #SBATCH --mem=128G
 #SBATCH --partition=cpu
 #SBATCH --constraint=rome
-#SBATCH --account=deepvortex
+#SBATCH --account=pi-hadwigm
 
 set -euo pipefail
 source ibex/verify_class_conditional_template_score_1.1_common.sh
