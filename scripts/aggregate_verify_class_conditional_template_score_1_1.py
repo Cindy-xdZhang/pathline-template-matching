@@ -78,6 +78,26 @@ LABEL_FREE_PRE_RESULT_FILES = (
     "outer_predictions.npz",
     "outer_prediction_manifest.json",
 )
+SELECTED_CANDIDATE_FIELDS = {
+    "schema",
+    "experiment",
+    "created_utc",
+    "config_sha256",
+    "git_commit",
+    "outer_family",
+    "candidate",
+    "candidate_count",
+    "early_evidence",
+    "inner_selection_summary",
+    "inner_evidence",
+    "final_per_scale_scaler_manifest",
+    "final_per_scale_scaler_file",
+    "final_calibration_manifest",
+    "final_calibration_file",
+    "outer_feature_member_opened",
+    runner.METHOD_BINDING_KEY,
+    "content_sha256",
+}
 COMPLETION_FIELDS = {*parent_aggregate.COMPLETION_FIELDS, runner.METHOD_BINDING_KEY}
 RESULT_FIELDS = {*parent_aggregate.RESULT_FIELDS, runner.METHOD_BINDING_KEY}
 METHOD_IDENTITY_FIELDS = {
@@ -1280,17 +1300,7 @@ def _authenticate_fold(
             self_hashed=True,
         )
         _require(
-            set(selected_payload)
-            == {
-                "schema",
-                "experiment",
-                "config_sha256",
-                "git_commit",
-                "outer_family",
-                "candidate",
-                runner.METHOD_BINDING_KEY,
-                "content_sha256",
-            },
+            set(selected_payload) == SELECTED_CANDIDATE_FIELDS,
             f"{fold_path}: selected-candidate fields drifted",
         )
         _require(

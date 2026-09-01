@@ -414,10 +414,20 @@ def _write_full_synthetic_fold(
         {
             "schema": runner.SELECTED_SCHEMA,
             "experiment": runner.EXPERIMENT,
+            "created_utc": "2026-01-01T00:00:00+00:00",
             "config_sha256": plan.sha256,
             "git_commit": NUMERICAL_COMMIT,
             "outer_family": family,
             "candidate": parent._candidate_payload(candidate),
+            "candidate_count": runner.FROZEN_CANDIDATE_COUNT,
+            "early_evidence": {},
+            "inner_selection_summary": parent._candidate_payload(candidate),
+            "inner_evidence": {},
+            "final_per_scale_scaler_manifest": {},
+            "final_per_scale_scaler_file": {},
+            "final_calibration_manifest": {},
+            "final_calibration_file": {},
+            "outer_feature_member_opened": False,
             runner.METHOD_BINDING_KEY: method,
         }
     )
@@ -552,6 +562,64 @@ def _authenticate_synthetic_fold(
             device="cpu",
             expected_fold_commit=NUMERICAL_COMMIT,
         )
+
+
+def test_selected_candidate_writer_and_aggregator_field_contract_match() -> None:
+    plan = runner.load_plan(CONFIG)
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        bound = _bound_plan(plan, root)
+        candidate = runner.candidate_specs(bound)[0]
+        evidence_paths = {
+            "inner_group_metrics": root / "inner_group_metrics.csv",
+            "inner_candidate_summary": root / "inner_candidate_summary.csv",
+            "inner_fit_audits": root / "inner_fit_audits.json",
+        }
+        for name, path in evidence_paths.items():
+            path.write_bytes(f"production-shaped:{name}\n".encode("utf-8"))
+        scaler = parent.VerifiedScalerArtifact(
+            manifest_path=root / "final_per_scale_scaler_manifest.json",
+            manifest_file_sha256="7" * 64,
+            scaler_file_sha256="8" * 64,
+            manifest={"content_sha256": "9" * 64},
+            scaler=object(),
+            _authentication_seal=parent._AUTHENTICATION_SEAL,
+        )
+        calibration = parent.VerifiedCalibrationArtifact(
+            manifest_path=root / "final_tail_calibration_manifest.json",
+            manifest_file_sha256="a" * 64,
+            calibration_file_sha256="b" * 64,
+            manifest={"content_sha256": "c" * 64},
+            model=object(),
+            _authentication_seal=parent._AUTHENTICATION_SEAL,
+        )
+        with runner.class_conditional_parent_runtime(bound, NUMERICAL_COMMIT):
+            path, _, payload = parent.write_selected_candidate(
+                root,
+                plan=bound,
+                selected=candidate,
+                selected_summary=parent._candidate_payload(candidate),
+                scaler=scaler,
+                calibration=calibration,
+                inner_group_metrics_path=evidence_paths["inner_group_metrics"],
+                inner_group_metrics_sha256=sha256_file(
+                    evidence_paths["inner_group_metrics"]
+                ),
+                inner_candidate_summary_path=evidence_paths[
+                    "inner_candidate_summary"
+                ],
+                inner_candidate_summary_sha256=sha256_file(
+                    evidence_paths["inner_candidate_summary"]
+                ),
+                inner_fit_audits_path=evidence_paths["inner_fit_audits"],
+                inner_fit_audits_sha256=sha256_file(
+                    evidence_paths["inner_fit_audits"]
+                ),
+                outer_family="half_cylinder",
+                git_commit=NUMERICAL_COMMIT,
+            )
+        assert set(payload) == aggregate_module.SELECTED_CANDIDATE_FIELDS
+        assert set(_read_json(path)) == aggregate_module.SELECTED_CANDIDATE_FIELDS
 
 
 def test_aggregate_contract_and_label_gate_order_are_frozen() -> None:
@@ -1480,6 +1548,22 @@ def test_full_fold_rejects_self_consistently_resigned_nested_type_mutations() ->
                     lambda selected: selected["candidate"].__setitem__(
                         "k", float(selected["candidate"]["k"])
                     ),
+                ),
+            ),
+            (
+                "selected_candidate_unknown_field",
+                lambda path: mutate_artifact(
+                    path,
+                    "selected_candidate.json",
+                    lambda selected: selected.__setitem__("unexpected", "forbidden"),
+                ),
+            ),
+            (
+                "selected_candidate_missing_field",
+                lambda path: mutate_artifact(
+                    path,
+                    "selected_candidate.json",
+                    lambda selected: selected.pop("created_utc"),
                 ),
             ),
             (
