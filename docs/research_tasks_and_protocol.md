@@ -841,10 +841,11 @@ confirmation。
 
 ## 34. `Other_SourceCenteredRankLikelihoodTemplateVisualization_1.1` 的固定四流场分类三联图
 
-状态：**`FROZEN_PRE_RUN_WAITING_FOR_AUTHENTICATED_RANK_LIKELIHOOD_RELEASE`**。本版本只报告
+状态：**`COMPLETED_LOCAL_RENDERED_QA_PASS`**。本版本只报告
 `Verify_SourceCenteredRankLikelihoodTemplate_1.1`的空间分类结果，不训练、不重新选择候选、不调阈值，
 也不在primary、negative-ECDF control与direct rank诊断之间按结果切换。冻结报告config SHA-256为
-`a464761eb8df3ebf43d55b6f05eee2e90302be770b43f3e5e75a5944f13ff9a3`；冻结发生在读取任何本方法
+`a464761eb8df3ebf43d55b6f05eee2e90302be770b43f3e5e75a5944f13ff9a3`，方法config SHA-256为
+`41d6e7be70b898715c6df6f92cfb17176d2f1bb6153fa37b09dd4da9a6059ffa`；冻结发生在读取任何本方法
 真实prediction、label、metric或父scene NPZ member之前。
 
 - 固定四个query均为source ordinal 2：`cylinder3d/Re160/source 68`、
@@ -870,6 +871,41 @@ confirmation。
 
 完整合同和运行接口见
 `docs/Other_SourceCenteredRankLikelihoodTemplateVisualization_1.1.md`与同名config。实现阶段只使用
-synthetic/opaque fixture；定向测试9/9、wrapper测试7/7、完整回归488/488、科研图静态QA
-18 PASS/0 FAIL。当前没有真实图或逐图指标；上游Boeing fold和complete-five aggregate完成并认证前，
-不得填造其SHA或生成结果图。
+synthetic/opaque fixture；修复后定向测试10/10、wrapper测试7/7、完整回归488/488、科研图静态QA
+18 PASS/0 FAIL。首次job `51165219`在任何NPZ member或output创建前因未绑定
+`source_evidence=None`与真实aggregate证据比较而关闭失败；它没有图或性能结论，也不反对数值release。
+修复只认证真实历史证据封套并增加回归，不改prediction、candidate、threshold或config。
+
+第二次Ibex job `51167090`使用exact reporting commit
+`1abd0a09adf34bcdf3f993e47e39ec6cefd1e618`解释数值commit
+`8db286f07da0ad484a595f85be5c4577957e032b`，于2026-09-02 01:16:23–01:22:42 +03:00在
+`cn514-13-r`完成；32 CPU、128 GiB、无GPU，MaxRSS=`2,370,032K`，
+TotalCPU=`15:55.963`，488/488测试通过（2项跳过）。完整release、half-cylinder和Boeing
+completion SHA-256分别为`6a59b22f2bed5a66d382cb71da14aa6753873a46c89d0290fe286972c958ac71`、
+`18413f08b1975d47c1b61e6b304bf823a78de9a024303d95f526a4cf13f4abe3`和
+`d3c70cd4d3d5fee223a5a1ff4c0f4ffb4f7c3c2a71735eafb7e6657a6cbf1a5e`。
+
+四个scene的combined-valid unique-center F1/AP/BA为：Re160=`.904892/.970477/.913152`，
+Re640=`.893489/.943060/.917367`，Re6400=`.872721/.919959/.919060`，Boeing 747=
+`.885538/.942748/.906483`。对应center TP/FP/TN/FN为
+`2978/0/56956/626`、`2827/123/57054/551`、`2705/285/58821/504`和
+`2437/74/58366/556`；coverage为`.946250/.946172/.973672/.959891`。共绘244,863个绘图
+centers和406,177个primary valid-projection rows。`negative_ecdf`与`direct_rank_mean_top5`的valid-row
+指标只入表，不进入panel或primary success论据。
+
+机器阶段恰好35个文件，本地审计增加26个，最终bundle恰好61个。4/4 alignment、
+PDF文字、SVG可编辑文字与最终尺寸目视检查均PASS；PDF最小7 pt，collision hard fail=0，
+51个warning均在21×5 inch复核中被确认为三维刻度/轴文字接触栅格化边缘，无标题、图例或
+数据遮挡。RUN/result/visualization/metrics/delivery QA/visual review SHA-256为
+`8edefa024db642237332d2079b70dd6c4c7260b68b658af98e6e3cdbaf9cdcfe`/
+`2123933ee472f6248a6dd175c2e21f59683a509712aca66799f4bbc0f12e1f2d`/
+`523b874d85f79ad833398235c26fe6ee297e839d3832dce58079c79452513196`/
+`889c88b9278d358cf8ebc2a15ba7ae9c18f505886d0b63796cb83c19f7cd5772`/
+`8bda4c6a6d46c63c6b10208d5836a4c37709061ea3849d9f3eeddeeff5efaa3b`/
+`c3c181146ea5525cc3b9c30350d7295bcc2c9c3136b221dcd0d0dff2226495c4`；全部哈希见结构化本地摘要。
+
+结论从“冻结完成但尚无真实图”变为“四张固定source图已通过机器事务和本地rendered QA，
+可作描述性交付”，原因是job `51167090`和61文件QA首次完成；旧结论只适用于预运行阶段。
+结论边界不变：四个flow全部是exposed development；方法使用target-source无标签rank和valid mask，
+因此是transductive；primary只使用seed-time curl rank，不是FMT pathline geometry，也不是聚类或
+formal confirmation。Panel A pathline仅为背景，不能用来解释Panel B的分数。
