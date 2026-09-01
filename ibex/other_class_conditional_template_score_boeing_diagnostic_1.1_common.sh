@@ -3,7 +3,9 @@
 
 set -euo pipefail
 
-readonly BOEING_DIAG_PROJECT_ROOT="${BOEING_DIAG_PROJECT_ROOT:-/home/zhanx0o/pathline-template-matching-class-conditional-score}"
+readonly BOEING_DIAG_PROJECT_ROOT=/home/zhanx0o/pathline-template-matching-class-conditional-boeing
+readonly BOEING_DIAG_VERIFY_PRODUCER_ROOT=/home/zhanx0o/pathline-template-matching-class-conditional-score
+readonly BOEING_DIAG_VERIFY_AUDIT_CONFIG_PATH=/home/zhanx0o/pathline-template-matching-class-conditional-score/config/Verify_ClassConditionalTemplateScore_1.1.yaml
 readonly BOEING_DIAG_EXPERIMENT_ROOT=/ibex/user/zhanx0o/pathline-template-matching/Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1
 readonly BOEING_DIAG_CONFIG=config/Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1.yaml
 readonly BOEING_DIAG_CONFIG_SHA256=6112e7588efecf29cf2690b270385053d8ccd94f8e11037a6e247815afcc5856
@@ -25,6 +27,9 @@ readonly BOEING_DIAG_VERIFY_CONFIG_SHA256=814f95d2ec58f751a91082d588f790b3592a89
 readonly BOEING_DIAG_VERIFY_CORE_SHA256=9c009376f7cea1481f6f47a49362d54d0e78530717f480fda3e8a109f841ef99
 readonly BOEING_DIAG_VERIFY_RUNNER_SHA256=e5063887475029320e66da1f1eb221d7988598e8918d37fbe47ee213e5ff1b48
 readonly BOEING_DIAG_VERIFY_AGGREGATOR_SHA256=77a561930ca85e3c1e6193a12e27b0b61bf7cc99be96889070962b8bfaf04e9c
+readonly BOEING_DIAG_VERIFY_RESOURCE_AUTHENTICATOR_SHA256=97f02e58cf571e81466fc1d14bbc605d89c48e7d79fe0d6af86f0fdb0e780371
+readonly BOEING_DIAG_VERIFY_RESOURCE_TEST_SHA256=31b0de79c34ccf13b2ff8559801d144d816212009cc07785e37cc7f5403908c7
+readonly BOEING_DIAG_VERIFY_RESOURCE_WRAPPER_SHA256=64c77ae20ed97edba0a57152d2fe0c51ca925b19f2c156a5c504bbd0e830c667
 readonly BOEING_DIAG_VERIFY_FIRST_FOLD_JOB_ID=51146327
 readonly BOEING_DIAG_VERIFY_FIRST_FOLD_DIR=/ibex/user/zhanx0o/pathline-template-matching/Verify_ClassConditionalTemplateScore_1.1/runs/slurm_51146327_0_58b0bc0b0c73_outer_half_cylinder
 readonly BOEING_DIAG_VERIFY_AUTH_DIR=/ibex/user/zhanx0o/pathline-template-matching/Verify_ClassConditionalTemplateScore_1.1/aggregate/slurm_51146768_58b0bc0b0c73
@@ -110,13 +115,64 @@ ptm_boeing_diag_require_parent_source_identity() {
     "authenticated Verify aggregator"
 }
 
+ptm_boeing_diag_require_verify_producer_source_identity() {
+  ptm_boeing_diag_require_file_sha256 \
+    "$BOEING_DIAG_VERIFY_PRODUCER_ROOT/$BOEING_DIAG_VERIFY_CONFIG" \
+    "$BOEING_DIAG_VERIFY_CONFIG_SHA256" "producer Verify config"
+  ptm_boeing_diag_require_file_sha256 \
+    "$BOEING_DIAG_VERIFY_PRODUCER_ROOT/$BOEING_DIAG_CORE" \
+    "$BOEING_DIAG_VERIFY_CORE_SHA256" "producer class-conditional core"
+  ptm_boeing_diag_require_file_sha256 \
+    "$BOEING_DIAG_VERIFY_PRODUCER_ROOT/$BOEING_DIAG_VERIFY_RUNNER" \
+    "$BOEING_DIAG_VERIFY_RUNNER_SHA256" "producer Verify runner"
+  ptm_boeing_diag_require_file_sha256 \
+    "$BOEING_DIAG_VERIFY_PRODUCER_ROOT/$BOEING_DIAG_VERIFY_AGGREGATOR" \
+    "$BOEING_DIAG_VERIFY_AGGREGATOR_SHA256" "producer Verify aggregator"
+  ptm_boeing_diag_require_file_sha256 \
+    "$BOEING_DIAG_VERIFY_PRODUCER_ROOT/$BOEING_DIAG_VERIFY_RESOURCE_AUTHENTICATOR" \
+    "$BOEING_DIAG_VERIFY_RESOURCE_AUTHENTICATOR_SHA256" \
+    "producer resource authenticator"
+  ptm_boeing_diag_require_file_sha256 \
+    "$BOEING_DIAG_VERIFY_PRODUCER_ROOT/tests/test_class_conditional_template_score_resource_smoke.py" \
+    "$BOEING_DIAG_VERIFY_RESOURCE_TEST_SHA256" "producer resource test"
+  ptm_boeing_diag_require_file_sha256 \
+    "$BOEING_DIAG_VERIFY_PRODUCER_ROOT/ibex/verify_class_conditional_template_score_1.1_resource_smoke.sh" \
+    "$BOEING_DIAG_VERIFY_RESOURCE_WRAPPER_SHA256" "producer resource wrapper"
+}
+
+ptm_boeing_diag_require_verify_producer_checkout() {
+  [[ -d "$BOEING_DIAG_VERIFY_PRODUCER_ROOT/.git" ]] || \
+    ptm_boeing_diag_die "immutable Verify producer checkout is missing"
+  local producer_root producer_head
+  producer_root=$(git -C "$BOEING_DIAG_VERIFY_PRODUCER_ROOT" rev-parse --show-toplevel)
+  [[ "$producer_root" == "$BOEING_DIAG_VERIFY_PRODUCER_ROOT" ]] || \
+    ptm_boeing_diag_die "Verify producer checkout resolved to the wrong absolute root"
+  producer_head=$(git -C "$BOEING_DIAG_VERIFY_PRODUCER_ROOT" rev-parse --verify HEAD^{commit})
+  [[ "$producer_head" == "$BOEING_DIAG_VERIFY_EXECUTION_COMMIT" ]] || \
+    ptm_boeing_diag_die "Verify producer checkout is not at the frozen execution commit"
+  if git -C "$BOEING_DIAG_VERIFY_PRODUCER_ROOT" symbolic-ref -q HEAD >/dev/null 2>&1; then
+    ptm_boeing_diag_die "Verify producer checkout must remain detached"
+  fi
+  [[ -z "$(git -C "$BOEING_DIAG_VERIFY_PRODUCER_ROOT" status --porcelain=v1 --untracked-files=all)" ]] || \
+    ptm_boeing_diag_die "Verify producer checkout is not clean"
+  git -C "$BOEING_DIAG_VERIFY_PRODUCER_ROOT" cat-file -e \
+    "${BOEING_DIAG_VERIFY_EXECUTION_COMMIT}^{commit}"
+  ptm_boeing_diag_require_verify_producer_source_identity
+}
+
 ptm_boeing_diag_stage_gate() {
   local expected_commit=${EXPECTED_GIT_COMMIT:?EXPECTED_GIT_COMMIT is required}
   [[ "$expected_commit" =~ ^[0-9a-f]{40}$ ]] || \
     ptm_boeing_diag_die "EXPECTED_GIT_COMMIT must be lowercase 40-hex"
   ptm_boeing_diag_reject_confirmation_value "$BOEING_DIAG_PROJECT_ROOT" "project root"
+  ptm_boeing_diag_reject_confirmation_value \
+    "$BOEING_DIAG_VERIFY_PRODUCER_ROOT" "Verify producer root"
   ptm_boeing_diag_reject_confirmation_value "$BOEING_DIAG_EXPERIMENT_ROOT" "experiment root"
+  [[ "$BOEING_DIAG_PROJECT_ROOT" != "$BOEING_DIAG_VERIFY_PRODUCER_ROOT" ]] || \
+    ptm_boeing_diag_die "Other and Verify producer checkouts must be separate"
   cd "$BOEING_DIAG_PROJECT_ROOT"
+  [[ "$(pwd -P)" == "$BOEING_DIAG_PROJECT_ROOT" ]] || \
+    ptm_boeing_diag_die "Other checkout resolved to the wrong absolute root"
   [[ -z "$(git status --porcelain=v1 --untracked-files=all)" ]] || \
     ptm_boeing_diag_die "worktree is not clean"
   local observed_commit
@@ -264,8 +320,7 @@ ptm_boeing_diag_require_parent_releases() {
   local auth_complete_sha256=$3
   local resource_pass=$4
   local resource_pass_sha256=$5
-  local original_directory original_pythonpath project_directory
-  local verify_auth_checkout verify_auth_head
+  local original_directory original_pythonpath project_directory producer_directory
 
   [[ "$first_fold_job_id" == "$BOEING_DIAG_VERIFY_FIRST_FOLD_JOB_ID" ]] || \
     ptm_boeing_diag_die "VERIFY_FIRST_FOLD_JOB_ID drifted from the frozen stopped fold"
@@ -289,41 +344,45 @@ ptm_boeing_diag_require_parent_releases() {
   project_directory=$(realpath -- "$BOEING_DIAG_PROJECT_ROOT")
   [[ "$original_directory" == "$project_directory" ]] || \
     ptm_boeing_diag_die "parent release authentication must start in the current Other checkout"
-  git -C "$BOEING_DIAG_PROJECT_ROOT" cat-file -e \
-    "${BOEING_DIAG_VERIFY_EXECUTION_COMMIT}^{commit}"
-  verify_auth_checkout="$BOEING_DIAG_JOB_TMP_ROOT/verify_parent_release_auth_${BOEING_DIAG_VERIFY_EXECUTION_COMMIT}"
-  [[ ! -e "$verify_auth_checkout" ]] || \
-    ptm_boeing_diag_die "job-local Verify authentication clone already exists"
-
-  # This is a job-local object-isolated clone of the current local repository.
-  # It performs no network access and never mutates the shared Other checkout.
-  git clone --local --no-hardlinks --no-checkout -- \
-    "$BOEING_DIAG_PROJECT_ROOT" "$verify_auth_checkout"
-  git -C "$verify_auth_checkout" -c advice.detachedHead=false checkout --detach \
-    "$BOEING_DIAG_VERIFY_EXECUTION_COMMIT"
-  verify_auth_head=$(git -C "$verify_auth_checkout" rev-parse --verify HEAD^{commit})
-  [[ "$verify_auth_head" == "$BOEING_DIAG_VERIFY_EXECUTION_COMMIT" ]] || \
-    ptm_boeing_diag_die "job-local Verify authentication clone is at the wrong commit"
-  [[ -z "$(git -C "$verify_auth_checkout" status --porcelain=v1 --untracked-files=all)" ]] || \
-    ptm_boeing_diag_die "job-local Verify authentication clone is not clean"
+  producer_directory=$(realpath -- "$BOEING_DIAG_VERIFY_PRODUCER_ROOT")
+  [[ "$producer_directory" == "$BOEING_DIAG_VERIFY_PRODUCER_ROOT" ]] || \
+    ptm_boeing_diag_die "Verify producer root is not the frozen absolute path"
+  [[ "$producer_directory" != "$project_directory" ]] || \
+    ptm_boeing_diag_die "Other and Verify producer roots unexpectedly coincide"
+  ptm_boeing_diag_require_verify_producer_checkout
 
   (
-    cd "$verify_auth_checkout"
-    export PYTHONPATH="$verify_auth_checkout/src:$verify_auth_checkout"
+    cd "$BOEING_DIAG_VERIFY_PRODUCER_ROOT"
+    export PYTHONPATH="$BOEING_DIAG_VERIFY_PRODUCER_ROOT/src:$BOEING_DIAG_VERIFY_PRODUCER_ROOT"
     python - \
       "$resource_pass" "$resource_pass_sha256" \
       "$auth_dir" "$auth_complete_sha256" \
       "$BOEING_DIAG_VERIFY_EXECUTION_COMMIT" "$BOEING_DIAG_VERIFY_CONFIG_SHA256" \
-      "$BOEING_DIAG_VERIFY_FIRST_FOLD_DIR" <<'PY'
+      "$BOEING_DIAG_VERIFY_FIRST_FOLD_DIR" \
+      "$BOEING_DIAG_VERIFY_PRODUCER_ROOT" "$BOEING_DIAG_VERIFY_AUDIT_CONFIG_PATH" <<'PY'
 from pathlib import Path
+import inspect
 import sys
 
 from scripts import aggregate_verify_class_conditional_template_score_1_1 as verify_aggregate
 from scripts import run_verify_class_conditional_template_score_resource_smoke_1_1 as verify_resource
 
-clone_root = Path.cwd().resolve()
-assert Path(verify_aggregate.__file__).resolve().is_relative_to(clone_root)
-assert Path(verify_resource.__file__).resolve().is_relative_to(clone_root)
+producer_root = Path(sys.argv[8]).resolve()
+expected_config_path = Path(sys.argv[9]).resolve()
+assert Path.cwd().resolve() == producer_root
+assert Path(verify_aggregate.__file__).resolve().is_relative_to(producer_root)
+assert Path(verify_resource.__file__).resolve().is_relative_to(producer_root)
+assert Path(verify_aggregate.runner.__file__).resolve().is_relative_to(producer_root)
+assert verify_aggregate.runner.CORE_PATH.resolve() == (
+    producer_root / "src/pathline_template_matching/class_conditional_template_score.py"
+)
+inherited_git_module = inspect.getmodule(
+    verify_aggregate.runner._INHERITED_GIT_IDENTITY
+)
+assert inherited_git_module is not None
+assert Path(inherited_git_module.__file__).resolve().is_relative_to(producer_root)
+assert verify_resource.CONFIG_PATH.resolve() == expected_config_path
+assert verify_aggregate.runner.CONFIG_PATH.resolve() == expected_config_path
 
 resource = verify_resource.authenticate_resource_smoke_release(
     Path(sys.argv[1]),
@@ -354,11 +413,7 @@ PY
     ptm_boeing_diag_die "current directory was not restored after Verify authentication"
   [[ "${PYTHONPATH-}" == "$original_pythonpath" ]] || \
     ptm_boeing_diag_die "PYTHONPATH was not restored after Verify authentication"
-  verify_auth_head=$(git -C "$verify_auth_checkout" rev-parse --verify HEAD^{commit})
-  [[ "$verify_auth_head" == "$BOEING_DIAG_VERIFY_EXECUTION_COMMIT" ]] || \
-    ptm_boeing_diag_die "job-local Verify authentication clone HEAD changed"
-  [[ -z "$(git -C "$verify_auth_checkout" status --porcelain=v1 --untracked-files=all)" ]] || \
-    ptm_boeing_diag_die "job-local Verify authentication clone changed"
+  ptm_boeing_diag_require_verify_producer_checkout
   ptm_boeing_diag_stage_gate
 }
 

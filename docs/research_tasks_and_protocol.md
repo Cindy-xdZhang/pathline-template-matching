@@ -595,6 +595,11 @@ half-cylinder fold覆盖；只允许另建本 `Other` 版本补一个 Boeing out
   Boeing必须重新nested selection、final refit、sealed prediction和outer-label gate。
 - Verify stopped release `f8515858…76844` 与resource PASS `3f9197a1…57ea`只作执行授权和来源证据，
   不是数值输入。Tangaroa/SmokeBuoyancy继续禁止。
+- 旧resource audit绑定的Verify config绝对路径为
+  `/home/zhanx0o/pathline-template-matching-class-conditional-score/config/Verify_ClassConditionalTemplateScore_1.1.yaml`。
+  因此该原路径必须保留为clean detached `58b0bc0…` producer；本Other版本的fold/auth/report只允许从
+  `/home/zhanx0o/pathline-template-matching-class-conditional-boeing`运行。两个checkout不得相同，且不得用
+  `/tmp` clone或alternate worktree冒充旧producer绝对路径。
 - 诊断只允许固定source visualization与descriptive error analysis，不评估或输出success、stop、
   five-family macro、formal confirmation或独立test generalization。
 - 认证release必须恰为`boeing_outer_summary.csv`、`boeing_diagnostic_report.json`、

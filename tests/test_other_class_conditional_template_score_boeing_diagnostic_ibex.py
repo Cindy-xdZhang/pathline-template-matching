@@ -14,6 +14,8 @@ AUTH_NAME = "other_class_conditional_template_score_boeing_diagnostic_1.1_auth.s
 CONFIG = ROOT / "config" / "Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1.yaml"
 CONFIG_SHA256 = "6112e7588efecf29cf2690b270385053d8ccd94f8e11037a6e247815afcc5856"
 VERIFY_COMMIT = "58b0bc0b0c7385f1b356eb343a150fcd50dad94f"
+OTHER_ROOT = "/home/zhanx0o/pathline-template-matching-class-conditional-boeing"
+VERIFY_PRODUCER_ROOT = "/home/zhanx0o/pathline-template-matching-class-conditional-score"
 
 
 def _text(name: str) -> str:
@@ -56,11 +58,15 @@ def test_boeing_diagnostic_pins_the_exact_inherited_scientific_sources() -> None
         "BOEING_DIAG_VERIFY_CORE_SHA256": "9c009376f7cea1481f6f47a49362d54d0e78530717f480fda3e8a109f841ef99",
         "BOEING_DIAG_VERIFY_RUNNER_SHA256": "e5063887475029320e66da1f1eb221d7988598e8918d37fbe47ee213e5ff1b48",
         "BOEING_DIAG_VERIFY_AGGREGATOR_SHA256": "77a561930ca85e3c1e6193a12e27b0b61bf7cc99be96889070962b8bfaf04e9c",
+        "BOEING_DIAG_VERIFY_RESOURCE_AUTHENTICATOR_SHA256": "97f02e58cf571e81466fc1d14bbc605d89c48e7d79fe0d6af86f0fdb0e780371",
+        "BOEING_DIAG_VERIFY_RESOURCE_TEST_SHA256": "31b0de79c34ccf13b2ff8559801d144d816212009cc07785e37cc7f5403908c7",
+        "BOEING_DIAG_VERIFY_RESOURCE_WRAPPER_SHA256": "64c77ae20ed97edba0a57152d2fe0c51ca925b19f2c156a5c504bbd0e830c667",
     }
     for name, value in expected.items():
         assert f"readonly {name}={value}" in common
     assert "ptm_boeing_diag_require_parent_source_identity" in common
-    assert common.count("ptm_boeing_diag_require_file_sha256") >= 9
+    assert "ptm_boeing_diag_require_verify_producer_source_identity" in common
+    assert common.count("ptm_boeing_diag_require_file_sha256") >= 16
 
 
 def test_boeing_diagnostic_reauthenticates_the_exact_stopped_parent_and_resource_release() -> None:
@@ -82,43 +88,66 @@ def test_boeing_diagnostic_reauthenticates_the_exact_stopped_parent_and_resource
     assert 'sys.argv[5],\n    sys.argv[6],' in common
 
 
-def test_parent_release_auth_uses_an_isolated_local_detached_verify_clone() -> None:
+def test_parent_release_auth_uses_separate_immutable_absolute_checkouts() -> None:
     common = _text(COMMON_NAME)
+    assert f"readonly BOEING_DIAG_PROJECT_ROOT={OTHER_ROOT}" in common
+    assert (
+        f"readonly BOEING_DIAG_VERIFY_PRODUCER_ROOT={VERIFY_PRODUCER_ROOT}"
+        in common
+    )
+    assert (
+        "readonly BOEING_DIAG_VERIFY_AUDIT_CONFIG_PATH="
+        f"{VERIFY_PRODUCER_ROOT}/config/Verify_ClassConditionalTemplateScore_1.1.yaml"
+        in common
+    )
     section = common[
         common.index("ptm_boeing_diag_require_parent_releases() {") :
         common.index("ptm_boeing_diag_stage_unchanged() {")
     ]
-    assert (
-        'verify_auth_checkout="$BOEING_DIAG_JOB_TMP_ROOT/'
-        'verify_parent_release_auth_${BOEING_DIAG_VERIFY_EXECUTION_COMMIT}"'
-    ) in section
-    assert "git clone --local --no-hardlinks --no-checkout --" in section
-    assert (
-        'git -C "$verify_auth_checkout" -c advice.detachedHead=false '
-        "checkout --detach"
-    ) in section
-    assert section.count(
-        'git -C "$verify_auth_checkout" rev-parse --verify HEAD^{commit}'
-    ) == 2
-    assert section.count(
-        'git -C "$verify_auth_checkout" status --porcelain=v1 '
-        "--untracked-files=all"
-    ) == 2
+    producer_gate = common[
+        common.index("ptm_boeing_diag_require_verify_producer_checkout() {") :
+        common.index("ptm_boeing_diag_stage_gate() {")
+    ]
+    assert 'rev-parse --verify HEAD^{commit}' in producer_gate
+    assert 'symbolic-ref -q HEAD' in producer_gate
+    assert 'status --porcelain=v1 --untracked-files=all' in producer_gate
+    assert "ptm_boeing_diag_require_verify_producer_source_identity" in producer_gate
+    assert section.count("ptm_boeing_diag_require_verify_producer_checkout") == 2
     assert 'original_directory=$(pwd -P)' in section
     assert 'original_pythonpath=${PYTHONPATH-}' in section
-    assert 'cd "$verify_auth_checkout"' in section
-    assert 'export PYTHONPATH="$verify_auth_checkout/src:$verify_auth_checkout"' in section
-    assert "Path(verify_aggregate.__file__).resolve().is_relative_to(clone_root)" in section
-    assert "Path(verify_resource.__file__).resolve().is_relative_to(clone_root)" in section
+    assert 'cd "$BOEING_DIAG_VERIFY_PRODUCER_ROOT"' in section
+    assert (
+        'export PYTHONPATH="$BOEING_DIAG_VERIFY_PRODUCER_ROOT/src:'
+        '$BOEING_DIAG_VERIFY_PRODUCER_ROOT"'
+    ) in section
+    assert "Path(verify_aggregate.__file__).resolve().is_relative_to(producer_root)" in section
+    assert "Path(verify_resource.__file__).resolve().is_relative_to(producer_root)" in section
+    assert "Path(verify_aggregate.runner.__file__).resolve().is_relative_to(producer_root)" in section
+    assert "verify_aggregate.runner.CORE_PATH.resolve()" in section
+    assert "inspect.getmodule(" in section
+    assert "verify_aggregate.runner._INHERITED_GIT_IDENTITY" in section
+    assert "Path(inherited_git_module.__file__).resolve().is_relative_to(producer_root)" in section
+    assert "verify_resource.CONFIG_PATH.resolve() == expected_config_path" in section
+    assert "verify_aggregate.runner.CONFIG_PATH.resolve() == expected_config_path" in section
     assert '[[ "$(pwd -P)" == "$original_directory" ]]' in section
     assert '[[ "${PYTHONPATH-}" == "$original_pythonpath" ]]' in section
     assert section.rfind("ptm_boeing_diag_stage_gate") > section.rfind(
         "PYTHONPATH was not restored"
     )
-    assert "git worktree" not in section
-    assert "https://" not in section
-    assert "git@" not in section
-    assert "ssh " not in section
+    for forbidden in ("git clone", "git worktree", "https://", "git@", "ssh "):
+        assert forbidden not in section
+
+
+def test_all_boeing_wrappers_use_the_other_checkout_and_leave_producer_root_reserved() -> None:
+    common = _text(COMMON_NAME)
+    assert f"readonly BOEING_DIAG_PROJECT_ROOT={OTHER_ROOT}" in common
+    assert f"readonly BOEING_DIAG_VERIFY_PRODUCER_ROOT={VERIFY_PRODUCER_ROOT}" in common
+    for name in (FOLD_NAME, AUTH_NAME):
+        text = _text(name)
+        assert f"#SBATCH --chdir={OTHER_ROOT}" in text
+        assert f"#SBATCH -o {OTHER_ROOT}/slurm_logs/%x.%j.out" in text
+        assert f"#SBATCH -e {OTHER_ROOT}/slurm_logs/%x.%j.err" in text
+        assert VERIFY_PRODUCER_ROOT not in text
 
 
 def test_boeing_diagnostic_wrappers_request_and_authenticate_the_frozen_cpu_allocation() -> None:

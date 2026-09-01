@@ -17,8 +17,12 @@ SHA-256 为
 `6112e7588efecf29cf2690b270385053d8ccd94f8e11037a6e247815afcc5856`。配置中的
 `frozen_pre_run_not_implemented` 和 `current_state` 是冻结时的不可变历史记录，不得在实现或运行后回写。
 
-截至本文当前草案，只完成代码和 synthetic tests，尚未提交本版本 Slurm job，也没有读取本版本真实
-Boeing 数组或结果。因此没有 Boeing 指标、候选或图像结论。
+首次部署 job `51149373` 在455项测试通过后、Boeing runner 启动前失败。旧 resource audit 将
+Verify config 的绝对路径固化为
+`/home/zhanx0o/pathline-template-matching-class-conditional-score/config/Verify_ClassConditionalTemplateScore_1.1.yaml`；
+job-local detached `58b0bc0…` clone 位于 `/tmp`，虽然 commit、config SHA-256 与source bytes均正确，
+仍无法满足 public authenticator 的绝对路径合同。该失败未创建 fold output，也没有读取本诊断真实
+Boeing 数组、候选、prediction 或指标；因此仍没有 Boeing 性能或图像结论。
 
 ## 不变的科学方法
 
@@ -67,6 +71,21 @@ Tangaroa 与 SmokeBuoyancy 继续全部禁止访问。
 | Boeing fold wrapper | `ibex/other_class_conditional_template_score_boeing_diagnostic_1.1_fold.sh` |
 | release authentication wrapper | `ibex/other_class_conditional_template_score_boeing_diagnostic_1.1_auth.sh` |
 
+部署固定使用两个彼此独立、不可混用的 checkout：
+
+| checkout 角色 | 冻结绝对路径与状态 |
+|---|---|
+| Verify producer | `/home/zhanx0o/pathline-template-matching-class-conditional-score`；必须 clean、detached，HEAD 恰为 `58b0bc0b0c7385f1b356eb343a150fcd50dad94f` |
+| 本 Other 版本的 fold/auth/report | `/home/zhanx0o/pathline-template-matching-class-conditional-boeing`；必须 clean，HEAD 恰为本次已 push deployment commit |
+
+旧 resource 和 stopped single-fold 两个 public authenticator 必须从 Verify producer 的原绝对路径导入并
+执行，因为旧 release 同时绑定 commit、config SHA-256、source SHA-256 和 config 绝对路径。任意 `/tmp`
+clone、alternate worktree 或把两个角色放在同一 checkout 都不符合该release合同。common gate 在调用前后
+都验证 producer HEAD、detached/clean状态和旧source hashes；认证结束后恢复 Other cwd/PYTHONPATH 并重跑
+当前版本stage gate。认证进程还显式检查aggregator、runner、core与继承Git-identity函数全部从producer
+根加载，禁止由Other checkout或环境中的同名module混入。三个 Boeing fold/auth/report wrappers 的chdir
+与scheduler logs均只指向Other根。
+
 adapter 只在互斥、可恢复的 runtime transaction 中把 Verify runner 的 experiment/config/output identity
 换成本 `Other` 版本；实际 fit、selection、score、spatial transform、prediction、label gate 和15文件
 transaction 仍由固定 Verify 实现执行。任何非 `boeing_747` outer family 在 Git 或数值访问前拒绝。
@@ -74,7 +93,7 @@ transaction 仍由固定 Verify 实现执行。任何非 `boeing_747` outer fami
 Ibex 请求固定为逻辑 `cpu` partition、实际认证 `batch`、account `pi-hadwigm`、Rome、32 CPU、
 128 GiB、12小时、无GPU。每个 job 必须来自已 push 的 clean exact commit，并按以下顺序执行：
 
-1. source/config/commit 与 Slurm allocation 认证；
+1. Other source/config/commit、独立 Verify producer 的 commit/clean/source身份与 Slurm allocation 认证；
 2. synthetic targeted/full tests；
 3. 父 resource PASS 和 stopped single-fold release fresh authentication；
 4. Boeing-only fold，输出到新的不可覆盖目录；
@@ -83,6 +102,12 @@ Ibex 请求固定为逻辑 `cpu` partition、实际认证 `batch`、account `pi-
 
 提交后必须立即把 fold 和 auth 两个 Slurm process 分别登记到
 [`docs/ibex_run_registry.md`](ibex_run_registry.md)，不能等完成后合并成一行。建议命令形态为：
+
+提交前必须确认原 producer 根仍为 clean detached `58b0bc0…`，并从新的 Other 根提交：
+
+```bash
+cd /home/zhanx0o/pathline-template-matching-class-conditional-boeing
+```
 
 ```bash
 sbatch --partition=batch --export=ALL,EXPECTED_GIT_COMMIT=<clean-commit>,VERIFY_FIRST_FOLD_JOB_ID=51146327,VERIFY_FIRST_FOLD_AUTH_DIR=/ibex/user/zhanx0o/pathline-template-matching/Verify_ClassConditionalTemplateScore_1.1/aggregate/slurm_51146768_58b0bc0b0c73,VERIFY_FIRST_FOLD_AUTH_COMPLETE_SHA256=f8515858efe531c24471a11f64f014692a5d4774146c8908f07ee4ca49476844,VERIFY_RESOURCE_SMOKE_PASS=/ibex/user/zhanx0o/pathline-template-matching/Verify_ClassConditionalTemplateScore_1.1/resource_smoke/slurm_51146125_58b0bc0b0c73/RESOURCE_SMOKE_PASS.json,VERIFY_RESOURCE_SMOKE_PASS_SHA256=3f9197a19407906b0b13a2b9eaa09dbc647b166a9fe9d2ef4dc90cda532557ea ibex/other_class_conditional_template_score_boeing_diagnostic_1.1_fold.sh

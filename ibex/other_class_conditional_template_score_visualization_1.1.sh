@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH -N 1
 #SBATCH -J PTMClassScoreViz
-#SBATCH --chdir=/home/zhanx0o/pathline-template-matching-class-conditional-score
-#SBATCH -o /home/zhanx0o/pathline-template-matching-class-conditional-score/slurm_logs/%x.%j.out
-#SBATCH -e /home/zhanx0o/pathline-template-matching-class-conditional-score/slurm_logs/%x.%j.err
+#SBATCH --chdir=/home/zhanx0o/pathline-template-matching-class-conditional-boeing
+#SBATCH -o /home/zhanx0o/pathline-template-matching-class-conditional-boeing/slurm_logs/%x.%j.out
+#SBATCH -e /home/zhanx0o/pathline-template-matching-class-conditional-boeing/slurm_logs/%x.%j.err
 #SBATCH --time=12:00:00
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=128G
@@ -30,7 +30,7 @@ require_lower_hex() {
     die "$name must be lowercase ${length}-hex"
 }
 
-readonly PROJECT_ROOT=/home/zhanx0o/pathline-template-matching-class-conditional-score
+readonly PROJECT_ROOT=/home/zhanx0o/pathline-template-matching-class-conditional-boeing
 readonly REPORTER=scripts/render_class_conditional_template_score_visualizations.py
 readonly REPORT_TEST=tests/test_class_conditional_template_score_visualization.py
 readonly WRAPPER_TEST=tests/test_class_conditional_template_score_visualization_ibex.py

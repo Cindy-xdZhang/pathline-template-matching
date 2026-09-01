@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH -N 1
 #SBATCH -J PTMClassBoeingAuth
-#SBATCH --chdir=/home/zhanx0o/pathline-template-matching-class-conditional-score
-#SBATCH -o /home/zhanx0o/pathline-template-matching-class-conditional-score/slurm_logs/%x.%j.out
-#SBATCH -e /home/zhanx0o/pathline-template-matching-class-conditional-score/slurm_logs/%x.%j.err
+#SBATCH --chdir=/home/zhanx0o/pathline-template-matching-class-conditional-boeing
+#SBATCH -o /home/zhanx0o/pathline-template-matching-class-conditional-boeing/slurm_logs/%x.%j.out
+#SBATCH -e /home/zhanx0o/pathline-template-matching-class-conditional-boeing/slurm_logs/%x.%j.err
 #SBATCH --time=12:00:00
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=128G

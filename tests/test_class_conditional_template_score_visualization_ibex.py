@@ -5,6 +5,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+OTHER_ROOT = "/home/zhanx0o/pathline-template-matching-class-conditional-boeing"
 WRAPPER = (
     ROOT
     / "ibex"
@@ -38,6 +39,15 @@ def test_class_score_visualization_wrapper_freezes_cpu_rome_resources() -> None:
     assert 'fields["Features"].casefold() == "rome"' in text
     assert 'fields["NumCPUs"] == "32"' in text
     assert '"gpu" not in surfaces' in text
+
+
+def test_class_score_visualization_wrapper_uses_the_separate_other_checkout() -> None:
+    text = _text()
+    assert f"#SBATCH --chdir={OTHER_ROOT}" in text
+    assert f"#SBATCH -o {OTHER_ROOT}/slurm_logs/%x.%j.out" in text
+    assert f"#SBATCH -e {OTHER_ROOT}/slurm_logs/%x.%j.err" in text
+    assert f"readonly PROJECT_ROOT={OTHER_ROOT}" in text
+    assert "/home/zhanx0o/pathline-template-matching-class-conditional-score" not in text
 
 
 def test_class_score_visualization_wrapper_requires_four_external_identities() -> None:
@@ -165,7 +175,7 @@ def _run_standalone() -> None:
         and callable(value)
         and not inspect.signature(value).parameters
     ]
-    assert len(tests) == 6
+    assert len(tests) == 7
     for function in tests:
         function()
 
