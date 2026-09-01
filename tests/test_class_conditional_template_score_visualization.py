@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import inspect
 import json
 from pathlib import Path, PurePosixPath
@@ -175,6 +176,35 @@ def test_existing_output_rejected_before_config_access(tmp_path: Path) -> None:
     except FileExistsError:
         return
     raise AssertionError("expected immutable output rejection")
+
+
+def test_visualization_manifest_self_hash_uses_persisted_json_safe_null(
+    tmp_path: Path,
+) -> None:
+    manifest = report._json_safe_self_hashed_payload(
+        {
+            "schema": "synthetic.visualization.v1",
+            "entries": [
+                {"metrics": {"unimputable_subset_f1": float("nan")}}
+            ],
+        },
+        field="manifest_content_sha256",
+    )
+    assert manifest["entries"][0]["metrics"]["unimputable_subset_f1"] is None
+    path = tmp_path / "visualization_manifest.json"
+    report._atomic_json(path, manifest)
+    persisted = json.loads(path.read_text(encoding="utf-8"))
+    claimed = persisted.pop("manifest_content_sha256")
+    assert claimed == canonical_json_sha256(persisted)
+
+    csv_path = tmp_path / "metrics.csv"
+    report._atomic_csv(
+        csv_path,
+        [{"unimputable_subset_f1": float("nan")}],
+        ("unimputable_subset_f1",),
+    )
+    with csv_path.open("r", encoding="utf-8", newline="") as source:
+        assert list(csv.DictReader(source)) == [{"unimputable_subset_f1": ""}]
 
 
 def test_environment_records_cpu_and_scheduler_identity() -> None:
@@ -468,7 +498,7 @@ def test_real_fold_chain_prediction_members_metrics_and_join(tmp_path: Path) -> 
 
 def _run_standalone() -> None:
     tests = [v for n, v in sorted(globals().items()) if n.startswith("test_") and callable(v)]
-    assert len(tests) == 15
+    assert len(tests) == 16
     for function in tests:
         if inspect.signature(function).parameters:
             with tempfile.TemporaryDirectory() as directory:

@@ -44,6 +44,7 @@ from pathline_template_matching.negative_tail_visualization import (  # noqa: E4
 from pathline_template_matching.phase21_pipeline import (  # noqa: E402
     _atomic_csv,
     _atomic_json,
+    _json_safe,
     _metric_values,
 )
 from pathline_template_matching.phase21_visualization import (  # noqa: E402
@@ -440,6 +441,18 @@ def _read_self_hashed_json(path: Path, field: str = "content_sha256") -> dict[st
     payload = {key: item for key, item in value.items() if key != field}
     _require(canonical_json_sha256(payload) == claimed, f"content hash mismatch: {path}")
     return value
+
+
+def _json_safe_self_hashed_payload(
+    payload: Mapping[str, Any], *, field: str
+) -> dict[str, Any]:
+    """Hash the exact JSON-safe object that ``_atomic_json`` will persist."""
+
+    _require(field not in payload, f"self-hash field already exists: {field}")
+    safe = _json_safe(payload)
+    _require(isinstance(safe, dict), "self-hashed payload must remain a JSON object")
+    safe[field] = canonical_json_sha256(safe)
+    return safe
 
 
 def _file_row(path: Path, role: str) -> dict[str, Any]:
@@ -2139,8 +2152,9 @@ def render_bundle(
         "unique_key": ["dataset", "scale_block"],
         "entries": figure_rows,
     }
-    visualization_manifest["manifest_content_sha256"] = canonical_json_sha256(
-        visualization_manifest
+    visualization_manifest = _json_safe_self_hashed_payload(
+        visualization_manifest,
+        field="manifest_content_sha256",
     )
     _atomic_json(
         output_root / "visualization_manifest.json", visualization_manifest
