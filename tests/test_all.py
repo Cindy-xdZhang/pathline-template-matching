@@ -221,6 +221,9 @@ from test_class_conditional_template_score_resource_smoke import (
     test_self_hash_authentication_rejects_tampering,
     test_synthetic_core_full_path_self_exclusion_roundtrip_and_strict_tie,
 )
+from test_class_conditional_template_score_visualization import (
+    _run_standalone as test_class_conditional_template_score_visualization_suite,
+)
 from test_class_conditional_template_score_ibex import (
     test_aggregate_output_directories_match_the_frozen_pattern,
     test_all_numerical_wrappers_enforce_clean_exact_commit_and_no_overwrite,
@@ -738,6 +741,7 @@ TESTS = (
     test_single_fold_release_rejects_resigned_summary_csv_replacements,
     test_prediction_array_contract_and_no_replace_fail_closed,
     test_full_synthetic_fold_replays_before_metrics_and_rejects_support_tamper,
+    test_class_conditional_template_score_visualization_suite,
     test_frozen_resource_smoke_contract_matches_exact_config,
     test_frozen_evidence_fixture_matches_real_runtime_identity_shapes,
     test_reserved_family_selection_fails_closed_before_any_loader_call,
