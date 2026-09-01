@@ -10,6 +10,7 @@ readonly RANK_CONFIG_SHA256=41d6e7be70b898715c6df6f92cfb17176d2f1bb6153fa37b09dd
 readonly RANK_PREPARER=scripts/prepare_verify_source_centered_rank_likelihood_template_1_1.py
 readonly RANK_RUNNER=scripts/run_verify_source_centered_rank_likelihood_template_1_1.py
 readonly RANK_AGGREGATOR=scripts/aggregate_verify_source_centered_rank_likelihood_template_1_1.py
+readonly RANK_TEST_RUNNER=tests/run_source_centered_rank_likelihood_tests.py
 readonly RANK_COMMON=ibex/verify_source_centered_rank_likelihood_template_1.1_common.sh
 readonly RANK_REMOTE_URL=git@github.com:Cindy-xdZhang/pathline-template-matching.git
 
@@ -26,6 +27,7 @@ readonly -a RANK_IDENTITY_SOURCES=(
   tests/test_source_centered_rank_likelihood_runner.py
   tests/test_source_centered_rank_likelihood_aggregate.py
   tests/test_source_centered_rank_likelihood_ibex.py
+  tests/run_source_centered_rank_likelihood_tests.py
 )
 
 rank_die() {
@@ -140,11 +142,7 @@ rank_activate_runtime() {
 
 rank_targeted_preflight() {
   python -m py_compile "$RANK_PREPARER" "$RANK_RUNNER" "$RANK_AGGREGATOR"
-  python -m pytest -q \
-    tests/test_source_centered_rank_likelihood.py \
-    tests/test_source_centered_rank_likelihood_runner.py \
-    tests/test_source_centered_rank_likelihood_aggregate.py \
-    tests/test_source_centered_rank_likelihood_ibex.py
+  python "$RANK_TEST_RUNNER"
 }
 
 rank_full_preflight() {

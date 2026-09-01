@@ -91,6 +91,11 @@ def test_all_stages_are_cpu_rome_and_use_fail_closed_shared_gates() -> None:
         assert "rank_targeted_preflight" in text
         assert "--device cpu" in text or name in {"prepare", "first_fold_auth", "aggregate_five"}
 
+    common = _read(COMMON)
+    assert "python -m pytest" not in common
+    assert 'python "$RANK_TEST_RUNNER"' in common
+    assert "tests/run_source_centered_rank_likelihood_tests.py" in common
+
 
 def test_prepare_only_binds_existing_parent_sidecars_without_rebuild() -> None:
     prepare = _read(STAGES["prepare"])

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
+import unittest
 
 from pathline_template_matching.source_centered_rank_likelihood import (
     FamilyBalancedRankLikelihoodModel,
@@ -83,7 +83,9 @@ def test_assigned_midrank_is_separate_for_every_block_dx_group_and_order_safe() 
 
     broken_scales = scales[permutation].copy()
     broken_scales[0] = int(blocks[permutation][0]) * 1000
-    with pytest.raises(ValueError, match="must contain exactly 10 assigned rows"):
+    with unittest.TestCase().assertRaisesRegex(
+        ValueError, "must contain exactly 10 assigned rows"
+    ):
         assigned_block_dx_midranks(
             centers[permutation],
             blocks[permutation],
@@ -120,7 +122,7 @@ def test_pairing_uses_both_assigned_ranks_but_library_mask_is_combined_valid() -
     )
     # Center 0 has only a valid legacy pathline, but its assigned expanded rank
     # is still part of the fixed paired representation.
-    assert paired.paired_rank[0] == pytest.approx(0.70)
+    np.testing.assert_allclose(paired.paired_rank[0], 0.70, rtol=0.0, atol=1e-15)
     for value in paired.__dataclass_fields__:
         array = getattr(paired, value)
         if isinstance(array, np.ndarray):
@@ -229,9 +231,9 @@ def test_leave_one_source_out_fails_when_remaining_family_loses_a_class() -> Non
         source_ids=np.asarray([0, 0, 0, 1, 1], dtype=np.int64),
     )
     supported = _fit_batches()["family_b"]
-    with pytest.raises(
+    with unittest.TestCase().assertRaisesRegex(
         ValueError,
-        match=(
+        (
             "leave-one-source-out histogram must retain both classes: "
             "family='unsupported', source_id=0, missing=positive"
         ),
@@ -359,7 +361,7 @@ def test_model_export_round_trip_is_allow_pickle_false_and_exact(tmp_path) -> No
 def test_inputs_are_copied_and_outputs_are_read_only() -> None:
     batches = _fit_batches()
     family_a_ranks = batches["family_a"].ranks
-    with pytest.raises(ValueError):
+    with unittest.TestCase().assertRaises(ValueError):
         family_a_ranks[0] = 0.99
     model = _model()
     query = np.asarray([0.2, 0.8], dtype=np.float64)
@@ -367,38 +369,40 @@ def test_inputs_are_copied_and_outputs_are_read_only() -> None:
     query[:] = 0.0
     np.testing.assert_array_equal(result.ranks, [0.2, 0.8])
     for name in result.__dataclass_fields__:
-        with pytest.raises(ValueError):
+        with unittest.TestCase().assertRaises(ValueError):
             getattr(result, name)[0] = 0
     for name, value in model.export_arrays().items():
-        with pytest.raises(ValueError, match="read-only"):
+        with unittest.TestCase().assertRaisesRegex(ValueError, "read-only"):
             value.flat[0] = value.flat[0]
 
 
 def test_invalid_population_and_model_parameters_fail_closed() -> None:
-    with pytest.raises(ValueError, match="at least two complete sources"):
+    with unittest.TestCase().assertRaisesRegex(
+        ValueError, "at least two complete sources"
+    ):
         FamilySourceRankBatch(
             ranks=np.asarray([0.1, 0.9], dtype=np.float64),
             labels=np.asarray([False, True], dtype=np.bool_),
             source_ids=np.asarray([0, 0], dtype=np.int64),
         )
-    with pytest.raises(ValueError, match="both template classes"):
+    with unittest.TestCase().assertRaisesRegex(ValueError, "both template classes"):
         FamilySourceRankBatch(
             ranks=np.asarray([0.1, 0.2], dtype=np.float64),
             labels=np.asarray([False, False], dtype=np.bool_),
             source_ids=np.asarray([0, 1], dtype=np.int64),
         )
-    with pytest.raises(ValueError, match="bin_count"):
+    with unittest.TestCase().assertRaisesRegex(ValueError, "bin_count"):
         FamilyBalancedRankLikelihoodModel(
             _fit_batches(), bin_count=32, beta=0.5
         )
-    with pytest.raises(ValueError, match="beta"):
+    with unittest.TestCase().assertRaisesRegex(ValueError, "beta"):
         FamilyBalancedRankLikelihoodModel(
             _fit_batches(), bin_count=64, beta=1.0
         )
     model = _model()
-    with pytest.raises(ValueError, match="dtype float64"):
+    with unittest.TestCase().assertRaisesRegex(ValueError, "dtype float64"):
         model.query(np.asarray([0.5], dtype=np.float32))
-    with pytest.raises(ValueError, match="lie in \[0,1\]"):
+    with unittest.TestCase().assertRaisesRegex(ValueError, r"lie in \[0,1\]"):
         model.query(np.asarray([1.1], dtype=np.float64))
 
 
@@ -406,10 +410,10 @@ def test_serialized_tampering_fails_closed() -> None:
     arrays = _model().export_arrays()
     bad_density = {name: value.copy() for name, value in arrays.items()}
     bad_density["full_class_density"][0, 0] += 0.01
-    with pytest.raises(ValueError, match="family-equal mean"):
+    with unittest.TestCase().assertRaisesRegex(ValueError, "family-equal mean"):
         FamilyBalancedRankLikelihoodModel.from_arrays(bad_density)
 
     bad_offsets = {name: value.copy() for name, value in arrays.items()}
     bad_offsets["dual_negative_reference_offsets"][1] += 1
-    with pytest.raises(ValueError):
+    with unittest.TestCase().assertRaises(ValueError):
         FamilyBalancedRankLikelihoodModel.from_arrays(bad_offsets)
