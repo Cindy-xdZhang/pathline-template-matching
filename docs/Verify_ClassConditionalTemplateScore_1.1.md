@@ -310,6 +310,7 @@ Resource smoke 固定只打开 `f22_raptor/channel/boeing_747` 的 12 个 source
 
 数值基线 commit `cfa369dd35ab1b3dd89232b74ead7f3b3c937b40` 的 config、核心公式、runner 与
 aggregator identity 保持有效；仅含无效 wrapper billing account 的 execution/deployment revision 被
-后续基础设施修复提交取代。该新 execution commit 必须在下一次纯文档提交中精确登记。首次真实读取
-只能在 Ibex detached checkout 新提交，并逐文件复核上述 SHA。任何 SHA、
+基础设施修复提交 `0e9fe3d4fcfcda9b9e438ad5ba3a4f7ad0c9b2d9` 取代。本次只改文档的后续
+提交不属于 execution checkout；首次真实读取只能在 Ibex detached checkout 该精确提交，并逐文件
+复核上述 SHA。任何 SHA、
 `slurm_logs/.gitkeep` tree identity 或 clean-worktree 门不通过都禁止提交 resource smoke。
