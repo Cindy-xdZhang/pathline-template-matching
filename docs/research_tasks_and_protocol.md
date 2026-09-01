@@ -701,7 +701,13 @@ PNG目视、PDF/SVG文字、严格panel alignment和碰撞overlay检查：collis
 - 同时固定min-`dx`与逐`dx` midrank双尺度平均两个direct top-5%诊断；它们不使用label或模板库，
   只界定表示排序上限，不能满足模板方法成功条件。
 
-本配置在首次读取本版本任何真实source-centered feature、prediction或metric前冻结；尚无性能结论。
+本配置在首次读取本版本任何真实source-centered feature、prediction或metric前冻结。完整五折认证
+job `51160422`现已完成：primary macro F1/AP/BA/P/R=`0.679390/0.750806/0.858326/
+0.648096/0.734997`，family F1 half/delta/F22/channel/Boeing=`0.636556/0.816445/0.579344/
+0.572869/0.791734`；相对Early的paired bootstrap F1差为`+0.018611`，95% CI
+`[0.012595,0.024880]`。旧结论“首折完成且五折门仍可能通过”只用于释放其余折；完整认证后，
+macro F1<0.70且仅2/5 family达到0.65，故`stop_version=true`。direct dx-rank/min-dx macro
+F1=`0.858241/0.841770`仍只是不使用模板库的直接运动学诊断，不能替代失败的模板成功门。
 
 ## 32. `Other_SourceCenteredPairedScaleTemplateVisualization_1.1` 的单一双尺度中心分类三联图
 
@@ -739,4 +745,10 @@ Re160、Re640、Re6400、Boeing，source ordinal 为2，共4张图而不是8张 
 完整合同、运行接口和结论边界见
 `docs/Other_SourceCenteredPairedScaleTemplateVisualization_1.1.md`。实现阶段只用 synthetic/opaque
 fixture 完成15项核心定向测试与8项wrapper合同测试，其中完整synthetic三联图实际通过正式
-collision auditor（hard fail=0）；本地标准库测试486/486通过，没有产生实际流场图或性能结论。
+collision auditor（hard fail=0）；本地标准库测试486/486通过。其后Ibex job `51162501`完成真实
+四图机器事务，combined-valid center F1 Re160/Re640/Re6400/Boeing=`0.6830/0.5426/0.6663/
+0.8342`。本地4/4 alignment、PDF/SVG文字和最终尺寸目视检查PASS，collision hard fail=0；
+`delivery_qa_summary.json`文件SHA-256为
+`ebb6b5b8545b85debd7a2a1928c7b71a1de522df0a0e998059781b3652b5aa84`。旧结论“没有实际流场图”
+只适用于实现阶段；当前四图可以按暴露开发范围交付，但不是formal confirmation，也不改变完整
+五折macro F1=`0.679390<0.70`的失败结论。

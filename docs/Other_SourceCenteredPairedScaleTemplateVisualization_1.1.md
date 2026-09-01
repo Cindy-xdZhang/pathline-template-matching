@@ -1,11 +1,11 @@
 # `Other_SourceCenteredPairedScaleTemplateVisualization_1.1`
 
-状态：**`MACHINE_RENDER_SUBMITTED_JOB_51162501_PENDING_LOCAL_QA`**。本版本是
+状态：**`COMPLETED_LOCAL_REPORTING_QA_PASS`**。本版本是
 `Verify_SourceCenteredPairedScaleTemplate_1.1` 的固定下游报告，不训练、不重新拟合、
 不选择候选、不改变阈值，也不把 legacy 与 expanded 两个尺度块伪装成两个分类器。
-上游完整五折认证现已完成；机器渲染job `51162501`已提交，但真实四图的指标、位置检查、
-SVG/PDF文字检查、碰撞审计和逐图人工复核尚未形成可发布的本地QA结论。因此本文不虚构图指标
-或图面结论，`pending local QA`状态不能写成已交付。
+上游完整五折认证和机器渲染job `51162501`均已完成；真实四图的指标、位置检查、SVG/PDF文字
+检查、碰撞审计和逐图人工复核均已通过。结构化本地证据为
+`docs/evidence/Other_SourceCenteredPairedScaleTemplateVisualization_1.1_local_summary.json`。
 
 冻结配置为
 `config/Other_SourceCenteredPairedScaleTemplateVisualization_1.1.yaml`，SHA-256 为
@@ -61,6 +61,56 @@ paired dataset-source bootstrap F1差为`+0.018611`，5000次重采样的95%置�
 direct source-centered dx-rank-mean与min-dx诊断的五族macro F1分别为`0.858241`和
 `0.841770`。二者不使用负模板库，只检验直接source-centered局部运动学的排序信息；它们既不参与
 主候选成功判定，也绝不能写成模板匹配方法达到0.70–0.80。
+
+## 实际四图结果
+
+Ibex job `51162501`从reporting commit
+`2468222535f4c87cbd7046a88b3cd4b6dc892356`在`cn514-15-r`完成，exit `0:0`，运行
+`00:06:51`，使用32 CPU、128 GiB、Rome、无GPU；486项测试通过，2项跳过。机器产物为35个文件，
+本地QA后完整bundle为61个文件。`RUN_COMPLETE.json`、`result_manifest.json`、
+`visualization_manifest.json`和`per_figure_metrics.csv`的文件SHA-256依次为：
+
+```text
+f93e74dc0adb9daa5023c44969cc5d671aba87c6f25adf413c5f403efde92901
+2a20dbb769fe71c7113649e329fcfa96223475e344567e324f12d84e03d0754a
+f07a64ebd7269456838acf40508f4dcef6c9e8f5361516b4b9ff6ac7389798b6
+fdbf7b0706dd2251e91421bfeb6eb52e0c057c9bc4eec53018b55bfd7dc53097
+```
+
+以下是图中`combined_valid_unique_centers`总体；每个中心只计一次，正类是whole-volume IVD p95
+reference。Accuracy受约95%负类支配，不能代替F1、Average Precision、Balanced Accuracy、
+precision或recall。
+
+| flow | centers / coverage | TP / FP / TN / FN | F1 | Average Precision | Balanced Accuracy | precision / recall |
+|---|---:|---:|---:|---:|---:|---:|
+| Cylinder3D Re160 | 60,560 / 94.63% | 2,105 / 455 / 56,501 / 1,499 | 0.6830 | 0.7763 | 0.7880 | 0.8223 / 0.5841 |
+| Cylinder3D Re640 | 60,555 / 94.62% | 1,611 / 949 / 56,228 / 1,767 | 0.5426 | 0.6227 | 0.7302 | 0.6293 / 0.4769 |
+| Cylinder3D Re6400 | 62,315 / 97.37% | 1,922 / 638 / 58,468 / 1,287 | 0.6663 | 0.7835 | 0.7941 | 0.7508 / 0.5989 |
+| Boeing 747 | 61,433 / 95.99% | 2,583 / 617 / 57,823 / 410 | 0.8342 | 0.9100 | 0.9262 | 0.8072 / 0.8630 |
+
+前三个Cylinder流场使用half-cylinder outer fold经inner-family选择的
+`chirality35+source4, k=15, sigma=0.5, legacy weight=0.75, top 4%`；Boeing使用其outer fold选择的
+`real-neighbor36+source4, k=31, sigma=0.5, legacy weight=1, top 5%`。这是预注册nested
+family-specific selection，不是把一个相同超参数candidate横跨四个流场。
+
+Boeing fixed source最好，F1=`0.8342`且precision/recall同时较高；Re640最弱，F1=`0.5426`，主要
+问题是recall=`0.4769`且FP明显多于Re160/Re6400。Reynolds number结果不单调：Re160、Re640、
+Re6400的F1依次为`0.6830/0.5426/0.6663`。这些单source图不能推翻完整五族primary macro
+F1=`0.679390<0.70`的停止结论。
+
+Panel B中红色表示预测涡流、蓝色表示预测非涡流。Panel C中红色圆点为TP、紫色三角为FP、
+橙色叉号为FN、低透明度蓝色圆点为TN。Panel A中蓝色实线与紫色虚线只分别标出legacy和expanded
+固定前120条pathline背景，不是两个独立分类器。
+
+## 最终本地QA
+
+本地checkout临时切到机器记录的exact reporting commit后执行正式auditor。4/4严格面板位置、4/4
+PDF文字、4/4 SVG可编辑文字和4/4逐图最终尺寸检查均通过；PDF最小文字为7 pt，碰撞hard failure
+为0。collision auditor共有51个warning，逐张叠加层确认它们只来自三维刻度文字接触栅格绘图区或
+filled axes边缘，没有标题、图例、面板或数据被遮挡。`delivery_qa_summary.json`文件SHA-256为
+`ebb6b5b8545b85debd7a2a1928c7b71a1de522df0a0e998059781b3652b5aa84`，canonical content
+SHA-256为`9c575ff707f1c31749009f86b40b42f6a65bbd55fd16aff4432305995497ac5a`；人工复核JSON
+SHA-256为`2c703814e28e4a915f188bb69291a33dabe1e55dfd5cdd209e33a3417ad12877`。
 
 ## 固定图与统计总体
 
@@ -153,13 +203,13 @@ job `51160422`现已发布一个`complete_five_fold_aggregate`，同时授权hal
 fold completion SHA-256分别为
 `0cda692c60229381fad3a0e4eff278798844b0eaca9d21e52e7b4af2408cdbdd`和
 `7f3a232b77d01312c6c886d051affadf5b956b84e66665f761833e27871f1a65`。生产job `51162501`已从
-reporting commit `2468222535f4c87cbd7046a88b3cd4b6dc892356`提交，固定output为
+reporting commit `2468222535f4c87cbd7046a88b3cd4b6dc892356`完成，固定output为
 `/ibex/user/zhanx0o/pathline-template-matching/Other_SourceCenteredPairedScaleTemplateVisualization_1.1/runs/report_2468222535f4_20260901_01`。
-在本地后置QA完成前，提交或机器渲染本身都不是可发布结果。
+机器阶段单独仍不是可发布结果；其后完成的本地QA才构成当前交付状态。
 
-机器阶段固定结束在 `complete_pending_local_rendered_qa`，不是可交付状态。job `51162501`已提交，
-但当前仍为`pending local QA`；下载完整目录后，先按
-21×5 inch 最终物理尺寸逐张检查四张 PNG，并准备独立 visual-review JSON。该文件必须固定四个
+机器阶段按合同结束在 `complete_pending_local_rendered_qa`，不是可交付状态。job `51162501`完成后，
+完整目录已下载，并按21×5 inch最终物理尺寸逐张检查四张PNG，同时建立独立visual-review JSON。
+该文件固定四个
 dataset 顺序、逐图 PNG SHA-256、全部五项布尔检查、reviewer、UTC 时间与总体 `PASS`。如果碰撞
 审计有 warning，还必须逐图写
 `collision_warning_review=accepted_after_final_size_review` 和非空说明；没有 warning 时写
@@ -182,8 +232,8 @@ SVG/PDF主输出、360 dpi预览和三幅3D报告画布合同处置，出现任�
 1.5 pt 严格三面板位置检查、SVG真实`<text>`元素检查、PDF最小5 pt文字检查和 PDF
 rendered-collision 检查，并绑定人工逐图复核。只有4/4位置检查、4/4 SVG/PDF文字检查、0个碰撞 hard
 failure 和4/4人工复核全部通过，才会不可覆盖地写出自哈希
-`delivery_qa_summary.json`，其中 `delivery_status=PASS`。原始 `RUN_COMPLETE.json` 保留机器阶段的
-pending 状态，两者记录的是先后阶段，不互相覆盖。
+`delivery_qa_summary.json`，其中 `delivery_status=PASS`。本次已经满足全部条件；原始
+`RUN_COMPLETE.json`仍保留机器阶段的pending状态，两者记录的是先后阶段，不互相覆盖。
 
 ## 代码与测试
 
