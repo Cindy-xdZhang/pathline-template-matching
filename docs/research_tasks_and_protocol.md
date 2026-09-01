@@ -752,3 +752,52 @@ collision auditor（hard fail=0）；本地标准库测试486/486通过。其后
 `ebb6b5b8545b85debd7a2a1928c7b71a1de522df0a0e998059781b3652b5aa84`。旧结论“没有实际流场图”
 只适用于实现阶段；当前四图可以按暴露开发范围交付，但不是formal confirmation，也不改变完整
 五折macro F1=`0.679390<0.70`的失败结论。
+
+## 33. `Verify_SourceCenteredRankLikelihoodTemplate_1.1` 的source-rank双类似然模板
+
+状态：**`FROZEN_PRE_RUN_NOT_RUN`**。父`Verify_SourceCenteredPairedScaleTemplate_1.1`已认证
+primary macro F1=`0.6793896155`，而其不使用模板库的direct dx-rank-mean top-5%诊断为
+`0.8582408452`。本版本根据这项已暴露诊断预注册一个新的表示和分数：只使用source-centered seed-time
+curl的组内rank，以有标签正、负fit中心的直方图log-likelihood ratio（对数似然比）替换父版本高维、
+对称的negative-distance score。上述父数字只是设计依据，不是本版本结果。
+
+- 复用父numerical commit `a85c007ef961ce53bb40946ca3f38f033bf7a646`已经认证的32个sidecars；
+  父config/input/population SHA-256固定为`15ac5b0e…60cc`、`5f7e567a…fec9`、
+  `50d9d53f…97e2`。任何新数组读取前，新版本必须只以stat/size/whole-file hash认证并原子发布
+  `parent_sidecar_binding.json`与`BINDING_COMPLETE.json`；禁止改写父manifest或在binding阶段解压
+  sidecar member。每折final nonouter model和candidate关闭前，outer sidecar也只允许相同的opaque检查。
+- 每个`dataset×source×block×dx`组必须使用全部6,400条assigned rows，包括pathline-invalid rows；
+  empirical midrank固定为`(one-based average tie rank-0.5)/6400`。同一中心先以
+  `z_w=w*r_legacy+(1-w)*r_expanded`融合，`w={0,.25,.5,.75,1}`。Rank归一化禁止使用validity、label或
+  reference，因此是无标签的；但它使用目标source自身统计，所以完整分类器是transductive。
+- 模板库只收至少一个block有效的combined-valid centers；同一中心只出现一次，label只由其
+  `valid_labels`聚合且重复block必须一致。禁止为invalid center读取`reference_labels_all`。Rank总体仍是
+  全部assigned rows；template/query eligibility与rank总体不能混淆。
+- Primary先对每个fit family/class分别构建`B={64,128,256}`个等宽bin的自然计数，以
+  `beta={0.5,2}`做加性平滑；再按`p_c(b)=mean_f p_f,c(b)`对physical families等权，最后计算
+  `ell=log p_positive-log p_negative`。禁止先算family LLR再平均，也禁止按family行数加权。
+- 每个fit-negative reference中心必须排除其完整`dataset×source×H48 window`的所有正、负模板后重建
+  上述mean-density模型，再计算留一LLR；rank本身不重算。留一分数按所属family形成reference ECDF。
+  Outer query使用full-fit histogram；对每个family的异常分数固定为
+  `count(reference < query_llr)/(N+1)`，相等不计入，最后family等权。禁止半并列mid-CDF或结果可见后
+  改变tie policy。
+- 校准分数只在各`dataset×source`的combined-valid 40³ mask内做mask-normalized Gaussian，
+  `sigma={0,.5,1}`、truncate=3；阈值`tau={.90,.925,.95,.975,.99,.995}`且严格`score>tau`。
+  Primary候选恰为`5 w×3 B×2 beta×3 sigma×6 tau=540`。
+- `negative_ecdf`只以fit-family natural negatives的`z_w`做family等权经验CDF control，独立从
+  `5 w×3 sigma×6 tau=90`项中做inner选择，不得影响primary或满足success。Direct诊断固定
+  `w=.5/top=5%`、在全部64,000 centers上产生无模板prediction，再投影到全部parent-valid rows；它也
+  不能满足模板成功条件。
+- 完整五个physical family的nested outer/inner拆分、source+H48不可拆、Tangaroa/Smoke禁令、两级
+  inner宏平均、outer-label gate、valid-row主指标、combined-center coverage、metric和认证停止规则继承
+  SourceCentered父版本。Primary成功门仍为macro F1≥.70、至少4/5 family F1≥.65、任一family≥.50、
+  AP≥.60、balanced accuracy≥.70、precision/recall≥.60、coverage≥.90；另要求相对已认证父方法
+  F1=`.6793896155`、在exact same valid-row identities上做5,000次paired dataset-source bootstrap，
+  F1差95%区间下界严格大于0。单折和两个control都不得宣称成功。
+
+该方法的primary representation不使用FMT或Raw pathline coordinates，只使用直接seed-time local curl。
+若提高F1，结论只能是“有标签source-rank likelihood template比父版本高维对称距离更好地保留直接局部
+curl的单侧排序”；禁止写成“independent FMT geometry学会涡结构”。八个flow均已暴露，本版本不是新的
+formal confirmation。完整数值、父绝对路径、18-file fold合同和输出规则唯一由
+`config/Verify_SourceCenteredRankLikelihoodTemplate_1.1.yaml`与同名实验文档定义；冻结config
+SHA-256为`41d6e7be70b898715c6df6f92cfb17176d2f1bb6153fa37b09dd4da9a6059ffa`。

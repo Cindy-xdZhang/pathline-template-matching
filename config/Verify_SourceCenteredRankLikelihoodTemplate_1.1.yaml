@@ -1,0 +1,423 @@
+experiment: Verify_SourceCenteredRankLikelihoodTemplate_1.1
+category: component_verification
+status: frozen_after_authenticated_parent_diagnostics_before_any_new_method_prediction_or_metric
+frozen_date: 2026-09-01
+
+scientific_question: >-
+  Can a source-local empirical-rank representation of source-centered curl,
+  followed by a labeled positive-versus-negative histogram likelihood-ratio
+  template and source-held-out negative calibration, preserve the strong
+  one-sided vortex ordering that was diluted by the parent's high-dimensional
+  symmetric negative-distance score?
+
+design_provenance:
+  motivating_parent_experiment: Verify_SourceCenteredPairedScaleTemplate_1.1
+  authenticated_parent_five_family_macro_f1: 0.6793896154555039
+  authenticated_parent_direct_dx_rank_mean_macro_f1: 0.8582408452
+  parent_result_was_visible_before_this_freeze: true
+  interpretation: >-
+    The parent direct-rank result motivated this pre-registered score change.
+    It is not an unbiased discovery result and cannot itself satisfy this
+    version's success rule.  No prediction or metric from the new rank-
+    likelihood method was available when this file was frozen.
+
+direct_parent:
+  experiment: Verify_SourceCenteredPairedScaleTemplate_1.1
+  config_path: config/Verify_SourceCenteredPairedScaleTemplate_1.1.yaml
+  config_sha256: 15ac5b0e82b30cbaf952475a7fbb6d19dc070c1121bc9aa8db980d75600260cc
+  numerical_commit: a85c007ef961ce53bb40946ca3f38f033bf7a646
+  source_centered_input_manifest:
+    path: /ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredPairedScaleTemplate_1.1/preparation/slurm_51158660_a85c007ef961/source_centered_input_manifest.json
+    file_sha256: 5f7e567a2f989d18b51389814938a5d18025c4ed5247730d07df30b13458fec9
+  source_centered_sidecar_population:
+    path: /ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredPairedScaleTemplate_1.1/source_centered_cache/train/SIDECAR_POPULATION.json
+    file_sha256: 50d9d53f7dc9255d5153f0101c922975e006303b550bfb43317074080a0a97e2
+    exact_sidecars: 32
+    exact_assigned_rows: 4096000
+    exact_valid_projection_rows: 2967612
+  authenticated_aggregate:
+    job_id: 51160422
+    directory: /ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredPairedScaleTemplate_1.1/aggregate/slurm_51160422_a85c007ef961_first_51158984_remaining_51159215
+    completion_file_sha256: f6599295df79f764a9e1c45a08ee62eef747f09676fab1b4c16c378f0568fbe8
+    manifest_file_sha256: e97088f7fbdb8f1edc4d27ed113341f95b1b90f948416b2fae80977a0613ba43
+    report_file_sha256: bfb6db3ec0db0b200ae14b37e3607a012a61d1bc96cb892d0500c461c52cc2af
+    table_file_sha256: 39bdd096ffd8ca398f3d411280036680a097b8797659bfdb0bb372e550084934
+  outer_run_directories:
+    half_cylinder: /ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredPairedScaleTemplate_1.1/runs/slurm_51158984_0_a85c007ef961_outer_half_cylinder
+    delta_wing: /ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredPairedScaleTemplate_1.1/runs/slurm_51159215_1_a85c007ef961_outer_delta_wing
+    f22_raptor: /ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredPairedScaleTemplate_1.1/runs/slurm_51159215_2_a85c007ef961_outer_f22_raptor
+    channel: /ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredPairedScaleTemplate_1.1/runs/slurm_51159215_3_a85c007ef961_outer_channel
+    boeing_747: /ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredPairedScaleTemplate_1.1/runs/slurm_51159215_4_a85c007ef961_outer_boeing_747
+  control_use: exact_prediction_replay_and_paired_bootstrap_only
+  refit_or_candidate_reuse: forbidden
+
+immutable_parent_sidecar_binding:
+  mode: authenticate_and_reuse_without_copying_or_rewriting_parent_manifests
+  binding_must_complete_before_any_new_method_array_read: true
+  initial_authentication:
+    - exact_parent_experiment_config_commit_and_config_sha256
+    - exact_source_centered_input_manifest_path_size_and_file_sha256
+    - exact_sidecar_population_path_size_file_sha256_and_self_hash
+    - exact_32_population_entries_and_each_sidecar_path_size_and_whole_file_sha256
+  initial_sidecar_member_access: forbidden
+  initial_label_or_reference_access: forbidden
+  new_binding_schema: pathline_template_matching.source_centered_rank_likelihood_parent_binding.v1
+  binding_files:
+    - parent_sidecar_binding.json
+    - BINDING_COMPLETE.json
+  old_manifest_mutation: forbidden
+  fold_use: >-
+    Nonouter sidecars may be opened only through the authenticated binding.
+    Before final nonouter models and both selected candidates are closed, an
+    outer sidecar may be checked only by stat, size, and whole-file SHA-256.
+    Its members are opened and freshly replayed only after that gate.
+
+input_population:
+  allowed_datasets:
+    - cylinder3d
+    - halfcylinderRe640
+    - halfcylinderRe6400
+    - deltaWing_resampled
+    - deltaWing_LBM
+    - f22raptor
+    - channel
+    - boeing747
+  forbidden_datasets: [tangaroa, smokeBuoyancy]
+  source_ordinals: [0, 1, 2, 3]
+  complete_future_horizon_frames: 48
+  assigned_rows_per_dataset_source: 128000
+  unique_centers_per_dataset_source: 64000
+  assignments_per_center: 2
+  primitive_order: [center, x_plus, x_minus, y_plus, y_minus, z_plus, z_minus]
+  scale_blocks:
+    legacy_2_1: [0, 999]
+    expanded_3_1: [1000, 1999]
+
+rank_representation:
+  sidecar_member: source_centered_seed4
+  used_coordinate_index: 0
+  used_coordinate_definition: l2_norm_of_curl_minus_dataset_source_block_dx_group_mean_curl
+  unused_source_centered_coordinates: [strain_frobenius_norm, signed_divergence, signed_Q]
+  fmt_coordinates_used: false
+  raw_coordinates_used: false
+  rank_group_fields: [dataset, source_ordinal, scale_block, dx_level]
+  dx_level_formula: (scale_id_mod_1000)_integer_divided_by_100
+  exact_rows_per_rank_group: 6400
+  rank_population: all_assigned_rows_including_pathline_invalid_rows
+  validity_or_reference_filter_during_rank_fit: forbidden
+  finite_values_required: true
+  tie_order: stable_mergesort
+  midrank_formula: (one_based_average_tie_rank_minus_0.5)/6400
+  output_dtype: float64
+  output_range: strictly_between_zero_and_one
+  blocks_per_center: [legacy_2_1, expanded_3_1]
+  fused_rank_formula: weight*legacy_rank+(1-weight)*expanded_rank
+  weights: [0.00, 0.25, 0.50, 0.75, 1.00]
+  target_flow_unlabeled_statistics_used: true
+
+center_population:
+  identity_fields: [dataset, source_ordinal, center_seed_index]
+  combined_valid_definition: legacy_parent_valid_or_expanded_parent_valid
+  template_library_population: combined_valid_centers_only
+  query_classification_population: combined_valid_centers_only
+  both_invalid_center_prediction: false
+  rank_values_for_combined_valid_center: both_assigned_block_ranks_even_if_one_pathline_block_is_invalid
+  fit_center_label_source: valid_labels_grouped_by_center
+  both_valid_label_agreement_required: true
+  reference_labels_all_for_invalid_centers: forbidden_for_template_library
+  template_sampling: none
+  class_balancing: none
+  duplicated_valid_row_weight_in_template_library: forbidden
+  row_projection: copy_center_score_and_prediction_to_every_corresponding_parent_valid_row
+  primary_metric_population: all_parent_valid_rows_after_exact_center_projection
+  unique_center_metrics: secondary
+  combined_coverage_denominator: all_64000_centers_per_dataset_source
+
+families:
+  half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+  delta_wing: [deltaWing_resampled, deltaWing_LBM]
+  f22_raptor: [f22raptor]
+  channel: [channel]
+  boeing_747: [boeing747]
+
+nested_split:
+  outer_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  inner_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  outer_unit: complete_physical_family
+  inner_unit: complete_physical_family
+  source_leave_out_unit: dataset_plus_source_ordinal_plus_complete_H48_window
+  random_spatial_seed_split: forbidden
+  outer_labels_available_to_selection: false
+  selection_aggregation:
+    stage_1: equal_dataset_source_parent_valid_row_groups_within_inner_family
+    stage_2: equal_inner_family_macro
+  selection_metric_population: all_parent_valid_rows_after_exact_center_projection
+  outer_result_selection: forbidden
+
+primary_rank_likelihood_template:
+  arm_id: dual_histogram_llr
+  status: primary_template_method
+  library_classes: [natural_negative, natural_positive]
+  library_unit: one_combined_valid_center_once
+  histogram_input: fused_rank
+  histogram_domain: [0.0, 1.0]
+  bin_counts: [64, 128, 256]
+  bin_edges_formula: edge_j=j/B_for_j_0_through_B
+  bin_index_formula: min(B-1,floor(B*fused_rank))
+  additive_beta_values: [0.5, 2.0]
+  family_class_probability_formula: (count_family_class_bin+beta)/(count_family_class+B*beta)
+  class_probability_formula: arithmetic_mean_of_family_class_probabilities_over_fit_families
+  raw_log_likelihood_ratio_formula: log(mean_family_positive_probability)-log(mean_family_negative_probability)
+  family_count_weighting_in_class_probability: equal
+  all_fit_families_and_both_classes_required: true
+  missing_family_or_class_policy: fail
+  probability_and_log_dtype: float64
+  fit_label_access: allowed_for_fit_families_only
+  outer_label_access: forbidden_until_prediction_gate
+  calibration:
+    name: leave_one_source_out_fit_negative_family_ecdf
+    reference_population: every_combined_valid_fit_negative_center
+    for_each_reference_row: >-
+      Exclude every template center with the same dataset and source ordinal,
+      rebuild all affected family/class histograms and the equal-family class
+      probabilities, and evaluate that negative center's raw likelihood ratio.
+    rank_values_recomputed_after_source_exclusion: false
+    reference_partition: physical_family_of_the_held_out_negative_center
+    query_raw_score_model: full_fit_histograms_without_any_source_exclusion
+    per_family_anomaly_formula: count(reference_score_strictly_less_than_query_llr)/(reference_count+1)
+    calibrated_score_formula: arithmetic_mean_of_per_family_anomalies_over_fit_families
+    tied_reference_score_policy: conservative_not_counted_as_less
+    all_fit_family_reference_sets_required_nonempty: true
+    calibration_shrinkage: none
+    calibration_dtype: float64
+
+negative_ecdf_control:
+  arm_id: negative_ecdf
+  status: independently_inner_selected_control_not_primary_success
+  uses_positive_templates: false
+  library_population: every_combined_valid_fit_negative_center_once
+  reference_partition: physical_family
+  query_input: fused_rank
+  per_family_anomaly_formula: count(fit_negative_fused_rank_strictly_less_than_query_rank)/(negative_count+1)
+  score_formula: arithmetic_mean_of_per_family_anomalies_over_fit_families
+  family_weighting: equal
+  tied_reference_rank_policy: conservative_not_counted_as_less
+  all_fit_family_reference_sets_required_nonempty: true
+  template_sampling: none
+  class_balancing: none
+
+spatial_transform:
+  applied_independently_to_arms: [dual_histogram_llr, negative_ecdf]
+  grid_shape_zyx: [40, 40, 40]
+  center_order: exact_center_seed_index_0_through_63999
+  input: family_balanced_calibrated_anomaly_score
+  support_mask: combined_valid_centers_only
+  gaussian_sigmas_grid_indices: [0.0, 0.5, 1.0]
+  gaussian_truncate: 3.0
+  positive_sigma_formula: G(score_times_support_mask)/G(support_mask)
+  zero_sigma_formula: unchanged_score_on_combined_valid_centers
+  prediction_eligibility_after_smoothing: combined_valid_centers_only
+  cross_dataset_source_or_outer_smoothing: forbidden
+
+decision_rule:
+  type: calibrated_score_threshold
+  tau_values: [0.900, 0.925, 0.950, 0.975, 0.990, 0.995]
+  comparison: score_strictly_greater_than_tau
+  equality_prediction: false
+  prevalence_or_outer_label_threshold_fit: forbidden
+  tie_break: not_applicable_for_strict_fixed_threshold
+
+candidates:
+  primary:
+    arm_id: dual_histogram_llr
+    weights: 5
+    bin_counts: 3
+    additive_beta_values: 2
+    spatial_sigmas: 3
+    tau_values: 6
+    exact_count_formula: 5*3*2*3*6
+    exact_count: 540
+    selection_primary: highest_equal_inner_family_macro_f1
+  negative_ecdf_control:
+    arm_id: negative_ecdf
+    weights: 5
+    spatial_sigmas: 3
+    tau_values: 6
+    exact_count_formula: 5*3*6
+    exact_count: 90
+    selection: independent_highest_equal_inner_family_macro_f1
+    may_change_primary_selection: false
+    may_satisfy_primary_success_rule: false
+  shared_tie_break_order:
+    - highest_equal_inner_family_macro_average_precision
+    - highest_equal_inner_family_macro_balanced_accuracy
+    - highest_equal_inner_family_macro_precision
+    - highest_equal_inner_family_macro_recall
+    - lexicographically_smallest_candidate_id
+  outer_result_selection: forbidden
+
+reported_arms:
+  parent_source_centered_paired_scale:
+    definition: authenticated_parent_primary_predictions_on_exact_valid_row_identities
+    status: fixed_control_and_bootstrap_parent
+  dual_histogram_llr:
+    definition: selected_from_the_frozen_540_candidate_primary_grid
+    status: primary_template_method_and_only_arm_eligible_for_success
+  negative_ecdf:
+    definition: selected_independently_from_the_frozen_90_candidate_control_grid
+    status: negative_template_control_not_eligible_for_primary_success
+  direct_rank_mean_top5:
+    definition: >-
+      On all 64,000 centers, use weight 0.5 to average the two block ranks and
+      select exactly ceil(0.05*64000) centers by descending score then
+      ascending center index; project to every parent-valid row only for the
+      primary-comparable diagnostic metric.
+    fixed_weight: 0.5
+    fixed_top_fraction: 0.05
+    uses_template_library: false
+    uses_fit_labels: false
+    uses_outer_labels_for_prediction: false
+    all_center_metric_status: secondary_after_final_reference_access_only
+    status: direct_kinematic_diagnostic_not_template_matching_success
+
+outer_label_gate:
+  global_precondition:
+    - parent_sidecar_binding
+    - binding_completion
+  pre_outer_required_artifacts:
+    - inner_group_metrics.csv
+    - inner_candidate_summary.csv
+    - inner_fit_audits.json
+    - final_rank_likelihood_model.npz
+    - final_rank_likelihood_model_manifest.json
+    - final_rank_likelihood_calibration.npz
+    - final_rank_likelihood_calibration_manifest.json
+    - final_negative_ecdf_control.npz
+    - final_negative_ecdf_control_manifest.json
+    - selected_candidate.json
+  artifacts_are_atomic_hash_bound_and_freshly_replayed: true
+  selected_candidate_contains_primary_and_control_without_outer_results: true
+  preselection_outer_sidecar_access: file_stat_size_and_whole_file_sha256_only
+  outer_members_opened_after_final_fit_only:
+    - assigned_row_index
+    - center_seed_index
+    - scale_block_index
+    - scale_id
+    - source_centered_seed4
+    - valid_assigned_row_index
+    - valid_center_seed_index
+    - valid_scale_block_index
+    - valid_scale_id
+  outer_rank_binding_written_and_authenticated_before_prediction: true
+  outer_prediction_written_and_freshly_replayed_before_reference_access: true
+  parent_control_prediction_replay_before_reference_access: allowed_after_new_prediction_is_closed
+  reference_members_after_prediction_only:
+    - valid_labels
+  reference_labels_all_access: forbidden
+  label_or_ivd_access_in_rank_or_prediction_code_path: forbidden
+  any_outer_metric_visible_freezes_version: true
+  required_fold_files:
+    - inner_group_metrics.csv
+    - inner_candidate_summary.csv
+    - inner_fit_audits.json
+    - final_rank_likelihood_model.npz
+    - final_rank_likelihood_model_manifest.json
+    - final_rank_likelihood_calibration.npz
+    - final_rank_likelihood_calibration_manifest.json
+    - final_negative_ecdf_control.npz
+    - final_negative_ecdf_control_manifest.json
+    - selected_candidate.json
+    - outer_rank_binding.json
+    - outer_predictions.npz
+    - outer_prediction_manifest.json
+    - outer_group_metrics.csv
+    - outer_summary.json
+    - outer_reference_access_audit.json
+    - result_manifest.json
+    - RUN_COMPLETE.json
+
+metrics:
+  classification:
+    - accuracy
+    - average_precision
+    - f1
+    - balanced_accuracy
+    - auroc
+    - precision
+    - recall
+    - true_positive
+    - false_positive
+    - true_negative
+    - false_negative
+  availability:
+    - unique_center_combined_coverage
+    - both_valid_count
+    - legacy_only_count
+    - expanded_only_count
+    - neither_valid_count
+    - histogram_class_count_by_fit_family
+    - leave_one_source_out_negative_reference_count_by_family
+  reporting_levels:
+    - dataset_source_unique_center
+    - dataset_source_valid_row
+    - dataset
+    - physical_family
+    - five_family_equal_macro
+  primary_metric_population: all_parent_valid_rows_after_exact_center_projection
+  unique_center_metrics_are_secondary: true
+  uncertainty:
+    method: paired_dataset_source_bootstrap
+    replicates: 5000
+    seed: 17068
+    target: >-
+      primary dual-histogram-LLR valid-row projection F1 minus authenticated
+      parent SourceCenteredPairedScale F1 on the exact same valid-row identities
+
+success_rule:
+  eligible_arm: dual_histogram_llr_only
+  classification_metric_population: all_parent_valid_rows_after_exact_center_projection
+  complete_unique_outer_families_required: 5
+  five_family_macro_f1_minimum: 0.70
+  stretch_five_family_macro_f1: 0.75
+  families_at_or_above_f1_0_65_minimum: 4
+  minimum_single_family_f1: 0.50
+  five_family_macro_average_precision_minimum: 0.60
+  five_family_macro_balanced_accuracy_minimum: 0.70
+  five_family_macro_precision_minimum: 0.60
+  five_family_macro_recall_minimum: 0.60
+  unique_center_combined_coverage_minimum: 0.90
+  paired_parent: Verify_SourceCenteredPairedScaleTemplate_1.1
+  authenticated_parent_five_family_macro_f1: 0.6793896154555039
+  paired_bootstrap_f1_difference_lower_95_percent_bound_strictly_above: 0.0
+  any_single_fold_success_claim: forbidden
+  changes_after_outer_results: forbidden
+
+authenticated_stop_rule:
+  - any_completed_outer_family_primary_f1_strictly_below_0_50
+  - two_completed_outer_family_primary_f1_values_strictly_below_0_65
+  - optimistic_remaining_families_cannot_satisfy_any_complete_five_threshold
+
+interpretation_rules:
+  - The complete method is transductive because every query source supplies all assigned rows for its own rank normalization and may supply its combined-valid spatial mask.
+  - The primary representation is the first source-centered seed-time curl coordinate; it does not use FMT pathline geometry, Raw pathline geometry, strain, divergence, or Q.
+  - A gain may be described only as evidence that a labeled rank-likelihood template preserves direct local curl ordering better than the parent's high-dimensional symmetric distance.
+  - A gain must not be described as evidence that independent FMT geometry learned vortex structure.
+  - The dual histogram likelihood-ratio arm is template matching because both labeled positive and negative fit-center distributions define its score; the fixed direct top-five-percent diagnostic is not template matching.
+  - The negative-ECDF control and direct diagnostic cannot satisfy the primary success rule even if either exceeds every numerical threshold.
+  - All eight flows are exposed development data, so this verification is not formal confirmation on unseen physical families.
+  - Failure, partial, timeout, cancelled, superseded, and negative outputs must be retained.
+
+ibex:
+  host: glogin.ibex.kaust.edu.sa
+  account: pi-hadwigm
+  partition: batch
+  constraint: rome
+  gpu: none
+  execution_from_clean_pushed_commit_only: true
+
+output:
+  root: /ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredRankLikelihoodTemplate_1.1
+  overwrite: forbidden
+  parent_binding_directory_pattern: preparation/slurm_JOBID_COMMIT12
+  fold_directory_pattern: runs/slurm_JOBID_ARRAYTASK_COMMIT12_outer_FAMILY
+  aggregate_directory_pattern: aggregate/slurm_JOBID_COMMIT12
