@@ -363,10 +363,17 @@ def _source_fold(fold: base.AuthenticatedFold) -> dict[str, Any]:
 
 
 def _support(plan: runner.Plan, fold: base.AuthenticatedFold) -> dict[str, Any]:
+    # ``base._authenticate_fold`` deliberately deep-freezes every authenticated
+    # summary before returning it.  Restore only the JSON container types at
+    # this release-packaging boundary; the base authenticator below still
+    # enforces the exact schema, ordered fit families, and strict majority.
+    payload = runner.inherited._json_safe(
+        fold.summary["class_conditional_support"]
+    )
     return base._authenticate_support_audit(
         plan,
         runner.ONLY_OUTER_FAMILY,
-        fold.summary["class_conditional_support"],
+        payload,
     )
 
 

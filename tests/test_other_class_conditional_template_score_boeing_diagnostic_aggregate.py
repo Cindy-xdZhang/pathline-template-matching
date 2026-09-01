@@ -125,7 +125,9 @@ def _fold(root: Path, plan: runner.Plan) -> base.AuthenticatedFold:
         input_manifest_rows_sha256=plan.manifest_rows_sha256,
         requested_device="cpu",
         selected_candidate=MappingProxyType(selected),
-        summary=MappingProxyType(_summary(plan)),
+        # Match the real Verify authenticator, which recursively freezes nested
+        # JSON lists into tuples before returning an AuthenticatedFold.
+        summary=runner.inherited._deep_freeze(_summary(plan)),
         artifact_identities=MappingProxyType(artifacts),
         completion_file_sha256=_sha(fold_path / "RUN_COMPLETE.json"),
         completion_content_sha256="5" * 64,
@@ -262,6 +264,49 @@ def test_release_contract_has_exactly_four_files_and_no_stop_success_or_macro_fi
             serialized = json.dumps(payload, sort_keys=True)
             assert "stop_version" not in serialized
             assert "family_macro" not in serialized
+
+
+def test_support_release_boundary_restores_json_types_without_weakening_majority_gate() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        plan, _bound = _bound_plan()
+        fold = _fold(Path(directory), plan)
+        frozen = fold.summary["class_conditional_support"]
+        assert isinstance(frozen["family_order"], tuple)
+        _expect_error(
+            ValueError,
+            base._authenticate_support_audit,
+            plan,
+            "boeing_747",
+            frozen,
+            contains="family/majority binding drifted",
+        )
+
+        restored = aggregate._support(plan, fold)
+        assert isinstance(restored["family_order"], list)
+        assert restored["family_order"] == [
+            "half_cylinder",
+            "delta_wing",
+            "f22_raptor",
+            "channel",
+        ]
+        assert restored["required_joint_family_count"] == 3
+
+        changed = runner.inherited._json_safe(frozen)
+        changed["required_joint_family_count"] = 2
+        changed_fold = replace(
+            fold,
+            summary=runner.inherited._deep_freeze(
+                {**runner.inherited._json_safe(fold.summary),
+                 "class_conditional_support": changed}
+            ),
+        )
+        _expect_error(
+            ValueError,
+            aggregate._support,
+            plan,
+            changed_fold,
+            contains="family/majority binding drifted",
+        )
 
 
 def test_public_authenticator_reconstructs_release_and_returns_frozen_projection() -> None:
