@@ -571,5 +571,5 @@ billing account `deepvortex` 不属于当前用户关联而被拒绝，未分配
 certificate/report/manifest/completion，并只从 `scontrol Features=rome` 认证节点约束。Resource
 smoke 的三-family/12-shard population 不是完整 final fit 的资源上界，这一证据边界必须保留。
 本段仍不构成真实性能证据；`cfa369dd…` 的科学 config/core/runner/aggregator identity 保持有效，
-`0e9fe3d4…` execution revision 因pre-data真实调度格式差异被下一基础设施提交替代。首次真实读取只能
-使用随后纯文档提交精确登记的新 detached checkout。
+`0e9fe3d4…` execution revision 因pre-data真实调度格式差异被基础设施提交
+`30bc5a081b46972b25a0e558cbe5584e582e6410` 替代。首次真实读取只能使用该 detached checkout。
