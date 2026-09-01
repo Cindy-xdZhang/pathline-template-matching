@@ -801,3 +801,38 @@ curl的单侧排序”；禁止写成“independent FMT geometry学会涡结构�
 formal confirmation。完整数值、父绝对路径、18-file fold合同和输出规则唯一由
 `config/Verify_SourceCenteredRankLikelihoodTemplate_1.1.yaml`与同名实验文档定义；冻结config
 SHA-256为`41d6e7be70b898715c6df6f92cfb17176d2f1bb6153fa37b09dd4da9a6059ffa`。
+
+## 34. `Other_SourceCenteredRankLikelihoodTemplateVisualization_1.1` 的固定四流场分类三联图
+
+状态：**`FROZEN_PRE_RUN_WAITING_FOR_AUTHENTICATED_RANK_LIKELIHOOD_RELEASE`**。本版本只报告
+`Verify_SourceCenteredRankLikelihoodTemplate_1.1`的空间分类结果，不训练、不重新选择候选、不调阈值，
+也不在primary、negative-ECDF control与direct rank诊断之间按结果切换。冻结报告config SHA-256为
+`a464761eb8df3ebf43d55b6f05eee2e90302be770b43f3e5e75a5944f13ff9a3`；冻结发生在读取任何本方法
+真实prediction、label、metric或父scene NPZ member之前。
+
+- 固定四个query均为source ordinal 2：`cylinder3d/Re160/source 68`、
+  `halfcylinderRe640/Re640/source 18`、`halfcylinderRe6400/Re6400/source 68`和
+  `boeing747/source 100`。前三项必须来自同一个认证half-cylinder outer fold，Boeing必须来自认证
+  Boeing outer fold；两个fold又必须同时受一个complete-five aggregate release约束。
+- 每个flow只生成一张三联图。Panel A复用同一个whole-volume IVD-p95 mesh，并固定显示legacy与
+  expanded父scene各前120条pathline；Panel B只画combined-valid unique centers上的primary
+  `dual_histogram_llr` prediction，禁止标成FMT或聚类；Panel C对完全相同、同顺序的中心画
+  TP/FP/FN/TN。三个panel必须共享相机、bounds、IVD mesh和升序center顺序。
+- 报告器在打开任何prediction或scene NPZ member前，必须先认证complete-five release、两个各18文件
+  fold、8个父scene、冻结config和全部直接代码依赖，并原子写入输入manifest与figure contract。
+  Dataset、source、block、center、assigned row和scale ID必须精确连接；duplicate、missing、extra、
+  reorder、valid-mask drift或两个block的坐标/reference不一致全部失败。
+- center-level图中指标与all-parent-valid-row主指标严格分开。Primary、negative-ECDF control和direct
+  rank的行指标都须从认证数组重算并在绝对容差`1e-12`内复现producer；后两者只入表，不能进入图或
+  满足primary success。Panel A pathline只是尺度背景，不能解释只使用seed-time curl rank的Panel B分数。
+- 生产必须来自push后的clean exact reporting commit，在Ibex Rome CPU节点运行。若method commit与
+  reporting commit不同，13个解释数值产物的源文件必须逐Git blob一致。机器阶段输出四套
+  PNG/PDF/SVG及scene、alignment、render/collision证据并停在
+  `complete_pending_local_rendered_qa`；本地4/4最终尺寸目视、SVG可编辑文字、PDF最小5 pt、1.5 pt
+  alignment和collision hard fail=0全部通过后才可发布。
+
+完整合同和运行接口见
+`docs/Other_SourceCenteredRankLikelihoodTemplateVisualization_1.1.md`与同名config。实现阶段只使用
+synthetic/opaque fixture；定向测试9/9、wrapper测试7/7、完整回归488/488、科研图静态QA
+18 PASS/0 FAIL。当前没有真实图或逐图指标；上游Boeing fold和complete-five aggregate完成并认证前，
+不得填造其SHA或生成结果图。

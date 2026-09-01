@@ -233,6 +233,12 @@ from test_source_centered_visualization import (
 from test_source_centered_visualization_ibex import (
     _run_standalone as test_source_centered_visualization_ibex_suite,
 )
+from test_source_centered_rank_likelihood_visualization import (
+    _run_standalone as test_source_centered_rank_likelihood_visualization_suite,
+)
+from test_source_centered_rank_likelihood_visualization_ibex import (
+    _run_standalone as test_source_centered_rank_likelihood_visualization_ibex_suite,
+)
 from test_class_conditional_template_score_ibex import (
     test_aggregate_output_directories_match_the_frozen_pattern,
     test_all_numerical_wrappers_enforce_clean_exact_commit_and_no_overwrite,
@@ -854,6 +860,8 @@ TESTS = (
     test_class_conditional_template_score_visualization_ibex_suite,
     test_source_centered_visualization_suite,
     test_source_centered_visualization_ibex_suite,
+    test_source_centered_rank_likelihood_visualization_suite,
+    test_source_centered_rank_likelihood_visualization_ibex_suite,
     test_diagnostic_config_and_all_inherited_sources_fail_closed_on_drift,
     test_diagnostic_plan_is_boeing_only_and_candidate_sequence_is_identical,
     test_method_binding_records_verify_stop_resource_and_no_override_scope,
