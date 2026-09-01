@@ -1,9 +1,10 @@
 # Other_ClassConditionalTemplateScoreVisualization_1.1：双认证单折分类三联图
 
-状态：**`ATTEMPT_2_FAILED_AFTER_RENDER_BEFORE_WRAPPER_ACCEPTANCE_JSON_HASH_FIX_IMPLEMENTED`**。尚无通过完整
-wrapper认证的结果图或报告指标；第二次尝试虽写出`RUN_COMPLETE.json`，但Slurm终态失败。本实验只生成用户要求的Cylinder3D Re160、Re640、Re6400和Boeing 747当前
-class-conditional template-score分类效果；它不恢复已停止的Verify五折，也不把两个不同实验的单折证据
-伪装成完整五折。
+状态：**`COMPLETED_LOCAL_REPORTING_QA_PASS`**。Ibex job `51156521`已从exact reporting commit
+`5d3d49eae02b59aae11d399755cee33f3e7884e3`完成完整wrapper认证；下载后的8张图又通过本地PDF/SVG、
+alignment、碰撞overlay和目视检查。本实验只生成用户要求的Cylinder3D Re160、Re640、Re6400和Boeing 747
+当前class-conditional template-score分类效果；它不恢复已停止的Verify五折，也不把两个不同实验的单折证据
+伪装成完整五折或formal confirmation。
 
 冻结production config为
 `config/Other_ClassConditionalTemplateScoreVisualization_1.1.yaml`，SHA-256为
@@ -36,6 +37,16 @@ prediction、候选、阈值、support、block、source ordinal和parent scenes�
 manifest递归转换成实际落盘的JSON-safe对象，再计算自哈希；新增回归同时验证`NaN→null`后磁盘自哈希重算相等，
 以及metric CSV仍写空字段。16项reporter定向测试、wrapper定向测试、Python编译和456/456全套测试均通过；
 production config SHA仍未改变。该测试结果只支持修复revision可以提交新output attempt，不认证任何旧图件。
+
+第三次Ibex job `51156521`从exact reporting commit
+`5d3d49eae02b59aae11d399755cee33f3e7884e3`提交，于2026-09-01 19:12:33–19:18:27 +03在
+`cn514-15-r`运行，Slurm终态`COMPLETED 0:0`。它完成456/456测试、两个source release与parent scene认证、
+8组prediction/scene exact join、sealed metric逐字段重算、8图渲染和61-artifact/63-file wrapper复核。实际资源为
+32 CPU、128 GB、Rome、无GPU；batch MaxRSS `1,646,728K`，TotalCPU `17:45.206`。权威Ibex输出为
+`/ibex/user/zhanx0o/pathline-template-matching/Other_ClassConditionalTemplateScoreVisualization_1.1/runs/report_5d3d49eae02b_attempt3`。
+本地不可变下载目录为
+`outputs/Other_ClassConditionalTemplateScoreVisualization_1.1_job51156521_download`；所有后处理QA只写入同级
+`outputs/Other_ClassConditionalTemplateScoreVisualization_1.1_job51156521_qa_local`，没有修改下载集合。
 
 ## 冻结输入
 
@@ -114,7 +125,85 @@ partition均需通过`scontrol`认证。production report config必须以绝对�
 及上述config SHA。本文不虚构尚未产生的reporting commit、job ID或output path；这些身份在实际提交后写入
 `docs/ibex_run_registry.md`并回填本文。
 
-Slurm `COMPLETED`只证明63文件transaction及自动门禁完成。下载后仍须逐张完成8/8 PNG目视检查、PDF/SVG
-文字可编辑性、panel alignment、裁切与碰撞检查，并确认颜色和TP/FP/FN/TN说明准确。在本地QA完成前状态不得
-提升为最终图件；任何性能描述都必须注明两个single-fold evidence source、不是完整五折、不是formal
-confirmation。
+Slurm `COMPLETED`只证明63文件transaction及自动门禁完成。下载后又逐张完成8/8 PNG目视检查、PDF/SVG
+文字可编辑性、panel alignment、裁切与碰撞检查，并确认颜色和TP/FP/FN/TN说明准确；详见下文QA。任何性能
+描述仍必须注明两个single-fold evidence source、不是完整五折、不是formal confirmation。
+
+## 固定分类器与图例语义
+
+8行均使用同一候选
+`representation=chirality_all35_plus_seed4|k=5|sigma=2.0|fixed_top_fraction=0.05`：每个
+dataset×source×block内按连续`spatial_score`降序排序，相同分数按center index升序，固定预测前5%为涡旋。
+兼容字段`tail_anomaly`承载原始class-conditional template score；`tail_probability=1-raw score`，不是后验概率。
+两block分别判断，不跨block投票，也没有置信区间。
+
+三联图说明固定为：
+
+1. panel a：橙色为IVD p95等值面；240条center pathline按相对积分时间使用viridis着色，紫色端为起始seed；
+2. panel b：蓝色为预测非涡旋，红色为预测涡旋。这是二分类结果，不是聚类结果；
+3. panel c：TN为浅蓝圆点、TP为红色圆点、FP为紫色三角、FN为橙色叉号。
+
+图内没有重复图例，因此发布或引用图件时必须保留上述caption。
+
+## Source ordinal 2逐图结果
+
+`Coverage=valid/64,000`。各行真实正类只占有效样本的3.08%–7.44%，Accuracy主要受TN主导。F1 score是
+Precision与Recall的调和平均；Balanced Accuracy（BA）是正负类Recall的均值；Average Precision（AP）是
+Precision–Recall曲线的加权面积；Area Under the Receiver Operating Characteristic Curve（AUROC）是受试者
+工作特征曲线下面积。解释时优先看F1、BA、Precision和Recall。
+
+| Flow | Block | Valid / 64,000 | Coverage | Accuracy | AP | F1 | BA | AUROC | Precision | Recall | TP | FP | TN | FN |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Cylinder3D Re160 | legacy | 60,560 | 94.63% | 0.9486 | 0.5354 | **0.5311** | 0.7332 | 0.9704 | 0.5816 | 0.4886 | 1,761 | 1,267 | 55,689 | 1,843 |
+| Cylinder3D Re160 | expanded | 43,347 | 67.73% | 0.9264 | 0.4800 | 0.4089 | 0.6576 | 0.9533 | 0.5088 | 0.3418 | 1,103 | 1,065 | 39,055 | 2,124 |
+| Cylinder3D Re640 | legacy | 60,555 | 94.62% | 0.9037 | 0.1303 | 0.0896 | 0.5185 | 0.8054 | 0.0948 | 0.0850 | 287 | 2,741 | 54,436 | 3,091 |
+| Cylinder3D Re640 | expanded | 42,463 | 66.35% | 0.8971 | 0.1211 | **0.0726** | 0.5085 | 0.7852 | 0.0805 | 0.0661 | 171 | 1,953 | 37,922 | 2,417 |
+| Cylinder3D Re6400 | legacy | 62,313 | 97.36% | 0.9331 | 0.3277 | 0.3403 | 0.6505 | 0.9434 | 0.3453 | 0.3355 | 1,076 | 2,040 | 57,066 | 2,131 |
+| Cylinder3D Re6400 | expanded | 57,906 | 90.48% | 0.9301 | 0.3225 | 0.3247 | 0.6395 | 0.9384 | 0.3360 | 0.3141 | 973 | 1,923 | 52,885 | 2,125 |
+| Boeing 747 | legacy | 61,432 | 95.99% | 0.9182 | 0.1331 | 0.1715 | 0.5651 | 0.7846 | 0.1693 | 0.1738 | 520 | 2,552 | 55,888 | 2,472 |
+| Boeing 747 | expanded | 17,601 | 27.50% | 0.9355 | 0.1555 | 0.2024 | 0.6112 | 0.8926 | 0.1635 | 0.2657 | 144 | 737 | 16,322 | 398 |
+
+下载scene内的binary prediction与reference足以独立重算TP/FP/TN/FN、Coverage、Accuracy、Precision、Recall、
+F1和BA，8/8均通过。63文件发布集合没有完整连续score与
+support数组，因此本地没有独立重算AP、AUROC和support-subset F1；这些字段由CSV↔manifest逐字段一致、producer/
+result/RUN哈希，以及Ibex reporter从sealed input进行的重算共同认证。
+
+支持率解释如下；`imputed`是没有同时满足检索/校准支持时的空间补值，8行`unimputable=0`：
+
+| Flow | Block | Retrieval/calibration supported | Support fraction | Spatially imputed | Imputed fraction |
+|---|---|---:|---:|---:|---:|
+| Re160 | legacy | 57,123 | 94.32% | 3,437 | 5.68% |
+| Re160 | expanded | 10,592 | 24.44% | 32,755 | 75.56% |
+| Re640 | legacy | 57,124 | 94.33% | 3,431 | 5.67% |
+| Re640 | expanded | 10,590 | 24.94% | 31,873 | 75.06% |
+| Re6400 | legacy | 58,769 | 94.31% | 3,544 | 5.69% |
+| Re6400 | expanded | 11,513 | 19.88% | 46,393 | 80.12% |
+| Boeing 747 | legacy | 59,949 | 97.59% | 1,483 | 2.41% |
+| Boeing 747 | expanded | 13,867 | 78.79% | 3,734 | 21.21% |
+
+最强逐图结果是Re160 legacy，F1=`0.5311`；最弱是Re640 expanded，F1=`0.0726`。Re640两个block的
+Precision/Recall都接近零，分类几乎退化为负类基线；Re6400约为F1 `0.33`；Boeing约为`0.17–0.20`，且
+expanded只覆盖27.50%的分配query。legacy与expanded的有效样本、support和补值率不同，不能把差值解释为只由
+尺度扩展造成。已认证family-level half-cylinder F1=`0.404462`和Boeing F1=`0.241293`均低于项目目标
+`0.70`；本次固定source图不改变该负面结论。
+
+## 本地交付QA与哈希
+
+- 不可变下载恰有63文件、41,120,156 bytes；`result_manifest`列出的61个artifact路径、大小和SHA-256全部一致；
+  5个自哈希、RUN绑定、8个scene identity和20个继承scene arrays均通过。
+- 8个scene各含`(240,32,4)`展示pathline，即240条、7,680点；总计1,920条。8个PNG均为
+  7,560×1,800 RGBA、约360 dpi；8个PDF均为单页1,512×360 pt；8个SVG均可解析且各有43个文字元素。
+- `nature-figure`源代码preflight为18 PASS、3个已审查WARN、0 FAIL。PDF文字审计8/8通过，最小字号
+  7 pt，低于5 pt为0；panel alignment严格8/8通过，16组比较没有WARN/FAIL。
+- 碰撞审计8/8可读，hard FAIL为0；text–text、text–stroke、page clipping均为0。95个WARN分为
+  48个text–fill-edge和47个text–image-edge；全部只涉及三维坐标轴刻度字符，与8张overlay逐张目视复核后接受。
+- 独立目视检查8/8通过：三panel、a/b/c、相机/边界、IVD、pathline、分类和四类错误标记均完整；没有空panel、
+  无效轨迹、裁切或渲染破损。Boeing视图上部空白来自固定低z物理结构，不是绘制错误；全量query的密集遮挡属于
+  预期现象。
+
+关键文件SHA-256：`per_figure_metrics.csv=4cce86a2f42cd91f520a518e299d79d431da4931c895cb97a69a9259285a27f7`，
+`visualization_manifest.json=7f2ea6d0a37c5db694ad015735d0989239aef0bf04958bc0e0457ad41ef22c81`，
+`result_manifest.json=986d4a330cdee0ca4c92adc302e70b4fb4fdb5fe3ae74113d27f1a417476e7ee`，
+`RUN_COMPLETE.json=376f731d82a8de4bd7ba1b7a79862a718a09211f49e5c3c7055aec5b5547f6cb`，
+本地`delivery_qa_summary.json=2341c619d09d1811e2fb630b80b0cc955a16c39622c29c0a27921abcfd0fe45`。
+结构化证据见`docs/evidence/Other_ClassConditionalTemplateScoreVisualization_1.1_local_summary.json`。

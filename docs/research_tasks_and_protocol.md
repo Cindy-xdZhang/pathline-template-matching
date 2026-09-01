@@ -621,7 +621,7 @@ Boeing描述性诊断，不改变Verify停止结论，也不得与half-cylinder�
 
 ## 30. `Other_ClassConditionalTemplateScoreVisualization_1.1` 的双单折分类三联图
 
-状态：**`ATTEMPT_2_FAILED_AFTER_RENDER_BEFORE_WRAPPER_ACCEPTANCE_JSON_HASH_FIX_IMPLEMENTED`**。本报告不是新的数值训练或五折实验；它只组合两个分别完成并认证的
+状态：**`COMPLETED_LOCAL_REPORTING_QA_PASS`**。本报告不是新的数值训练或五折实验；它只组合两个分别完成并认证的
 single-fold release：Verify停止分支的`half_cylinder` release与独立Other的`boeing_747` release。
 report-time禁止再次执行public fresh replay；reporter只认证冻结completion→manifest→15-file fold→13
 artifact→19-array prediction链，并在打开任何NPZ member前写入完整输入manifest。
@@ -654,5 +654,19 @@ artifact→19-array prediction链，并在打开任何NPZ member前写入完整�
 存在图与完成标记也不可接受。下一revision只修JSON-safe自哈希顺序并增加真实持久化回归，不改科学config、数值
 输入、prediction、metric、candidate、threshold、support、block、source ordinal、parent scene或renderer。
 最小修复commit `0cf30b605e63e0b2b6866e40eb48bff114583a83`先构造实际落盘JSON-safe对象再计算
-self-hash；真实`NaN→null`持久化回归、CSV空字段回归、16项定向测试及456/456全套测试通过。只有新目录中的
-Ibex job完整通过wrapper和后续本地QA后，状态才能提升。
+self-hash；真实`NaN→null`持久化回归、CSV空字段回归、16项定向测试及456/456全套测试通过。
+
+第三次Ibex job `51156521`使用exact reporting commit
+`5d3d49eae02b59aae11d399755cee33f3e7884e3`，终态`COMPLETED 0:0`；456/456测试、双release认证、
+8组exact join与sealed metric比较、8图渲染、61-artifact/63-file复核全部通过。下载后的本地QA又完成8/8
+PNG目视、PDF/SVG文字、严格panel alignment和碰撞overlay检查：collision hard FAIL为0，95个自动WARN均为
+三维坐标刻度与fill/image边缘接触，逐张复核后接受。状态因此提升为可交付图件。
+
+固定source ordinal 2的legacy/expanded F1分别为：Re160 `0.5311/0.4089`、Re640
+`0.0896/0.0726`、Re6400 `0.3403/0.3247`、Boeing `0.1715/0.2024`；对应coverage分别为
+`94.63%/67.73%`、`94.62%/66.35%`、`97.36%/90.48%`、`95.99%/27.50%`。约95%的有效样本为负类，
+因此高Accuracy不能替代F1、Balanced Accuracy、Precision和Recall。legacy/expanded有效样本、support和补值率
+不同，不构成单变量因果比较；八张图也不改变已认证half-cylinder/Boeing family F1=`0.404462/0.241293`
+低于0.70的结论。完整指标、caption、哈希和QA证据见
+`docs/Other_ClassConditionalTemplateScoreVisualization_1.1.md`及
+`docs/evidence/Other_ClassConditionalTemplateScoreVisualization_1.1_local_summary.json`。
