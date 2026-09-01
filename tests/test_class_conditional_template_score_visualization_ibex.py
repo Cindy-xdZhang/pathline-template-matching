@@ -118,14 +118,17 @@ def test_class_score_visualization_wrapper_invokes_frozen_reporter_contract() ->
         assert argument in text
     assert (
         "pathline_template_matching.class_conditional_template_score_"
-        "visualization_run_complete.v1"
+        "visualization_run_complete.v2"
     ) in text
     assert (
         "pathline_template_matching.class_conditional_template_score_"
-        "visualization_result.v1"
+        "visualization_result.v2"
     ) in text
     assert 'completion["figure_count"] == result["figure_count"] == visualization["figure_count"] == 8' in text
     assert 'len({(row["dataset"], row["scale_block"]) for row in entries}) == 8' in text
+    assert 'payload["source_release_count"] == 2' in text
+    assert 'payload["complete_five_fold"] is False' in text
+    assert 'row["evidence_source"]' in text
     for export_kind in (
         "scene_npz",
         "scene_manifest",

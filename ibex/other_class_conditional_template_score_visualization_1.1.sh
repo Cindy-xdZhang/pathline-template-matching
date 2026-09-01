@@ -235,12 +235,18 @@ def self_hashed(name: str, field: str) -> dict:
 visualization = self_hashed("visualization_manifest.json", "manifest_content_sha256")
 result = self_hashed("result_manifest.json", "manifest_content_sha256")
 completion = self_hashed("RUN_COMPLETE.json", "marker_content_sha256")
-assert completion["schema"] == "pathline_template_matching.class_conditional_template_score_visualization_run_complete.v1"
-assert result["schema"] == "pathline_template_matching.class_conditional_template_score_visualization_result.v1"
+assert completion["schema"] == "pathline_template_matching.class_conditional_template_score_visualization_run_complete.v2"
+assert result["schema"] == "pathline_template_matching.class_conditional_template_score_visualization_result.v2"
 for payload in (visualization, result, completion):
     assert payload["experiment"] == "Other_ClassConditionalTemplateScoreVisualization_1.1"
     assert payload["reporting_git_commit"] == expected_commit
     assert payload["report_config_sha256"] == expected_config_sha256
+    assert payload["source_release_mode"] == "two_authenticated_single_fold_releases"
+    assert payload["source_release_count"] == 2
+    assert payload["authenticated_outer_families"] == ["half_cylinder", "boeing_747"]
+    assert payload["complete_five_fold"] is False
+    assert payload["five_fold_success_evaluated"] is False
+    assert payload["formal_confirmation"] is False
 assert completion["status"] == "complete_pending_local_pdf_collision_and_visual_QA"
 assert result["status"] == "completed_pending_local_pdf_collision_and_visual_QA"
 assert completion["figure_count"] == result["figure_count"] == visualization["figure_count"] == 8
@@ -261,6 +267,10 @@ expected_kinds = {
     "render_metadata",
 }
 for row in entries:
+    assert row["evidence_source"] in {
+        "stopped_verify_half_cylinder_single_fold_release",
+        "post_stop_other_boeing_diagnostic_single_fold_release",
+    }
     exports = row["exports"]
     assert len(exports) == 7
     assert {item["export_kind"] for item in exports} == expected_kinds

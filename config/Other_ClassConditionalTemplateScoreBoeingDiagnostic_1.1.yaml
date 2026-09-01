@@ -1,0 +1,172 @@
+schema: pathline_template_matching.other_class_conditional_template_score_boeing_diagnostic_config.v1
+experiment: Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1
+phase: post_stop_exposed_boeing_outer_visualization_diagnostic
+status: frozen_pre_run_not_implemented
+
+freeze:
+  date: 2026-09-01
+  frozen_before_first_read_of_any_diagnostic_real_array_or_result: true
+  new_version_runner_exists: false
+  new_version_real_feature_label_valid_rate_prediction_or_metric_read: false
+  immutable_history_note: >-
+    These fields record the pre-implementation and pre-read freeze.  They must
+    not be rewritten after implementation or execution begins.
+
+purpose: >-
+  Produce the Boeing 747 outer-fold prediction required for the fixed-source
+  class-conditional template-score visualization after the parent Verify
+  version stopped on its authenticated half-cylinder first fold.  This is an
+  exposed post-stop diagnostic, not a continuation of the stopped Verify
+  experiment and not a five-family performance evaluation.
+
+scientific_method_parent:
+  experiment: Verify_ClassConditionalTemplateScore_1.1
+  inheritance: exact_complete_numerical_contract_without_override
+  stopped_execution_git_commit: 58b0bc0b0c7385f1b356eb343a150fcd50dad94f
+  config:
+    path: config/Verify_ClassConditionalTemplateScore_1.1.yaml
+    sha256: 814f95d2ec58f751a91082d588f790b3592a891963810013ad92ab704febbdea
+  core:
+    path: src/pathline_template_matching/class_conditional_template_score.py
+    sha256: 9c009376f7cea1481f6f47a49362d54d0e78530717f480fda3e8a109f841ef99
+  runner:
+    path: scripts/run_verify_class_conditional_template_score_1_1.py
+    sha256: e5063887475029320e66da1f1eb221d7988598e8918d37fbe47ee213e5ff1b48
+  authenticated_aggregator:
+    path: scripts/aggregate_verify_class_conditional_template_score_1_1.py
+    sha256: 77a561930ca85e3c1e6193a12e27b0b61bf7cc99be96889070962b8bfaf04e9c
+  exact_inherited_sections:
+    - direct_parent
+    - evidence_scope
+    - input_identity
+    - families
+    - nested_split
+    - representations
+    - labels
+    - shared_negative_scaler
+    - family_class_exact_scale_conformity
+    - joint_family_support_and_score
+    - group_transform
+    - decision_candidates
+    - inner_selection
+    - final_refit_and_outer_label_gate
+    - metrics
+  inherited_candidate_count: 3060
+  inherited_candidate_identity_sequence_must_match_exactly: true
+  inherited_numerical_override: forbidden
+
+authenticated_stop_parent:
+  role: execution_authorization_and_provenance_only_not_a_numerical_input
+  expected_outer_family: half_cylinder
+  expected_stop_version: true
+  reason: authenticated_first_fold_f1_strictly_below_frozen_0_50_minimum
+  fold_job_id: 51146327
+  fold_directory: /ibex/user/zhanx0o/pathline-template-matching/Verify_ClassConditionalTemplateScore_1.1/runs/slurm_51146327_0_58b0bc0b0c73_outer_half_cylinder
+  authentication_job_id: 51146768
+  authentication_directory: /ibex/user/zhanx0o/pathline-template-matching/Verify_ClassConditionalTemplateScore_1.1/aggregate/slurm_51146768_58b0bc0b0c73
+  completion_file: AGGREGATE_COMPLETE.json
+  completion_file_sha256: f8515858efe531c24471a11f64f014692a5d4774146c8908f07ee4ca49476844
+  forbidden_as_method_input:
+    - selected_candidate
+    - prediction
+    - feature
+    - label
+    - metric
+    - prevalence
+    - support
+
+resource_evidence:
+  reuse_reason: exact_parent_numerical_code_path_and_candidate_grid_are_unchanged
+  experiment: Verify_ClassConditionalTemplateScore_1.1
+  execution_git_commit: 58b0bc0b0c7385f1b356eb343a150fcd50dad94f
+  config_sha256: 814f95d2ec58f751a91082d588f790b3592a891963810013ad92ab704febbdea
+  job_id: 51146125
+  pass_file: /ibex/user/zhanx0o/pathline-template-matching/Verify_ClassConditionalTemplateScore_1.1/resource_smoke/slurm_51146125_58b0bc0b0c73/RESOURCE_SMOKE_PASS.json
+  pass_file_sha256: 3f9197a19407906b0b13a2b9eaa09dbc647b166a9fe9d2ef4dc90cda532557ea
+  performance_evidence: false
+  caveat: three_family_twelve_shard_smoke_is_not_a_full_fold_resource_upper_bound
+
+diagnostic_scope:
+  only_outer_family: boeing_747
+  only_outer_dataset: boeing747
+  fit_families: [half_cylinder, delta_wing, f22_raptor, channel]
+  inner_query_families: [half_cylinder, delta_wing, f22_raptor, channel]
+  outer_family_count: 1
+  outer_labels_available_to_fit_selection_support_orientation_or_threshold: false
+  verify_half_cylinder_selected_candidate_or_result_reuse: forbidden
+  new_outer_result_exposed: boeing_747_only
+  allowed_use: fixed_source_visualization_and_descriptive_error_analysis
+  forbidden_uses:
+    - resume_or_complete_the_stopped_Verify_version
+    - candidate_threshold_representation_k_sigma_or_method_tuning
+    - five_family_macro
+    - success_or_stop_decision
+    - formal_confirmation
+    - independent_test_generalization
+
+evidence_scope:
+  level: exposed_post_stop_visualization_diagnostic
+  formal_confirmation: false
+  allowed_datasets:
+    - cylinder3d
+    - halfcylinderRe640
+    - halfcylinderRe6400
+    - deltaWing_resampled
+    - deltaWing_LBM
+    - f22raptor
+    - channel
+    - boeing747
+  forbidden_datasets: [tangaroa, smokeBuoyancy]
+  boeing_prediction_must_be_written_closed_and_freshly_authenticated_before_label_open: true
+
+input_identity:
+  source: exact_scientific_method_parent_config
+  parent_config_sha256: 814f95d2ec58f751a91082d588f790b3592a891963810013ad92ab704febbdea
+  train_cache_input_manifest_sha256: e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393
+  kinematic_input_manifest_sha256: 1b9df53a9010c6c3c46345639cfbf1d5ab2fe3a43187c79c7dfa0f7d840b102f
+  parent_synthetic_pass_sha256: 78d0990352777e488f26bb84f3b0fc16e18845fc7cedb8a7d7fc598f32c0afe3
+  sidecar_population_manifest_sha256: 9f96835b9185218f40df4cc3c52bf3d80a93056681d922a30abfc5c0246f88a7
+
+authentication:
+  numerical_fold_files: exact_parent_15_file_transaction
+  selected_candidate_top_level_fields: exact_parent_complete_18_field_envelope
+  fresh_replay_before_outer_label_gate: mandatory
+  diagnostic_release_files:
+    - boeing_outer_summary.csv
+    - boeing_diagnostic_report.json
+    - diagnostic_manifest.json
+    - DIAGNOSTIC_COMPLETE.json
+  public_release_reauthentication: mandatory
+  release_must_not_contain:
+    - success_rule
+    - stop_rule
+    - stop_version
+    - five_family_macro
+
+execution:
+  platform: Ibex
+  host: glogin.ibex.kaust.edu.sa
+  environment: deepvortex
+  slurm:
+    requested_partition: cpu
+    authoritative_runtime_partition: batch
+    constraint: rome
+    account: pi-hadwigm
+    nodes: 1
+    cpus_per_task: 32
+    memory_gb: 128
+    walltime: "12:00:00"
+    gpu: none
+  deployment_contract:
+    - push_exact_commit_then_use_clean_Ibex_checkout
+    - fold_and_authenticator_use_the_same_exact_commit
+    - authenticate_parent_stop_and_resource_evidence_before_array_access
+    - register_every_Slurm_process_immediately
+
+output:
+  root: /ibex/user/zhanx0o/pathline-template-matching/Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1
+  fold_directory_pattern: runs/slurm_JOBID_0_COMMIT12_outer_boeing_747
+  authentication_directory_pattern: authentication/slurm_JOBID_COMMIT12
+  overwrite: forbidden
+  atomic_publish: hard_link_without_replace
+  current_state: configuration_frozen_implementation_absent_no_diagnostic_read

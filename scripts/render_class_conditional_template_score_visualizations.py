@@ -2,11 +2,11 @@
 """Render authenticated Class-Conditional Template Score triptychs.
 
 This report is intentionally configuration-driven.  No production identities
-are embedded here: a separately frozen report config must bind the completed
-ClassConditional aggregate, its numerical commit, and the immutable Phase 3.1
-parent scenes.  The aggregate completion proves that all five folds already
-passed the authoritative fresh replay.  This downstream report authenticates
-that release chain and writes its input manifest before opening any NPZ member.
+are embedded here: a separately frozen report config must bind two independent
+single-fold releases and the immutable Phase 3.1 parent scenes.  The stopped
+Verify release contributes only half-cylinder predictions; the post-stop Other
+diagnostic contributes only Boeing predictions.  Both release/fold chains are
+hashed opaquely before this report opens any NPZ member.
 """
 
 from __future__ import annotations
@@ -60,9 +60,13 @@ from pathline_template_matching.portable_flow import (  # noqa: E402
 
 REPORT_EXPERIMENT = "Other_ClassConditionalTemplateScoreVisualization_1.1"
 REPORT_CONFIG_SCHEMA = (
-    "pathline_template_matching.class_conditional_template_score_visualization_config.v1"
+    "pathline_template_matching.class_conditional_template_score_visualization_config.v2"
 )
-PREDICTION_EXPERIMENT = "Verify_ClassConditionalTemplateScore_1.1"
+VERIFY_EXPERIMENT = "Verify_ClassConditionalTemplateScore_1.1"
+BOEING_DIAGNOSTIC_EXPERIMENT = (
+    "Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1"
+)
+SOURCE_RELEASE_MODE = "two_authenticated_single_fold_releases"
 PREDICTION_SCHEMA = (
     "pathline_template_matching.class_conditional_template_score_outer_prediction.v1"
 )
@@ -87,10 +91,21 @@ AGGREGATE_COMPLETE_SCHEMA = (
 AGGREGATE_SUMMARY_SCHEMA = (
     "pathline_template_matching.class_conditional_template_score_aggregate_summary.v1"
 )
-AGGREGATE_FRESH_REPLAY_SOURCE = (
-    "fresh_shared_scaler_family_class_template_LOO_bundle_and_"
-    "prediction_support_replay_before_outer_label_gate_then_"
-    "exact_metric_recomputation"
+VERIFY_SINGLE_FOLD_REPORT_SCHEMA = (
+    "pathline_template_matching.class_conditional_template_score_"
+    "single_fold_authentication_report.v1"
+)
+BOEING_DIAGNOSTIC_REPORT_SCHEMA = (
+    "pathline_template_matching.other_class_conditional_template_score_"
+    "boeing_diagnostic_report.v1"
+)
+BOEING_DIAGNOSTIC_MANIFEST_SCHEMA = (
+    "pathline_template_matching.other_class_conditional_template_score_"
+    "boeing_diagnostic_manifest.v1"
+)
+BOEING_DIAGNOSTIC_COMPLETE_SCHEMA = (
+    "pathline_template_matching.other_class_conditional_template_score_"
+    "boeing_diagnostic_complete.v1"
 )
 METHOD_BINDING_KEY = "class_conditional_template_score_method"
 
@@ -192,11 +207,49 @@ FOLD_FILE_NAMES = (
 FOLD_ARTIFACT_NAMES = tuple(
     name for name in FOLD_FILE_NAMES if name not in {"result_manifest.json", "RUN_COMPLETE.json"}
 )
-AGGREGATE_FILE_NAMES = (
+VERIFY_RELEASE_FILE_NAMES = (
     "outer_family_summary.csv",
-    "aggregate_summary.json",
+    "early_stop_certificate.json",
+    "single_fold_authentication_report.json",
     "aggregate_manifest.json",
     "AGGREGATE_COMPLETE.json",
+)
+BOEING_RELEASE_FILE_NAMES = (
+    "boeing_outer_summary.csv",
+    "boeing_diagnostic_report.json",
+    "diagnostic_manifest.json",
+    "DIAGNOSTIC_COMPLETE.json",
+)
+METHOD_IDENTITY_FIELDS = {
+    "direct_parent_config_sha256", "direct_parent_runner_sha256",
+    "direct_parent_aggregator_sha256", "core_sha256",
+}
+BOEING_COMMON_FIELDS = {
+    "schema", "experiment", "status", "config_sha256", *METHOD_IDENTITY_FIELDS,
+    METHOD_BINDING_KEY, "aggregator_git_commit", "aggregator_worktree_clean",
+    "fold_numerical_git_commit", "evidence_scope", "content_sha256",
+}
+BOEING_REPORT_FIELDS = BOEING_COMMON_FIELDS | {
+    "input_manifest_sha256", "input_manifest_rows_sha256", "outer_family",
+    "class_conditional_support", "fold_summary_source", "fold",
+    "boeing_outer_summary_file", "boeing_outer_summary_file_sha256",
+    "formal_confirmation", "allowed_use",
+}
+BOEING_MANIFEST_FIELDS = BOEING_COMMON_FIELDS | {
+    "boeing_outer_summary_file", "boeing_outer_summary_file_sha256",
+    "report_file", "report_file_sha256", "source_folds",
+}
+BOEING_COMPLETE_FIELDS = BOEING_COMMON_FIELDS | {
+    "diagnostic_manifest_file", "diagnostic_manifest_file_sha256", "report_file",
+    "report_file_sha256", "boeing_outer_summary_file",
+    "boeing_outer_summary_file_sha256", "completed_utc",
+}
+BOEING_EVIDENCE_SCOPE = "exposed_post_stop_visualization_diagnostic"
+BOEING_ALLOWED_USE = "fixed_source_visualization_and_descriptive_error_analysis_only"
+FOLD_SUMMARY_SOURCE = (
+    "fresh_shared_scaler_family_class_template_LOO_bundle_and_"
+    "prediction_support_replay_before_outer_label_gate_then_"
+    "exact_metric_recomputation"
 )
 METRIC_FIELDS = (
     "outer_family", "inner_family", "dataset", "source_ordinal", "block",
@@ -224,27 +277,32 @@ METRIC_STRING_FIELDS = {
     "outer_family", "inner_family", "dataset", "block", "candidate_id",
     "representation", "decision_rule",
 }
-AGGREGATE_COMPLETE_FIELDS = {
-    "schema", "experiment", "status", "mode", "config_sha256",
-    "direct_parent_config_sha256", "direct_parent_runner_sha256",
-    "direct_parent_aggregator_sha256", "core_sha256", METHOD_BINDING_KEY,
-    "aggregator_git_commit", "aggregator_worktree_clean", "fold_numerical_git_commit",
-    "aggregate_manifest_file", "aggregate_manifest_file_sha256", "report_file",
-    "report_file_sha256", "early_stop_certificate", "completed_utc", "content_sha256",
-}
-AGGREGATE_MANIFEST_FIELDS = {
-    "schema", "experiment", "status", "mode", "config_sha256",
-    "direct_parent_config_sha256", "direct_parent_runner_sha256",
-    "direct_parent_aggregator_sha256", "core_sha256", METHOD_BINDING_KEY,
-    "aggregator_git_commit", "aggregator_worktree_clean", "fold_numerical_git_commit",
-    "outer_family_summary_file", "outer_family_summary_file_sha256", "report_file",
-    "report_file_sha256", "early_stop_certificate", "source_folds", "content_sha256",
-}
 SOURCE_FOLD_FIELDS = {
     "outer_family", "run_directory", "completion_file_sha256",
     "result_manifest_file_sha256", "artifact_count", "artifacts",
 }
 PLACEHOLDER_TOKENS = ("TODO", "PLACEHOLDER", "REPLACE_ME", "PENDING_IDENTITY")
+SCIENTIFIC_METHOD_SECTIONS = (
+    "direct_parent",
+    "evidence_scope",
+    "input_identity",
+    "families",
+    "nested_split",
+    "representations",
+    "labels",
+    "shared_negative_scaler",
+    "family_class_exact_scale_conformity",
+    "joint_family_support_and_score",
+    "group_transform",
+    "decision_candidates",
+    "inner_selection",
+    "final_refit_and_outer_label_gate",
+    "metrics",
+)
+EVIDENCE_SOURCES = {
+    "half_cylinder": "stopped_verify_half_cylinder_single_fold_release",
+    "boeing_747": "post_stop_other_boeing_diagnostic_single_fold_release",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -263,14 +321,25 @@ class BlockSpec:
 
 
 @dataclass(frozen=True, slots=True)
+class SourceReleaseSpec:
+    outer_family: str
+    evidence_source: str
+    experiment: str
+    numerical_commit: str
+    config_path: Path
+    config_sha256: str
+    release_root: Path
+    completion_file: str
+    completion_sha256: str
+    fold_root: Path
+
+
+@dataclass(frozen=True, slots=True)
 class ReportPlan:
     path: Path
     sha256: str
     raw: Mapping[str, Any]
-    prediction_commit: str
-    prediction_config_sha256: str
-    aggregate_root: Path
-    aggregate_complete_sha256: str
+    source_releases: tuple[SourceReleaseSpec, SourceReleaseSpec]
     parent_root: Path
     parent_experiment: str
     parent_commit: str
@@ -293,13 +362,15 @@ class FoldEvidence:
     selected_candidate: Mapping[str, Any]
     prediction_manifest: Mapping[str, Any]
     artifacts: Mapping[str, Mapping[str, Any]]
+    method_binding: Mapping[str, Any]
 
 
 @dataclass(frozen=True, slots=True)
-class AggregateEvidence:
-    manifest: Mapping[str, Any]
-    completion: Mapping[str, Any]
+class SourceReleasesEvidence:
+    mode: str
     folds: Mapping[str, FoldEvidence]
+    releases: Mapping[str, Mapping[str, Any]]
+    method_projection: Mapping[str, Any]
     files: tuple[Mapping[str, Any], ...]
 
 
@@ -434,31 +505,81 @@ def load_report_plan(config_path: str | Path, expected_sha256: str) -> ReportPla
     _require_no_placeholders(value)
     _require(
         set(value)
-        == {"schema", "experiment", "status", "prediction_parent", "parent_scenes", "query", "figure_contract", "output_contract"},
+        == {"schema", "experiment", "status", "source_releases", "parent_scenes", "query", "figure_contract", "output_contract"},
         "report config top-level fields drifted",
     )
     _require(value.get("schema") == REPORT_CONFIG_SCHEMA, "report config schema changed")
     _require(value.get("experiment") == REPORT_EXPERIMENT, "report experiment changed")
     _require(value.get("status") == "frozen_pre_run_not_run", "report freeze status changed")
 
-    prediction = _mapping(value.get("prediction_parent"), "prediction parent")
+    source_releases = _mapping(value.get("source_releases"), "source releases")
     _require(
-        set(prediction)
-        == {"experiment", "numerical_git_commit", "config_sha256", "aggregate_root", "aggregate_complete_sha256", "aggregate_mode", "aggregate_fresh_replay_required"},
-        "prediction parent fields drifted",
+        set(source_releases)
+        == {"mode", "source_release_count", "complete_five_fold", "releases"},
+        "source-release fields drifted",
     )
-    _require(prediction.get("experiment") == PREDICTION_EXPERIMENT, "prediction experiment changed")
-    _require(_is_lower_hex(prediction.get("numerical_git_commit"), 40), "prediction commit is invalid")
-    _require(_is_lower_hex(prediction.get("config_sha256"), 64), "prediction config SHA is invalid")
-    _require(_is_lower_hex(prediction.get("aggregate_complete_sha256"), 64), "aggregate completion SHA is invalid")
-    _require(prediction.get("aggregate_mode") == "complete_five_fold_aggregate", "visualization requires the authenticated five-fold aggregate")
     _require(
-        prediction.get("aggregate_fresh_replay_required") is True,
-        "the five-fold aggregate must come from authoritative fresh replay",
+        source_releases.get("mode") == SOURCE_RELEASE_MODE
+        and source_releases.get("source_release_count") == 2
+        and source_releases.get("complete_five_fold") is False,
+        "visualization requires exactly two non-five-fold source releases",
     )
-    aggregate_root_value = Path(str(prediction.get("aggregate_root")))
-    _require(aggregate_root_value.is_absolute(), "aggregate root must be absolute")
-    aggregate_root = aggregate_root_value.resolve()
+    release_rows = source_releases.get("releases")
+    _require(isinstance(release_rows, list) and len(release_rows) == 2, "exactly two source releases are required")
+    releases: list[SourceReleaseSpec] = []
+    expected_release_identity = (
+        (
+            "half_cylinder",
+            EVIDENCE_SOURCES["half_cylinder"],
+            VERIFY_EXPERIMENT,
+            "AGGREGATE_COMPLETE.json",
+        ),
+        (
+            "boeing_747",
+            EVIDENCE_SOURCES["boeing_747"],
+            BOEING_DIAGNOSTIC_EXPERIMENT,
+            "DIAGNOSTIC_COMPLETE.json",
+        ),
+    )
+    release_fields = {
+        "outer_family", "evidence_source", "experiment", "numerical_git_commit",
+        "config_path", "config_sha256", "release_root", "completion_file",
+        "completion_sha256", "fold_root",
+    }
+    for row, (family, evidence_source, experiment, completion_file) in zip(
+        release_rows, expected_release_identity, strict=True
+    ):
+        row = _mapping(row, f"source release {family}")
+        _require(set(row) == release_fields, f"source release fields drifted: {family}")
+        _require(
+            row.get("outer_family") == family
+            and row.get("evidence_source") == evidence_source
+            and row.get("experiment") == experiment
+            and row.get("completion_file") == completion_file,
+            f"source release identity changed: {family}",
+        )
+        _require(_is_lower_hex(row.get("numerical_git_commit"), 40), f"source release commit is invalid: {family}")
+        _require(_is_lower_hex(row.get("config_sha256"), 64), f"source config SHA is invalid: {family}")
+        _require(_is_lower_hex(row.get("completion_sha256"), 64), f"source completion SHA is invalid: {family}")
+        paths = {
+            name: Path(str(row.get(name)))
+            for name in ("config_path", "release_root", "fold_root")
+        }
+        _require(all(path_value.is_absolute() for path_value in paths.values()), f"source release paths must be absolute: {family}")
+        releases.append(
+            SourceReleaseSpec(
+                outer_family=family,
+                evidence_source=evidence_source,
+                experiment=experiment,
+                numerical_commit=str(row["numerical_git_commit"]),
+                config_path=paths["config_path"].resolve(),
+                config_sha256=str(row["config_sha256"]),
+                release_root=paths["release_root"].resolve(),
+                completion_file=completion_file,
+                completion_sha256=str(row["completion_sha256"]),
+                fold_root=paths["fold_root"].resolve(),
+            )
+        )
 
     parent = _mapping(value.get("parent_scenes"), "parent scenes")
     _require(
@@ -535,10 +656,7 @@ def load_report_plan(config_path: str | Path, expected_sha256: str) -> ReportPla
         path=path,
         sha256=expected_sha256,
         raw=value,
-        prediction_commit=str(prediction["numerical_git_commit"]),
-        prediction_config_sha256=str(prediction["config_sha256"]),
-        aggregate_root=aggregate_root,
-        aggregate_complete_sha256=str(prediction["aggregate_complete_sha256"]),
+        source_releases=(releases[0], releases[1]),
         parent_root=parent_root,
         parent_experiment=str(parent["experiment"]),
         parent_commit=str(parent["numerical_git_commit"]),
@@ -555,14 +673,16 @@ def load_report_plan(config_path: str | Path, expected_sha256: str) -> ReportPla
 
 def _authenticate_method_binding(
     payload: Mapping[str, Any],
-    plan: ReportPlan,
     *,
+    expected_experiment: str,
+    expected_commit: str,
+    expected_config_sha256: str,
     label: str,
 ) -> Mapping[str, Any]:
     binding = _mapping(payload.get(METHOD_BINDING_KEY), f"{label} method binding")
-    _require(binding.get("experiment") == PREDICTION_EXPERIMENT, f"{label} method experiment changed")
+    _require(binding.get("experiment") == expected_experiment, f"{label} method experiment changed")
     config = _mapping(binding.get("config"), f"{label} method config")
-    _require(config.get("sha256") == plan.prediction_config_sha256, f"{label} method config changed")
+    _require(config.get("sha256") == expected_config_sha256, f"{label} method config changed")
     score = _mapping(binding.get("score"), f"{label} score binding")
     threshold = _mapping(binding.get("threshold"), f"{label} threshold binding")
     _require(score.get("combine") == "equal_mean_over_jointly_supported_families", f"{label} score combine changed")
@@ -572,8 +692,19 @@ def _authenticate_method_binding(
     _require(threshold.get("equality_prediction") == "negative", f"{label} threshold tie policy changed")
     _require(binding.get("prediction_array_contract") == "unchanged_parent_19_arrays", f"{label} prediction contract changed")
     _require(binding.get("fold_transaction") == "unchanged_parent_15_files", f"{label} fold transaction changed")
-    _require(binding.get("numerical_git_commit") == plan.prediction_commit, f"{label} numerical commit changed")
+    _require(binding.get("numerical_git_commit") == expected_commit, f"{label} numerical commit changed")
     return binding
+
+
+def _method_binding_projection(binding: Mapping[str, Any]) -> dict[str, Any]:
+    """Return only the scientific fields that must agree across releases."""
+
+    return {
+        "score": binding["score"],
+        "threshold": binding["threshold"],
+        "prediction_array_contract": binding["prediction_array_contract"],
+        "fold_transaction": binding["fold_transaction"],
+    }
 
 
 def _candidate_identity(value: object, *, label: str) -> dict[str, Any]:
@@ -599,21 +730,20 @@ def _candidate_identity(value: object, *, label: str) -> dict[str, Any]:
 
 
 def _authenticate_fold_chain(
-    plan: ReportPlan,
+    spec: SourceReleaseSpec,
     source: Mapping[str, Any],
-    aggregate_binding: Mapping[str, Any],
 ) -> tuple[FoldEvidence, list[dict[str, Any]]]:
-    """Authenticate the aggregate-to-fold 15-file chain without opening NPZ members."""
+    """Authenticate one release-to-fold 15-file chain without opening NPZ members."""
 
-    _require(set(source) == SOURCE_FOLD_FIELDS, "aggregate source-fold fields drifted")
+    _require(set(source) == SOURCE_FOLD_FIELDS, "release source-fold fields drifted")
     family = source.get("outer_family")
-    _require(isinstance(family, str) and family in FAMILY_ORDER, "aggregate source fold is unknown")
+    _require(family == spec.outer_family, "release source fold is wrong")
     root_value = source.get("run_directory")
     _require(isinstance(root_value, str) and root_value, f"{family}: fold root is invalid")
     root_path = Path(root_value)
     _require(root_path.is_absolute(), f"{family}: fold root must be absolute")
     root = root_path.resolve()
-    _require(root.is_dir(), f"{family}: fold root is missing")
+    _require(root == spec.fold_root and root.is_dir(), f"{family}: fold root is missing or changed")
     _require(
         {path.name for path in root.iterdir()} == set(FOLD_FILE_NAMES)
         and all((root / name).is_file() for name in FOLD_FILE_NAMES),
@@ -622,8 +752,8 @@ def _authenticate_fold_chain(
     _require(_is_lower_hex(source.get("completion_file_sha256"), 64), f"{family}: completion SHA is invalid")
     _require(_is_lower_hex(source.get("result_manifest_file_sha256"), 64), f"{family}: result SHA is invalid")
     _require(source.get("artifact_count") == 13, f"{family}: artifact count changed")
-    aggregate_artifacts = _mapping(source.get("artifacts"), f"{family}: aggregate artifacts")
-    _require(set(aggregate_artifacts) == set(FOLD_ARTIFACT_NAMES), f"{family}: aggregate artifact set changed")
+    release_artifacts = _mapping(source.get("artifacts"), f"{family}: release artifacts")
+    _require(set(release_artifacts) == set(FOLD_ARTIFACT_NAMES), f"{family}: release artifact set changed")
 
     completion_path = root / "RUN_COMPLETE.json"
     result_path = root / "result_manifest.json"
@@ -636,12 +766,17 @@ def _authenticate_fold_chain(
         (result, PREDICTION_RESULT_SCHEMA, "result"),
     ):
         _require(payload.get("schema") == schema, f"{family}: {label} schema changed")
-        _require(payload.get("experiment") == PREDICTION_EXPERIMENT, f"{family}: {label} experiment changed")
-        _require(payload.get("git_commit") == plan.prediction_commit, f"{family}: {label} commit changed")
-        _require(payload.get("config_sha256") == plan.prediction_config_sha256, f"{family}: {label} config changed")
+        _require(payload.get("experiment") == spec.experiment, f"{family}: {label} experiment changed")
+        _require(payload.get("git_commit") == spec.numerical_commit, f"{family}: {label} commit changed")
+        _require(payload.get("config_sha256") == spec.config_sha256, f"{family}: {label} config changed")
         _require(payload.get("outer_family") == family, f"{family}: {label} outer family changed")
-        binding = _authenticate_method_binding(payload, plan, label=f"{family} {label}")
-        _require(_strict_json_equal(binding, aggregate_binding), f"{family}: {label} method differs from aggregate")
+        binding = _authenticate_method_binding(
+            payload,
+            expected_experiment=spec.experiment,
+            expected_commit=spec.numerical_commit,
+            expected_config_sha256=spec.config_sha256,
+            label=f"{family} {label}",
+        )
     _require(result.get("status") == "completed", f"{family}: result is not completed")
     _require(completion.get("result_manifest_file") == "result_manifest.json", f"{family}: result path changed")
     _require(completion.get("result_manifest_file_sha256") == sha256_file(result_path), f"{family}: completion does not bind result file")
@@ -655,9 +790,9 @@ def _authenticate_fold_chain(
     ]
     normalized_artifacts: dict[str, Mapping[str, Any]] = {}
     for name in FOLD_ARTIFACT_NAMES:
-        aggregate_record = _mapping(aggregate_artifacts[name], f"{family}/{name} aggregate identity")
+        aggregate_record = _mapping(release_artifacts[name], f"{family}/{name} release identity")
         result_record = _mapping(result_artifacts[name], f"{family}/{name} result identity")
-        _require(_strict_json_equal(result_record, aggregate_record), f"{family}/{name}: aggregate/result identity differs")
+        _require(_strict_json_equal(result_record, aggregate_record), f"{family}/{name}: release/result identity differs")
         _require_file_identity(root / name, aggregate_record, role=f"{family}/{name}")
         normalized_artifacts[name] = dict(aggregate_record)
         evidence.append(_file_row(root / name, f"prediction_fold:{family}:{name}"))
@@ -670,12 +805,24 @@ def _authenticate_fold_chain(
     _require(prediction_manifest.get("schema") == PREDICTION_MANIFEST_SCHEMA, f"{family}: prediction manifest schema changed")
     _require(prediction_manifest.get("prediction_schema") == PREDICTION_SCHEMA, f"{family}: prediction schema changed")
     for payload, label in ((selected, "selected candidate"), (prediction_manifest, "prediction manifest")):
-        _require(payload.get("experiment") == PREDICTION_EXPERIMENT, f"{family}: {label} experiment changed")
-        _require(payload.get("git_commit") == plan.prediction_commit, f"{family}: {label} commit changed")
-        _require(payload.get("config_sha256") == plan.prediction_config_sha256, f"{family}: {label} config changed")
+        _require(payload.get("experiment") == spec.experiment, f"{family}: {label} experiment changed")
+        _require(payload.get("git_commit") == spec.numerical_commit, f"{family}: {label} commit changed")
+        _require(payload.get("config_sha256") == spec.config_sha256, f"{family}: {label} config changed")
         _require(payload.get("outer_family") == family, f"{family}: {label} fold changed")
-        binding = _authenticate_method_binding(payload, plan, label=f"{family} {label}")
-        _require(_strict_json_equal(binding, aggregate_binding), f"{family}: {label} method differs from aggregate")
+        binding = _authenticate_method_binding(
+            payload,
+            expected_experiment=spec.experiment,
+            expected_commit=spec.numerical_commit,
+            expected_config_sha256=spec.config_sha256,
+            label=f"{family} {label}",
+        )
+        _require(
+            _strict_json_equal(
+                _method_binding_projection(binding),
+                _method_binding_projection(result[METHOD_BINDING_KEY]),
+            ),
+            f"{family}: {label} scientific method differs within fold",
+        )
     candidate = _candidate_identity(selected.get("candidate"), label=f"{family} selected candidate")
     _require(_strict_json_equal(prediction_manifest.get("selected_candidate"), candidate), f"{family}: prediction candidate differs")
     _require(_strict_json_equal(result.get("selected_candidate"), candidate), f"{family}: result candidate differs")
@@ -701,106 +848,358 @@ def _authenticate_fold_chain(
             selected_candidate=candidate,
             prediction_manifest=prediction_manifest,
             artifacts=normalized_artifacts,
+            method_binding=dict(result[METHOD_BINDING_KEY]),
         ),
         evidence,
     )
 
 
-def authenticate_aggregate_chain(plan: ReportPlan) -> AggregateEvidence:
-    """Authenticate aggregate completion -> manifest -> all five 15-file folds.
+def _hashed_yaml(path: Path, expected_sha256: str, *, label: str) -> Mapping[str, Any]:
+    _require(path.is_file(), f"missing {label}: {path}")
+    _require(sha256_file(path) == expected_sha256, f"{label} SHA-256 mismatch")
+    value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    _require(isinstance(value, Mapping), f"{label} must contain a mapping")
+    return value
 
-    This phase hashes NPZ files as opaque bytes but deliberately does not call
-    ``numpy.load``.  Full numerical fold replay happens only after the report
-    input manifest has been persisted.
-    """
 
-    root = plan.aggregate_root
-    _require(root.is_dir(), f"aggregate root is missing: {root}")
-    _require(
-        {path.name for path in root.iterdir()} == set(AGGREGATE_FILE_NAMES)
-        and all((root / name).is_file() for name in AGGREGATE_FILE_NAMES),
-        "complete aggregate must contain exactly four files",
+def _authenticate_scientific_method_projection(
+    plan: ReportPlan,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Compare the shared method declared by the two separately hashed configs."""
+
+    half, boeing = plan.source_releases
+    half_config = _hashed_yaml(
+        half.config_path, half.config_sha256, label="half-cylinder Verify config"
     )
-    completion_path = root / "AGGREGATE_COMPLETE.json"
-    _require(sha256_file(completion_path) == plan.aggregate_complete_sha256, "aggregate completion SHA-256 mismatch")
-    completion = _read_self_hashed_json(completion_path)
-    _require(set(completion) == AGGREGATE_COMPLETE_FIELDS, "aggregate completion fields drifted")
-    _require(completion.get("schema") == AGGREGATE_COMPLETE_SCHEMA, "aggregate completion schema changed")
-    _require(completion.get("experiment") == PREDICTION_EXPERIMENT, "aggregate experiment changed")
-    _require(completion.get("status") == "completed", "aggregate is not complete")
-    _require(completion.get("mode") == "complete_five_fold_aggregate", "aggregate is not complete-five-fold")
-    _require(completion.get("config_sha256") == plan.prediction_config_sha256, "aggregate config changed")
-    _require(completion.get("aggregator_git_commit") == plan.prediction_commit, "aggregate commit changed")
-    _require(completion.get("fold_numerical_git_commit") == plan.prediction_commit, "fold commit changed")
-    _require(completion.get("aggregator_worktree_clean") is True, "aggregate worktree was not clean")
-    _require(completion.get("early_stop_certificate") is None, "complete aggregate must not carry an early-stop certificate")
-    aggregate_binding = _authenticate_method_binding(completion, plan, label="aggregate completion")
-
-    manifest_path = root / "aggregate_manifest.json"
-    report_path = root / "aggregate_summary.json"
-    table_path = root / "outer_family_summary.csv"
-    _require(completion.get("aggregate_manifest_file") == manifest_path.name, "aggregate manifest path changed")
-    _require(completion.get("aggregate_manifest_file_sha256") == sha256_file(manifest_path), "aggregate manifest file binding changed")
-    _require(completion.get("report_file") == report_path.name, "aggregate report path changed")
-    _require(completion.get("report_file_sha256") == sha256_file(report_path), "aggregate report file binding changed")
-    manifest = _read_self_hashed_json(manifest_path)
-    report = _read_self_hashed_json(report_path)
-    _require(set(manifest) == AGGREGATE_MANIFEST_FIELDS, "aggregate manifest fields drifted")
-    for payload, schema, label in (
-        (manifest, AGGREGATE_MANIFEST_SCHEMA, "aggregate manifest"),
-        (report, AGGREGATE_SUMMARY_SCHEMA, "aggregate report"),
-    ):
-        _require(payload.get("schema") == schema, f"{label} schema changed")
-        _require(payload.get("experiment") == PREDICTION_EXPERIMENT, f"{label} experiment changed")
-        _require(payload.get("status") == "completed", f"{label} is not complete")
-        _require(payload.get("mode") == "complete_five_fold_aggregate", f"{label} mode changed")
-        _require(payload.get("config_sha256") == plan.prediction_config_sha256, f"{label} config changed")
-        _require(payload.get("aggregator_git_commit") == plan.prediction_commit, f"{label} commit changed")
-        _require(payload.get("fold_numerical_git_commit") == plan.prediction_commit, f"{label} fold commit changed")
-        binding = _authenticate_method_binding(payload, plan, label=label)
-        _require(_strict_json_equal(binding, aggregate_binding), f"{label} method binding differs")
-    _require(manifest.get("outer_family_summary_file") == table_path.name, "aggregate table path changed")
-    _require(manifest.get("outer_family_summary_file_sha256") == sha256_file(table_path), "aggregate table binding changed")
-    _require(manifest.get("report_file") == report_path.name, "aggregate report path differs in manifest")
-    _require(manifest.get("report_file_sha256") == sha256_file(report_path), "aggregate report SHA differs in manifest")
-    _require(manifest.get("early_stop_certificate") is None, "aggregate manifest carries an early-stop certificate")
-    _require(report.get("outer_families") == list(FAMILY_ORDER), "aggregate family order changed")
-    _require(report.get("outer_family_count") == 5, "aggregate family count changed")
-    _require(report.get("formal_confirmation") is False, "aggregate made a formal-confirmation claim")
-    _require(
-        report.get("fold_summary_source") == AGGREGATE_FRESH_REPLAY_SOURCE,
-        "aggregate did not bind authoritative fresh fold replay",
+    boeing_config = _hashed_yaml(
+        boeing.config_path, boeing.config_sha256, label="Boeing Other config"
     )
     _require(
-        report.get("evidence_scope")
-        == "exposed_train_only_nested_family_validation",
-        "aggregate evidence scope changed",
+        half_config.get("experiment") == VERIFY_EXPERIMENT,
+        "half-cylinder method config experiment changed",
     )
-    _require(report.get("outer_family_summary_file_sha256") == sha256_file(table_path), "aggregate report table binding changed")
-
-    source_folds = manifest.get("source_folds")
-    _require(isinstance(source_folds, list) and len(source_folds) == 5, "aggregate must bind five source folds")
-    _require([row.get("outer_family") for row in source_folds if isinstance(row, Mapping)] == list(FAMILY_ORDER), "aggregate source-fold order changed")
-    files: list[dict[str, Any]] = [
-        _file_row(completion_path, "class_aggregate:AGGREGATE_COMPLETE"),
-        _file_row(manifest_path, "class_aggregate:aggregate_manifest"),
-        _file_row(report_path, "class_aggregate:aggregate_summary"),
-        _file_row(table_path, "class_aggregate:outer_family_summary"),
+    _require(
+        boeing_config.get("experiment") == BOEING_DIAGNOSTIC_EXPERIMENT,
+        "Boeing diagnostic config experiment changed",
+    )
+    scientific_parent = _mapping(
+        boeing_config.get("scientific_method_parent"),
+        "Boeing scientific-method parent",
+    )
+    parent_config = _mapping(
+        scientific_parent.get("config"), "Boeing method-parent config"
+    )
+    _require(
+        scientific_parent.get("experiment") == VERIFY_EXPERIMENT
+        and scientific_parent.get("inheritance")
+        == "exact_complete_numerical_contract_without_override"
+        and parent_config.get("sha256") == half.config_sha256
+        and scientific_parent.get("inherited_numerical_override") == "forbidden",
+        "Boeing diagnostic does not inherit the exact stopped Verify method",
+    )
+    names = scientific_parent.get("exact_inherited_sections")
+    _require(
+        isinstance(names, list) and tuple(names) == SCIENTIFIC_METHOD_SECTIONS,
+        "Boeing inherited method-section contract changed",
+    )
+    sections = {
+        name: half_config[name]
+        for name in SCIENTIFIC_METHOD_SECTIONS
+        if name in half_config
+    }
+    _require(
+        tuple(sections) == SCIENTIFIC_METHOD_SECTIONS,
+        "Verify method config is missing a shared scientific section",
+    )
+    half_projection = {
+        "method_parent_experiment": VERIFY_EXPERIMENT,
+        "method_parent_config_sha256": half.config_sha256,
+        "exact_inherited_sections": list(SCIENTIFIC_METHOD_SECTIONS),
+        "sections_content_sha256": canonical_json_sha256(sections),
+    }
+    boeing_projection = {
+        "method_parent_experiment": str(scientific_parent["experiment"]),
+        "method_parent_config_sha256": str(parent_config["sha256"]),
+        "exact_inherited_sections": list(names),
+        "sections_content_sha256": canonical_json_sha256(sections),
+    }
+    _require(
+        _strict_json_equal(half_projection, boeing_projection),
+        "the two hashed configs project different scientific methods",
+    )
+    projection = {
+        **half_projection,
+        "half_release_config_sha256": half.config_sha256,
+        "boeing_release_config_sha256": boeing.config_sha256,
+        "comparison": "strict_json_equal_after_exact_inheritance_validation",
+    }
+    return projection, [
+        _file_row(half.config_path, "source_release:half_cylinder:config"),
+        _file_row(boeing.config_path, "source_release:boeing_747:config"),
     ]
-    folds: dict[str, FoldEvidence] = {}
-    for source in source_folds:
-        source = _mapping(source, "aggregate source fold")
-        fold, fold_files = _authenticate_fold_chain(plan, source, aggregate_binding)
-        _require(fold.outer_family not in folds, f"duplicate aggregate fold: {fold.outer_family}")
-        folds[fold.outer_family] = fold
-        files.extend(fold_files)
-    _require(tuple(folds) == FAMILY_ORDER, "aggregate fold population changed")
-    _require(len({row["path"] for row in files}) == len(files), "aggregate evidence contains duplicate paths")
-    return AggregateEvidence(
-        manifest=manifest,
-        completion=completion,
-        folds=folds,
-        files=tuple(files),
+
+
+def _require_no_forbidden_release_claims(value: object, *, path: str) -> None:
+    forbidden = {
+        "complete_five_fold",
+        "five_fold_success",
+        "five_fold_success_evaluated",
+        "five_family_macro",
+        "five_family_macro_f1",
+        "stop_rule",
+        "stop_version",
+        "success_rule",
+    }
+    if isinstance(value, Mapping):
+        _require(not (set(value) & forbidden), f"forbidden Boeing release claim: {path}")
+        for key, item in value.items():
+            _require_no_forbidden_release_claims(item, path=f"{path}.{key}")
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            _require_no_forbidden_release_claims(item, path=f"{path}[{index}]")
+
+
+def _release_file_rows(
+    spec: SourceReleaseSpec, expected_names: Sequence[str]
+) -> list[dict[str, Any]]:
+    _require(spec.release_root.is_dir(), f"missing source release: {spec.outer_family}")
+    _require(
+        {path.name for path in spec.release_root.iterdir()} == set(expected_names)
+        and all((spec.release_root / name).is_file() for name in expected_names),
+        f"{spec.outer_family}: source release file set changed",
+    )
+    completion_path = spec.release_root / spec.completion_file
+    _require(
+        sha256_file(completion_path) == spec.completion_sha256,
+        f"{spec.outer_family}: release completion SHA-256 mismatch",
+    )
+    return [
+        _file_row(path=spec.release_root / name, role=f"source_release:{spec.outer_family}:{name}")
+        for name in expected_names
+    ]
+
+
+def _single_source_fold(manifest: Mapping[str, Any], *, family: str) -> Mapping[str, Any]:
+    rows = manifest.get("source_folds")
+    _require(
+        isinstance(rows, list)
+        and len(rows) == 1
+        and isinstance(rows[0], Mapping)
+        and rows[0].get("outer_family") == family,
+        f"{family}: release must bind exactly one source fold",
+    )
+    return rows[0]
+
+
+def _authenticate_verify_release_opaque(
+    spec: SourceReleaseSpec,
+) -> tuple[FoldEvidence, dict[str, Any], list[dict[str, Any]]]:
+    files = _release_file_rows(spec, VERIFY_RELEASE_FILE_NAMES)
+    completion = _read_self_hashed_json(spec.release_root / "AGGREGATE_COMPLETE.json")
+    manifest = _read_self_hashed_json(spec.release_root / "aggregate_manifest.json")
+    release_report = _read_self_hashed_json(
+        spec.release_root / "single_fold_authentication_report.json"
+    )
+    certificate = _read_self_hashed_json(
+        spec.release_root / "early_stop_certificate.json"
+    )
+    _require(
+        completion.get("schema") == AGGREGATE_COMPLETE_SCHEMA
+        and completion.get("experiment") == VERIFY_EXPERIMENT
+        and completion.get("mode") == "single_fold_authentication"
+        and completion.get("status") == "completed"
+        and completion.get("config_sha256") == spec.config_sha256
+        and completion.get("fold_numerical_git_commit") == spec.numerical_commit,
+        "half-cylinder release completion provenance changed",
+    )
+    _require(
+        manifest.get("schema") == AGGREGATE_MANIFEST_SCHEMA
+        and release_report.get("schema") == VERIFY_SINGLE_FOLD_REPORT_SCHEMA
+        and release_report.get("outer_family") == "half_cylinder"
+        and release_report.get("stop_version") is True
+        and release_report.get("five_fold_success_evaluated") is False
+        and release_report.get("five_fold_success") is None
+        and release_report.get("formal_confirmation") is False
+        and certificate.get("stop_version") is True
+        and certificate.get("five_fold_success_evaluated") is False
+        and certificate.get("five_fold_success") is None,
+        "half-cylinder release is not the authenticated stopped branch",
+    )
+    _require(
+        completion.get("aggregate_manifest_file") == "aggregate_manifest.json"
+        and completion.get("aggregate_manifest_file_sha256")
+        == sha256_file(spec.release_root / "aggregate_manifest.json")
+        and completion.get("report_file") == "single_fold_authentication_report.json"
+        and completion.get("report_file_sha256")
+        == sha256_file(spec.release_root / "single_fold_authentication_report.json"),
+        "half-cylinder release output binding changed",
+    )
+    source = _single_source_fold(manifest, family="half_cylinder")
+    fold, fold_files = _authenticate_fold_chain(spec, source)
+    return fold, {
+        "evidence_source": spec.evidence_source,
+        "experiment": spec.experiment,
+        "release_root": str(spec.release_root),
+        "completion_sha256": spec.completion_sha256,
+        "stop_version": True,
+        "five_fold_success_evaluated": False,
+        "formal_confirmation": False,
+    }, [*files, *fold_files]
+
+
+def _authenticate_boeing_release_opaque(
+    spec: SourceReleaseSpec,
+) -> tuple[FoldEvidence, dict[str, Any], list[dict[str, Any]]]:
+    files = _release_file_rows(spec, BOEING_RELEASE_FILE_NAMES)
+    completion = _read_self_hashed_json(spec.release_root / "DIAGNOSTIC_COMPLETE.json")
+    manifest = _read_self_hashed_json(spec.release_root / "diagnostic_manifest.json")
+    release_report = _read_self_hashed_json(
+        spec.release_root / "boeing_diagnostic_report.json"
+    )
+    envelopes = (
+        (completion, BOEING_COMPLETE_FIELDS, BOEING_DIAGNOSTIC_COMPLETE_SCHEMA, "completion"),
+        (manifest, BOEING_MANIFEST_FIELDS, BOEING_DIAGNOSTIC_MANIFEST_SCHEMA, "manifest"),
+        (release_report, BOEING_REPORT_FIELDS, BOEING_DIAGNOSTIC_REPORT_SCHEMA, "report"),
+    )
+    bindings: list[Mapping[str, Any]] = []
+    identities: list[dict[str, Any]] = []
+    for payload, fields, schema, label in envelopes:
+        _require(
+            set(payload) == fields
+            and payload.get("schema") == schema
+            and payload.get("experiment") == BOEING_DIAGNOSTIC_EXPERIMENT
+            and payload.get("status") == "completed"
+            and payload.get("config_sha256") == spec.config_sha256
+            and payload.get("aggregator_git_commit") == spec.numerical_commit
+            and payload.get("aggregator_worktree_clean") is True
+            and payload.get("fold_numerical_git_commit") == spec.numerical_commit
+            and payload.get("evidence_scope") == BOEING_EVIDENCE_SCOPE,
+            f"Boeing diagnostic {label} provenance changed",
+        )
+        identity = {name: payload.get(name) for name in METHOD_IDENTITY_FIELDS}
+        _require(all(_is_lower_hex(value, 64) for value in identity.values()), f"Boeing diagnostic {label} method identity changed")
+        identities.append(identity)
+        bindings.append(
+            _authenticate_method_binding(
+                payload,
+                expected_experiment=spec.experiment,
+                expected_commit=spec.numerical_commit,
+                expected_config_sha256=spec.config_sha256,
+                label=f"Boeing diagnostic {label}",
+            )
+        )
+        _require_no_forbidden_release_claims(payload, path=f"Boeing {label}")
+    _require(
+        _strict_json_equal(identities[0], identities[1])
+        and _strict_json_equal(identities[0], identities[2])
+        and _strict_json_equal(bindings[0], bindings[1])
+        and _strict_json_equal(bindings[0], bindings[2]),
+        "Boeing diagnostic release method identity differs across files",
+    )
+    _require(
+        release_report.get("outer_family") == "boeing_747"
+        and release_report.get("formal_confirmation") is False
+        and release_report.get("fold_summary_source") == FOLD_SUMMARY_SOURCE
+        and release_report.get("allowed_use") == BOEING_ALLOWED_USE,
+        "Boeing diagnostic report scope changed",
+    )
+    _require(
+        completion.get("diagnostic_manifest_file") == "diagnostic_manifest.json"
+        and completion.get("diagnostic_manifest_file_sha256")
+        == sha256_file(spec.release_root / "diagnostic_manifest.json")
+        and completion.get("report_file") == "boeing_diagnostic_report.json"
+        and completion.get("report_file_sha256")
+        == sha256_file(spec.release_root / "boeing_diagnostic_report.json")
+        and completion.get("boeing_outer_summary_file") == "boeing_outer_summary.csv"
+        and manifest.get("boeing_outer_summary_file") == "boeing_outer_summary.csv"
+        and release_report.get("boeing_outer_summary_file") == "boeing_outer_summary.csv"
+        and completion.get("boeing_outer_summary_file_sha256")
+        == manifest.get("boeing_outer_summary_file_sha256")
+        == release_report.get("boeing_outer_summary_file_sha256")
+        == sha256_file(spec.release_root / "boeing_outer_summary.csv"),
+        "Boeing diagnostic output binding changed",
+    )
+    _require(
+        manifest.get("report_file") == "boeing_diagnostic_report.json"
+        and manifest.get("report_file_sha256")
+        == sha256_file(spec.release_root / "boeing_diagnostic_report.json"),
+        "Boeing diagnostic manifest/report binding changed",
+    )
+    source = _single_source_fold(manifest, family="boeing_747")
+    fold, fold_files = _authenticate_fold_chain(spec, source)
+    with (spec.release_root / "boeing_outer_summary.csv").open(
+        "r", encoding="utf-8", newline=""
+    ) as stream:
+        reader = csv.DictReader(stream)
+        summary_rows = list(reader)
+    report_fold = _mapping(release_report.get("fold"), "Boeing diagnostic fold row")
+    _require(
+        len(summary_rows) == 1
+        and tuple(summary_rows[0]) == tuple(reader.fieldnames or ())
+        and set(summary_rows[0]) == set(report_fold)
+        and all(
+            summary_rows[0][name]
+            == ("" if report_fold[name] is None else (
+                str(int(report_fold[name])) if isinstance(report_fold[name], (bool, int))
+                else format(float(report_fold[name]), ".12g")
+                if isinstance(report_fold[name], float) else str(report_fold[name])
+            ))
+            for name in report_fold
+        ),
+        "Boeing diagnostic report fold differs from authenticated summary CSV",
+    )
+    outer_summary = _read_self_hashed_json(spec.fold_root / "outer_summary.json")
+    _require(
+        _strict_json_equal(
+            release_report.get("class_conditional_support"),
+            outer_summary.get("class_conditional_support"),
+        ),
+        "Boeing diagnostic support differs from authenticated fold summary",
+    )
+    input_manifest = _mapping(fold.result.get("input_manifest"), "Boeing fold input manifest")
+    _require(
+        release_report.get("input_manifest_sha256") == input_manifest.get("sha256")
+        and release_report.get("input_manifest_rows_sha256")
+        == input_manifest.get("rows_content_sha256"),
+        "Boeing diagnostic report input-manifest identity changed",
+    )
+    return fold, {
+        "evidence_source": spec.evidence_source,
+        "experiment": spec.experiment,
+        "release_root": str(spec.release_root),
+        "completion_sha256": spec.completion_sha256,
+        "formal_confirmation": False,
+    }, [*files, *fold_files]
+
+
+def authenticate_source_release_chains(plan: ReportPlan) -> SourceReleasesEvidence:
+    """Hash two release/config/fold chains opaquely before NPZ member access."""
+
+    projection, files = _authenticate_scientific_method_projection(plan)
+    half_spec, boeing_spec = plan.source_releases
+    half_fold, half_release, half_files = _authenticate_verify_release_opaque(half_spec)
+    boeing_fold, boeing_release, boeing_files = _authenticate_boeing_release_opaque(boeing_spec)
+    _require(
+        _strict_json_equal(
+            _method_binding_projection(half_fold.method_binding),
+            _method_binding_projection(boeing_fold.method_binding),
+        ),
+        "the two source folds use different scientific method projections",
+    )
+    all_files = [*files, *half_files, *boeing_files]
+    _require(
+        len({row["path"] for row in all_files}) == len(all_files),
+        "source-release evidence contains duplicate paths",
+    )
+    return SourceReleasesEvidence(
+        mode=SOURCE_RELEASE_MODE,
+        folds={"half_cylinder": half_fold, "boeing_747": boeing_fold},
+        releases={
+            "half_cylinder": half_release,
+            "boeing_747": boeing_release,
+        },
+        method_projection=projection,
+        files=tuple(all_files),
     )
 
 
@@ -942,13 +1341,13 @@ def _support_audit_for_group(
 
 def load_prediction_groups(
     plan: ReportPlan,
-    aggregate: AggregateEvidence,
+    releases: SourceReleasesEvidence,
 ) -> dict[tuple[str, str], LoadedPredictionGroup]:
     """Validate all 19 arrays, then project the eight fixed source-2 groups."""
 
     groups: dict[tuple[str, str], LoadedPredictionGroup] = {}
     for family in ("half_cylinder", "boeing_747"):
-        fold = aggregate.folds[family]
+        fold = releases.folds[family]
         expected_datasets = tuple(
             dataset.dataset for dataset in plan.datasets if dataset.outer_family == family
         )
@@ -1088,11 +1487,11 @@ def _parse_metric_value(field: str, text: str) -> Any:
 
 def read_outer_group_metrics(
     plan: ReportPlan,
-    aggregate: AggregateEvidence,
+    releases: SourceReleasesEvidence,
 ) -> dict[tuple[str, str], Mapping[str, Any]]:
     selected: dict[tuple[str, str], Mapping[str, Any]] = {}
     for family in ("half_cylinder", "boeing_747"):
-        fold = aggregate.folds[family]
+        fold = releases.folds[family]
         path = fold.root / "outer_group_metrics.csv"
         with path.open("r", encoding="utf-8", newline="") as source:
             reader = csv.DictReader(source)
@@ -1239,6 +1638,11 @@ def _figure_contract() -> dict[str, Any]:
             "c": "error decomposition: mutually exclusive TP, FP, FN, and TN populations",
         },
         "selection": "dataset, source ordinal 2, scale blocks, camera, and pathlines were fixed independently of current predictions",
+        "evidence_scope": (
+            "Cylinder results come only from the authenticated stopped Verify half-cylinder "
+            "single-fold release; Boeing results come only from the independent authenticated "
+            "Other Boeing diagnostic single-fold release."
+        ),
         "exclusions": "none; every valid query primitive in each selected dataset/source/block is rendered",
         "uncertainty": "none; each panel is one fixed source timeslice and carries no confidence interval",
         "reviewer_risks": [
@@ -1248,8 +1652,42 @@ def _figure_contract() -> dict[str, Any]:
             "fixed-top-fraction or positive-sigma candidates are group-transductive",
             "legacy and expanded blocks have different valid populations and are not a causal comparison",
             "the four flows are exposed-development data rather than sealed confirmation",
+            "the two releases do not constitute a complete five-fold evaluation",
         ],
     }
+
+
+def _source_release_claims(releases: SourceReleasesEvidence) -> dict[str, Any]:
+    return {
+        "source_release_mode": releases.mode,
+        "source_release_count": 2,
+        "authenticated_outer_families": ["half_cylinder", "boeing_747"],
+        "complete_five_fold": False,
+        "five_fold_success_evaluated": False,
+        "formal_confirmation": False,
+    }
+
+
+def _source_release_manifest_rows(
+    plan: ReportPlan, releases: SourceReleasesEvidence
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for spec in plan.source_releases:
+        evidence = releases.releases[spec.outer_family]
+        rows.append(
+            {
+                "outer_family": spec.outer_family,
+                "evidence_source": spec.evidence_source,
+                "experiment": spec.experiment,
+                "numerical_git_commit": spec.numerical_commit,
+                "config_sha256": spec.config_sha256,
+                "release_root": str(spec.release_root),
+                "completion_sha256": spec.completion_sha256,
+                "fold_root": str(spec.fold_root),
+                "formal_confirmation": evidence["formal_confirmation"],
+            }
+        )
+    return rows
 
 
 def _verify_child_scene_invariance(
@@ -1388,9 +1826,9 @@ def render_bundle(
 
     # Opaque file hashes and JSON chains are authenticated first.  No NPZ
     # member has been opened yet, so the input manifest can state that fact.
-    aggregate = authenticate_aggregate_chain(plan)
+    releases = authenticate_source_release_chains(plan)
     parent_scenes, parent_files = authenticate_parent_scene_chain(plan)
-    input_rows = [*aggregate.files, *parent_files]
+    input_rows = [*releases.files, *parent_files]
     input_rows.extend(
         [
             _file_row(plan.path, "report_config"),
@@ -1399,22 +1837,23 @@ def render_bundle(
     )
     _require(len({row["path"] for row in input_rows}) == len(input_rows), "authenticated input paths are not unique")
     input_manifest = {
-        "schema": "pathline_template_matching.class_conditional_template_score_visualization_input.v1",
+        "schema": "pathline_template_matching.class_conditional_template_score_visualization_input.v2",
         "experiment": REPORT_EXPERIMENT,
         **reporting_identity,
         "report_config_sha256": plan.sha256,
-        "prediction_experiment": PREDICTION_EXPERIMENT,
-        "prediction_git_commit": plan.prediction_commit,
-        "prediction_config_sha256": plan.prediction_config_sha256,
-        "aggregate_complete_sha256": plan.aggregate_complete_sha256,
+        **_source_release_claims(releases),
+        "source_releases": _source_release_manifest_rows(plan, releases),
+        "scientific_method_projection": releases.method_projection,
         "parent_scene_experiment": plan.parent_experiment,
         "parent_scene_git_commit": plan.parent_commit,
         "environment": environment,
         "source_selection": "fixed source ordinal 2",
         "npz_file_bytes_hashed_before_manifest_write": True,
         "npz_array_member_access_before_manifest_write": False,
-        "aggregate_completion_authenticates_prior_fresh_fold_replay": True,
-        "additional_report_time_fresh_replay": False,
+        "source_release_fresh_replay": (
+            "independently_completed_and_bound_by_authenticated_source_release"
+        ),
+        "report_time_fresh_replay": False,
         "files": input_rows,
         "files_content_sha256": canonical_json_sha256(input_rows),
     }
@@ -1424,11 +1863,12 @@ def render_bundle(
     contract["contract_content_sha256"] = canonical_json_sha256(contract)
     _atomic_json(output_root / "figure_contract.json", contract)
 
-    # From this point NPZ member access is allowed.  The authenticated
-    # five-fold aggregate already reconstructed every source fold before it
-    # published its immutable completion marker.
-    groups = load_prediction_groups(plan, aggregate)
-    parent_metrics = read_outer_group_metrics(plan, aggregate)
+    # Only after every opaque input byte has been frozen in input_manifest.json
+    # may this reporter open the 19-array prediction artifacts.  Fresh replay
+    # belongs to each independently authenticated source release: its clean
+    # exact-commit gate cannot be rerun from this later reporting checkout.
+    groups = load_prediction_groups(plan, releases)
+    parent_metrics = read_outer_group_metrics(plan, releases)
     expected_keys = {(dataset.dataset, block.block) for dataset in plan.datasets for block in plan.blocks}
     _require(set(groups) == set(parent_scenes) == set(parent_metrics) == expected_keys, "eight-figure input populations differ")
 
@@ -1445,6 +1885,10 @@ def render_bundle(
                 block=block.block,
             )
             loaded = groups[key]
+            source_spec = next(
+                item for item in plan.source_releases
+                if item.outer_family == dataset.outer_family
+            )
             prediction, score = exact_bind_prediction_group(
                 parent_metadata, parent_arrays, loaded.group
             )
@@ -1476,9 +1920,11 @@ def render_bundle(
                 {
                     "analysis_experiment": REPORT_EXPERIMENT,
                     "parent_analysis_experiment": plan.parent_experiment,
-                    "prediction_parent_experiment": PREDICTION_EXPERIMENT,
-                    "prediction_parent_git_commit": plan.prediction_commit,
-                    "prediction_parent_config_sha256": plan.prediction_config_sha256,
+                    "evidence_source": source_spec.evidence_source,
+                    "prediction_source_experiment": source_spec.experiment,
+                    "prediction_source_git_commit": source_spec.numerical_commit,
+                    "prediction_source_config_sha256": source_spec.config_sha256,
+                    "source_release_completion_sha256": source_spec.completion_sha256,
                     **reporting_identity,
                     "regime": "family-held-out exposed-development fixed-source reporting",
                     "candidate": candidate,
@@ -1571,6 +2017,7 @@ def render_bundle(
                 complete_metric=complete_metric,
                 loaded=loaded,
             )
+            metric_row["evidence_source"] = source_spec.evidence_source
             metric_rows.append(metric_row)
             exports = [
                 _export_record(scene_npz, output_root, "scene_npz"),
@@ -1584,6 +2031,7 @@ def render_bundle(
             figure_rows.append(
                 {
                     "dataset": dataset.dataset,
+                    "evidence_source": source_spec.evidence_source,
                     "display_name": dataset.display_name,
                     "scale_block": block.block,
                     "source_ordinal": plan.source_ordinal,
@@ -1605,16 +2053,14 @@ def render_bundle(
         tuple(metric_rows[0]),
     )
     visualization_manifest = {
-        "schema": "pathline_template_matching.class_conditional_template_score_visualization.v1",
+        "schema": "pathline_template_matching.class_conditional_template_score_visualization.v2",
         "experiment": REPORT_EXPERIMENT,
         **reporting_identity,
         "report_config_sha256": plan.sha256,
-        "prediction_experiment": PREDICTION_EXPERIMENT,
-        "prediction_git_commit": plan.prediction_commit,
-        "prediction_config_sha256": plan.prediction_config_sha256,
-        "aggregate_complete_sha256": plan.aggregate_complete_sha256,
+        **_source_release_claims(releases),
+        "source_releases": _source_release_manifest_rows(plan, releases),
+        "scientific_method_projection": releases.method_projection,
         "evidence_scope": "family-held-out exposed-development fixed-source reporting",
-        "formal_confirmation": False,
         "source_selection": "fixed source ordinal 2; no metric-based selection",
         "environment": environment,
         "figure_count": 8,
@@ -1640,19 +2086,14 @@ def render_bundle(
                 }
             )
     result = {
-        "schema": "pathline_template_matching.class_conditional_template_score_visualization_result.v1",
+        "schema": "pathline_template_matching.class_conditional_template_score_visualization_result.v2",
         "experiment": REPORT_EXPERIMENT,
         **reporting_identity,
         "report_config_sha256": plan.sha256,
         "status": "completed_pending_local_pdf_collision_and_visual_QA",
-        "formal_confirmation": False,
-        "prediction_experiment": PREDICTION_EXPERIMENT,
-        "prediction_git_commit": plan.prediction_commit,
-        "prediction_config_sha256": plan.prediction_config_sha256,
-        "aggregate_complete_sha256": plan.aggregate_complete_sha256,
+        **_source_release_claims(releases),
+        "source_releases": _source_release_manifest_rows(plan, releases),
         "environment": environment,
-        "aggregate_fresh_replay_authenticated_families": list(FAMILY_ORDER),
-        "report_projection_families": ["half_cylinder", "boeing_747"],
         "figure_count": 8,
         "query_count": int(sum(row["valid_count"] for row in metric_rows)),
         "input_manifest_file_sha256": sha256_file(output_root / "input_manifest.json"),
@@ -1665,11 +2106,12 @@ def render_bundle(
     result["manifest_content_sha256"] = canonical_json_sha256(result)
     _atomic_json(output_root / "result_manifest.json", result)
     complete = {
-        "schema": "pathline_template_matching.class_conditional_template_score_visualization_run_complete.v1",
+        "schema": "pathline_template_matching.class_conditional_template_score_visualization_run_complete.v2",
         "experiment": REPORT_EXPERIMENT,
         **reporting_identity,
         "report_config_sha256": plan.sha256,
         "status": "complete_pending_local_pdf_collision_and_visual_QA",
+        **_source_release_claims(releases),
         "environment": environment,
         "figure_count": 8,
         "query_count": result["query_count"],

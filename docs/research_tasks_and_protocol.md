@@ -578,3 +578,31 @@ smoke 的三-family/12-shard population 不是完整 final fit 的资源上界�
 Slurm MaxRSS `8,066,920K`，PASS/audit SHA=`7748bbfb…/f2d578c6…`。只打开固定三fit families的12 rows，
 保留half-cylinder/delta-wing member-open均0，2000/2000 scales和全部exact-path/resource门通过；该结果无
 F1、prediction、candidate或性能结论，只允许提交固定half-cylinder首折。
+
+## 29. `Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1` 的停止后 Boeing 单折诊断
+
+`Verify_ClassConditionalTemplateScore_1.1` 的修复后 half-cylinder 首折与独立认证 jobs
+`51146327/51146768` 已得到 F1=`0.404461664553<0.50` 和 `stop_version=true`；因此 Verify 剩余
+四折禁止运行。用户要求的 Re160/Re640/Re6400/Boeing 当前方法三联图中，前三个 flow 已由该认证
+half-cylinder fold覆盖；只允许另建本 `Other` 版本补一个 Boeing outer fold。
+
+- 科学方法逐项继承 Verify config SHA-256 `814f95d2…dea`、core `9c009376…ef99`、runner
+  `e5063887…1b48`、修复后 authenticator `77a56193…4e9c`，包括三种表示、共同负类scaler、
+  family/class exact-scale fit/calibration、2/3与3/4 support、空间处理、严格`score>threshold`和
+  全部3,060候选；任何数值override禁止。
+- 本版本只允许 outer=`boeing_747`，fit/inner families固定为half-cylinder、delta-wing、F22和channel。
+  不得读取或复用 Verify half-cylinder 的selected candidate、fit artifact、prediction、metric或support；
+  Boeing必须重新nested selection、final refit、sealed prediction和outer-label gate。
+- Verify stopped release `f8515858…76844` 与resource PASS `3f9197a1…57ea`只作执行授权和来源证据，
+  不是数值输入。Tangaroa/SmokeBuoyancy继续禁止。
+- 诊断只允许固定source visualization与descriptive error analysis，不评估或输出success、stop、
+  five-family macro、formal confirmation或独立test generalization。
+- 认证release必须恰为`boeing_outer_summary.csv`、`boeing_diagnostic_report.json`、
+  `diagnostic_manifest.json`、`DIAGNOSTIC_COMPLETE.json`四文件，并由公共接口重新认证underlying
+  15-file Boeing fold。可视化reporter必须把前三个flow的Verify half release与Boeing的Other release
+  保持为两个不同实验身份，只比较不变的scientific projection。
+
+本版本配置 SHA-256 为
+`6112e7588efecf29cf2690b270385053d8ccd94f8e11037a6e247815afcc5856`。截至当前只完成实现与
+synthetic tests，尚未提交 Slurm job或读取本版本真实Boeing结果；完整合同见
+`docs/Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1.md`。
