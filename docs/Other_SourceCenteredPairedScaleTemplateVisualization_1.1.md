@@ -1,10 +1,11 @@
 # `Other_SourceCenteredPairedScaleTemplateVisualization_1.1`
 
-状态：**`FROZEN_IMPLEMENTED_LOCAL_486_TESTS_PASS_NO_SOURCE_CENTERED_RESULT_READ`**。本版本是
+状态：**`MACHINE_RENDER_SUBMITTED_JOB_51162501_PENDING_LOCAL_QA`**。本版本是
 `Verify_SourceCenteredPairedScaleTemplate_1.1` 的固定下游报告，不训练、不重新拟合、
 不选择候选、不改变阈值，也不把 legacy 与 expanded 两个尺度块伪装成两个分类器。
-截至实现与测试完成时，没有读取该 Verify 版本的新 feature、prediction、metric 或父 scene
-数组，因此本文没有性能数值或图面结论。
+上游完整五折认证现已完成；机器渲染job `51162501`已提交，但真实四图的指标、位置检查、
+SVG/PDF文字检查、碰撞审计和逐图人工复核尚未形成可发布的本地QA结论。因此本文不虚构图指标
+或图面结论，`pending local QA`状态不能写成已交付。
 
 冻结配置为
 `config/Other_SourceCenteredPairedScaleTemplateVisualization_1.1.yaml`，SHA-256 为
@@ -13,6 +14,53 @@ SHA-256 为 `15ac5b0e82b30cbaf952475a7fbb6d19dc070c1121bc9aa8db980d75600260cc`�
 父空间 scene 固定来自 `Other_MainExp31FamilyHeldOutVisualization_1.1` job `51029080`，
 numerical commit 为 `86be29698eb689c0e269fe987a5b6d5f125a67be`，结果 manifest
 SHA-256 为 `57f03ba16ad8cfa0e1e0a9efd93f2dde7ae5866f173fad20055efb6939d4188e`。
+报告实现的exact commit为`2468222535f4c87cbd7046a88b3cd4b6dc892356`；受信任的上游数值
+commit为`a85c007ef961ce53bb40946ca3f38f033bf7a646`。
+
+## 上游五折认证结论与修订
+
+`Verify_SourceCenteredPairedScaleTemplate_1.1` 的完整五折认证job为`51160422`。其冻结config、
+输入manifest与32-sidecar population manifest的SHA-256依次为：
+
+```text
+15ac5b0e82b30cbaf952475a7fbb6d19dc070c1121bc9aa8db980d75600260cc
+5f7e567a2f989d18b51389814938a5d18025c4ed5247730d07df30b13458fec9
+50d9d53f7dc9255d5153f0101c922975e006303b550bfb43317074080a0a97e2
+```
+
+公开release的`AGGREGATE_COMPLETE.json`、`aggregate_manifest.json`、
+`aggregate_summary.json`与`outer_family_summary.csv`文件SHA-256依次为：
+
+```text
+f6599295df79f764a9e1c45a08ee62eef747f09676fab1b4c16c378f0568fbe8
+e97088f7fbdb8f1edc4d27ed113341f95b1b90f948416b2fae80977a0613ba43
+bfb6db3ec0db0b200ae14b37e3607a012a61d1bc96cb892d0500c461c52cc2af
+39bdd096ffd8ca398f3d411280036680a097b8797659bfdb0bb372e550084934
+```
+
+completion与summary的canonical content SHA-256分别为
+`640bf2f6c2f8eb95699dae186d889e4810eeab18f000a172c7ae7260edd4bfe4`和
+`699b7cb20bf96f2560896cfe025bf6830d7d3960960795e6d9730d6068bf1852`；job stdout/stderr
+SHA-256分别为`53afefbdb54dc3f301e30a755be1d95eec8c07b6ea1884bcfe7e8e52ca198879`和
+`abb3982bb0858ad3562355934153ab76bfb77f15527655349fdca97228d6e88f`。
+
+primary valid-row projection的五族等权macro Accuracy、Average Precision、F1、Balanced
+Accuracy、Area Under the Receiver Operating Characteristic Curve、precision和recall分别为
+`0.970084/0.750806/0.679390/0.858326/0.981895/0.648096/0.734997`；combined-valid
+unique-center coverage为`0.956523`。half-cylinder、delta-wing、F22、channel与Boeing 747的
+family F1分别为`0.636556/0.816445/0.579344/0.572869/0.791734`。相对Early parent的
+paired dataset-source bootstrap F1差为`+0.018611`，5000次重采样的95%置信区间为
+`[0.012595,0.024880]`。
+
+先前首折结论“half-cylinder F1=`0.636556`，乐观五折成功门仍可能满足” → 当前五折结论
+“macro F1=`0.679390<0.70`，且只有delta-wing与Boeing 747共2/5 family达到F1≥0.65，未满足
+至少4/5，故`stop_version=true`” → 结论变化是因为其余四折和独立完整五折认证现已完成 →
+先前结论只用于判断是否释放其余四折，范围限于首折，并未宣称完整方法成功。其余冻结门均通过，
+且bootstrap改善区间下界高于0，但这不能替代两个失败的硬门。
+
+direct source-centered dx-rank-mean与min-dx诊断的五族macro F1分别为`0.858241`和
+`0.841770`。二者不使用负模板库，只检验直接source-centered局部运动学的排序信息；它们既不参与
+主候选成功判定，也绝不能写成模板匹配方法达到0.70–0.80。
 
 ## 固定图与统计总体
 
@@ -99,13 +147,18 @@ python scripts/render_source_centered_paired_scale_template_visualizations.py \
   --expected-reporting-commit <exact-40-hex-commit>
 ```
 
-当前 SourceCentered aggregator 的 `single_fold_authentication` 只允许首折
-`half_cylinder`。因此，现有 producer 接口下，四流场完整报告必须由一个
-`complete_five_fold_aggregate` 同时授权 half-cylinder 与 Boeing fold。若 Verify 在首折停止而没有
-完整五折 release，本版本不能绕过认证补 Boeing；必须先建立新的、结果可见前冻结的 Boeing
-诊断版本及公开 release。
+job `51160422`现已发布一个`complete_five_fold_aggregate`，同时授权half-cylinder与Boeing fold；
+报告器绑定的aggregate completion SHA-256为
+`f6599295df79f764a9e1c45a08ee62eef747f09676fab1b4c16c378f0568fbe8`，half-cylinder与Boeing
+fold completion SHA-256分别为
+`0cda692c60229381fad3a0e4eff278798844b0eaca9d21e52e7b4af2408cdbdd`和
+`7f3a232b77d01312c6c886d051affadf5b956b84e66665f761833e27871f1a65`。生产job `51162501`已从
+reporting commit `2468222535f4c87cbd7046a88b3cd4b6dc892356`提交，固定output为
+`/ibex/user/zhanx0o/pathline-template-matching/Other_SourceCenteredPairedScaleTemplateVisualization_1.1/runs/report_2468222535f4_20260901_01`。
+在本地后置QA完成前，提交或机器渲染本身都不是可发布结果。
 
-机器阶段固定结束在 `complete_pending_local_rendered_qa`，不是可交付状态。下载完整目录后，先按
+机器阶段固定结束在 `complete_pending_local_rendered_qa`，不是可交付状态。job `51162501`已提交，
+但当前仍为`pending local QA`；下载完整目录后，先按
 21×5 inch 最终物理尺寸逐张检查四张 PNG，并准备独立 visual-review JSON。该文件必须固定四个
 dataset 顺序、逐图 PNG SHA-256、全部五项布尔检查、reviewer、UTC 时间与总体 `PASS`。如果碰撞
 审计有 warning，还必须逐图写
@@ -150,6 +203,8 @@ pending 状态，两者记录的是先后阶段，不互相覆盖。
 实现阶段核心定向测试为15/15 PASS，wrapper合同为8/8 PASS；其中包含一次完整 synthetic
 PNG/PDF/SVG/位置证据渲染，并实际调用正式collision auditor得到hard fail=0。接入后的本地标准库
 测试为486/486 PASS，相关 Python 文件均通过 `py_compile`，新wrapper通过Git Bash `bash -n`。
+这些实现与测试固定在reporting commit
+`2468222535f4c87cbd7046a88b3cd4b6dc892356`。
 其余输入使用 synthetic scene
 和故意无效的 opaque prediction bytes，只验证合同；它们不是实际流场结果。
 
@@ -159,4 +214,5 @@ PNG/PDF/SVG/位置证据渲染，并实际调用正式collision auditor得到har
 source 2 已暴露；source-centered mean 使用目标 flow 自身无标签速度，因此完整分类器属于
 transductive method（推理时使用目标集合无标签统计的方法）。四张图没有置信区间，不能替代完整
 five-family 统计，也不能称 sealed confirmation、无偏模型选择、聚类、独立单 primitive 分类器，
-或 legacy/expanded 两个方法的因果比较。
+或 legacy/expanded 两个方法的因果比较。上游完整五折primary F1=`0.679390`已经按冻结门停止；
+即使后续固定source图的某个流场表现较好，也不能推翻该五折失败结论。
