@@ -1,12 +1,67 @@
 # `Verify_SourceCenteredRankLikelihoodTemplate_1.1`
 
-状态：**方法与候选网格已冻结，尚未产生本版本任何真实 prediction 或 metric**。
+状态：**`COMPLETED_AUTHENTICATED_FIVE_FOLD_SUCCESS`**。完整五个outer-family fold及独立fresh aggregate
+authentication已经完成；全部预注册成功门通过，`stop_version=false`。
 
 唯一数值合同为
 `config/Verify_SourceCenteredRankLikelihoodTemplate_1.1.yaml`，冻结 SHA-256 为
 `41d6e7be70b898715c6df6f92cfb17176d2f1bb6153fa37b09dd4da9a6059ffa`。任何本版本真实
 prediction 或 metric 可见后，均不得修改 rank 公式、模板总体、直方图、校准、空间处理、候选网格、
 拆分、标签门或成功条件。
+
+## 已认证五折结论
+
+旧结论 **`FROZEN_PRE_RUN_NOT_RUN`** → 当前结论
+**`COMPLETED_AUTHENTICATED_FIVE_FOLD_SUCCESS`** → 变化原因是此前尚无本版本真实prediction、metric或
+Ibex job，而现在五个fold、outer-label gate、fresh replay、五族macro汇总和5,000次配对bootstrap均由
+独立aggregate job `51164588`认证完成。旧结论只描述预注册完成但尚未运行的时间状态，不是对方法性能的
+负面判断，也不适用于当前已认证release。
+
+权威执行证据如下：
+
+| 证据 | 固定值 |
+|---|---|
+| exact execution commit | `8db286f07da0ad484a595f85be5c4577957e032b` |
+| config SHA-256 | `41d6e7be70b898715c6df6f92cfb17176d2f1bb6153fa37b09dd4da9a6059ffa` |
+| prepare / first fold / first-fold auth | `51164204` / `51164265` / `51164274` |
+| remaining four folds / aggregate auth | `51164534_[1-4]` / `51164588` |
+| aggregate output | `/ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredRankLikelihoodTemplate_1.1/aggregate/slurm_51164588_8db286f07da0_first_51164265_remaining_51164534` |
+| aggregate completion SHA-256 | `6a59b22f2bed5a66d382cb71da14aa6753873a46c89d0290fe286972c958ac71` |
+| aggregate manifest SHA-256 | `17bb141e41b3ef88d25b44a50a8eca9dc6181e7adaeb7fcbb8d9801d527a0ebc` |
+| aggregate report SHA-256 | `1d6747e056ae688fb90fdc585cf7c6cbeb6503f1908fec8f3abd601ab70dc1b5` |
+| aggregate table SHA-256 | `af853eda58cff23f706b0fcdd6b8a688442c975475e570f622199afb3808ca48` |
+| device | Ibex Rome CPU，32 CPU、128 GB、无GPU；aggregate node `cn514-15-r` |
+
+Primary `dual_histogram_llr`的五族等权macro结果为：
+
+| Accuracy | Average Precision | F1 | balanced accuracy | AUROC | precision | recall | combined-valid coverage |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.988104393668 | 0.918678962980 | 0.862407509596 | 0.929693724511 | 0.989836958034 | 0.872667765824 | 0.865174131690 | 0.9565234375 |
+
+| outer physical family | F1 |
+|---|---:|
+| half-cylinder | 0.854675575067 |
+| delta-wing | 0.868925558915 |
+| F22 | 0.912295135029 |
+| channel | 0.797228609233 |
+| Boeing 747 | 0.878912669735 |
+
+相对父 `Verify_SourceCenteredPairedScaleTemplate_1.1` 的F1=`0.679389615456`，本方法在完全相同
+valid-row identities上的差为`+0.183017894140`；5,000次paired dataset-source bootstrap的95%区间为
+`[0.161199582226, 0.201614121593]`。因此macro F1、五族family F1、Average Precision、balanced
+accuracy、precision、recall、coverage和bootstrap下界的全部冻结成功门均通过，且认证停止判定为
+`stop_version=false`。
+
+该成功结论仍有严格边界：八个flow均已在旧实验中暴露；rank使用目标source自身的无标签总体，因此是
+transductive target-source rank；primary只使用seed-time source-centered curl rank，不使用FMT或Raw
+pathline geometry；本实验不是新physical family上的formal confirmation。允许的结论仅为有标签
+source-rank likelihood template在这些已暴露family-held-out折上显著优于父高维对称距离模板。
+
+失败和取消记录不删除：`51163911`因Ibex环境缺少`pytest`在任何真实数组或label读取前失败；
+`51164085`在outer prediction/label/metric生成前因fresh-replay audit的深冻结容器与JSON容器比较不一致
+而失败，已产生的数值数组核验此前均通过；其依赖认证job `51164120`未启动并被取消。三者都不产生方法
+性能结论；容器比较修复和回归测试后，权威执行commit `8db286f07da0ad484a595f85be5c4577957e032b`
+以新job ID完成上述认证release。
 
 ## 研究问题与已有证据
 
@@ -215,5 +270,6 @@ formal confirmation。所有失败、取消、超时、无效、负结果和被�
 输出根固定为
 `/ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredRankLikelihoodTemplate_1.1`，禁止覆盖。
 每个binding、fold、authentication或aggregate Slurm job提交后必须立即登记到
-`docs/ibex_run_registry.md`。当前尚未提交本版本真实job，因此没有可报告的新候选、prediction、metric或
-性能结论。
+`docs/ibex_run_registry.md`。本版本最终权威链为prepare `51164204`、首折 `51164265`、首折独立认证
+`51164274`、其余四折 `51164534_[1-4]`与完整五折独立aggregate认证 `51164588`；所有权威job均为
+`COMPLETED 0:0`，并由上述aggregate四个SHA-256固定最终release。

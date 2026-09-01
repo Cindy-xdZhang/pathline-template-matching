@@ -755,7 +755,7 @@ collision auditor（hard fail=0）；本地标准库测试486/486通过。其后
 
 ## 33. `Verify_SourceCenteredRankLikelihoodTemplate_1.1` 的source-rank双类似然模板
 
-状态：**`FROZEN_PRE_RUN_NOT_RUN`**。父`Verify_SourceCenteredPairedScaleTemplate_1.1`已认证
+状态：**`COMPLETED_AUTHENTICATED_FIVE_FOLD_SUCCESS`**。父`Verify_SourceCenteredPairedScaleTemplate_1.1`已认证
 primary macro F1=`0.6793896155`，而其不使用模板库的direct dx-rank-mean top-5%诊断为
 `0.8582408452`。本版本根据这项已暴露诊断预注册一个新的表示和分数：只使用source-centered seed-time
 curl的组内rank，以有标签正、负fit中心的直方图log-likelihood ratio（对数似然比）替换父版本高维、
@@ -801,6 +801,43 @@ curl的单侧排序”；禁止写成“independent FMT geometry学会涡结构�
 formal confirmation。完整数值、父绝对路径、18-file fold合同和输出规则唯一由
 `config/Verify_SourceCenteredRankLikelihoodTemplate_1.1.yaml`与同名实验文档定义；冻结config
 SHA-256为`41d6e7be70b898715c6df6f92cfb17176d2f1bb6153fa37b09dd4da9a6059ffa`。
+
+### 33.1 已认证结果与结论边界
+
+Exact execution commit为`8db286f07da0ad484a595f85be5c4577957e032b`，config SHA-256保持
+`41d6e7be70b898715c6df6f92cfb17176d2f1bb6153fa37b09dd4da9a6059ffa`。权威Ibex链为prepare
+`51164204`、half-cylinder首折`51164265`、首折独立认证`51164274`、其余四折
+`51164534_[1-4]`和完整五折独立fresh aggregate authentication `51164588`；最终五折job为
+`COMPLETED 0:0`，`stop_version=false`。Aggregate completion、manifest、report和table的文件
+SHA-256依次为：
+
+- `6a59b22f2bed5a66d382cb71da14aa6753873a46c89d0290fe286972c958ac71`；
+- `17bb141e41b3ef88d25b44a50a8eca9dc6181e7adaeb7fcbb8d9801d527a0ebc`；
+- `1d6747e056ae688fb90fdc585cf7c6cbeb6503f1908fec8f3abd601ab70dc1b5`；
+- `af853eda58cff23f706b0fcdd6b8a688442c975475e570f622199afb3808ca48`。
+
+Primary五族等权macro Accuracy、Average Precision、F1、balanced accuracy、Area Under the Receiver
+Operating Characteristic Curve、precision和recall依次为`0.988104393668`、`0.918678962980`、
+`0.862407509596`、`0.929693724511`、`0.989836958034`、`0.872667765824`和`0.865174131690`；
+combined-valid coverage=`0.9565234375`。Half-cylinder、delta-wing、F22、channel和Boeing 747的
+family F1依次为`0.854675575067`、`0.868925558915`、`0.912295135029`、`0.797228609233`和
+`0.878912669735`。相对父F1=`0.679389615456`的差为`+0.183017894140`；5,000次paired
+dataset-source bootstrap的95%区间为`[0.161199582226, 0.201614121593]`。Macro门、5/5 family门、
+Average Precision、balanced accuracy、precision、recall、coverage及bootstrap下界门全部通过。
+
+结论修订必须按时间范围解释：旧结论 **`FROZEN_PRE_RUN_NOT_RUN`** → 当前
+**`COMPLETED_AUTHENTICATED_FIVE_FOLD_SUCCESS`** → 原因是旧状态发布时没有本版本真实prediction、metric
+或Ibex job，而现在五个fold、outer-label gate、fresh replay、五族macro及配对bootstrap已由
+`51164588`完整认证 → 旧结论只适用于预注册后、真实运行前，不是性能失败结论。
+
+早期失败`51163911`（Ibex环境缺少`pytest`，未读取真实数组或label）、`51164085`（outer输出前的
+fresh-replay audit容器表示比较失败）和未启动后取消的依赖`51164120`必须继续保留；它们不产生性能
+结论，也未被成功job覆盖或删除。
+
+成功的可解释范围不扩大：八个flow均已暴露；分类器依赖transductive target-source rank；primary只用
+seed-time source-centered curl rank，不使用FMT或Raw pathline geometry。因此当前结果证明的是已暴露
+family-held-out设置下的source-rank likelihood template成功，不是FMT几何成功，也不是formal
+confirmation。
 
 ## 34. `Other_SourceCenteredRankLikelihoodTemplateVisualization_1.1` 的固定四流场分类三联图
 
