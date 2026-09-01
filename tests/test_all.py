@@ -555,6 +555,46 @@ from test_phase31_pipeline import (
     test_phase31_visualization_emits_four_unique_dataset_block_svgs,
 )
 from test_verify_long_arc_horizon import TestVerifyLongArcHorizon
+from test_source_centered_seed_time_kinematics import (
+    test_every_group_must_have_exactly_6400_complete_assigned_rows,
+    test_exact_group_curl_means_and_centered_four_coordinate_oracle,
+    test_input_shape_dtype_group_semantics_and_primitive_order_fail_closed as test_source_centered_input_contract_fails_closed,
+    test_nonsymmetric_three_dimensional_affine_oracle_activates_all_curl_components,
+    test_payload_arrays_have_frozen_dtypes_and_cannot_be_made_writeable as test_source_centered_payload_is_immutable,
+    test_saved_group_mean_and_feature_tampering_fail_exact_recomputation,
+)
+from test_paired_scale_center_fusion import (
+    test_derived_fusion_arrays_reject_post_construction_tampering,
+    test_direct_diagnostics_use_all_assigned_rows_and_fixed_top_five_percent,
+    test_duplicate_block_center_and_invalid_projection_fail_closed,
+    test_empirical_midrank_exact_ties,
+    test_fixed_top_fraction_uses_all_centers_and_deterministic_ties,
+    test_paired_center_fusion_covers_missing_blocks_and_projects_rows,
+    test_weight_zero_keeps_legacy_only_center_score,
+    test_weight_one_keeps_expanded_only_center_score,
+)
+from test_source_centered_runner_contract import (
+    test_selected_candidate_payload_round_trips_fraction_and_rejects_tamper,
+    test_single_fold_stop_certificate_uses_optimistic_complete_five_bounds,
+    test_source_centered_plan_freezes_complete_1800_candidate_grid,
+)
+from test_source_centered_aggregate import (
+    test_aggregate_evidence_persists_population_and_fold_result_binding,
+    test_aggregate_fresh_inner_replay_rejects_tampered_selected_candidate,
+    test_outer_source_mean_binding_is_written_and_freshly_authenticated,
+)
+from test_source_centered_ibex import (
+    test_every_slurm_stage_is_cpu_rome_and_uses_fail_closed_shared_gates,
+    test_exact_ibex_wrapper_population_and_shared_identity_gate,
+    test_first_fold_authentication_remaining_folds_and_five_fold_aggregate_are_bound,
+    test_preparation_profile_array_and_population_form_a_closed_release_chain,
+    test_resource_envelopes_cover_the_1800_candidate_cpu_workload,
+    test_wrappers_preserve_immutable_outputs_and_contain_no_destructive_git_or_file_action,
+)
+from test_source_centered_sidecar import (
+    test_end_to_end_freeze_sidecar_completion_population_and_fresh_replay,
+    test_parent_loader_opens_only_six_members_and_rejects_group_drift,
+)
 from test_scales import (
     test_balanced_assignment_is_reproducible_and_shuffled,
     test_frozen_scale_sets_are_valid_and_disjoint,
@@ -579,6 +619,34 @@ def test_negative_tail_export_is_pure_arrays_and_round_trip_is_exact():
 
 
 TESTS = (
+    test_aggregate_fresh_inner_replay_rejects_tampered_selected_candidate,
+    test_aggregate_evidence_persists_population_and_fold_result_binding,
+    test_outer_source_mean_binding_is_written_and_freshly_authenticated,
+    test_exact_ibex_wrapper_population_and_shared_identity_gate,
+    test_every_slurm_stage_is_cpu_rome_and_uses_fail_closed_shared_gates,
+    test_preparation_profile_array_and_population_form_a_closed_release_chain,
+    test_first_fold_authentication_remaining_folds_and_five_fold_aggregate_are_bound,
+    test_resource_envelopes_cover_the_1800_candidate_cpu_workload,
+    test_wrappers_preserve_immutable_outputs_and_contain_no_destructive_git_or_file_action,
+    test_source_centered_plan_freezes_complete_1800_candidate_grid,
+    test_selected_candidate_payload_round_trips_fraction_and_rejects_tamper,
+    test_single_fold_stop_certificate_uses_optimistic_complete_five_bounds,
+    test_fixed_top_fraction_uses_all_centers_and_deterministic_ties,
+    test_paired_center_fusion_covers_missing_blocks_and_projects_rows,
+    test_weight_zero_keeps_legacy_only_center_score,
+    test_weight_one_keeps_expanded_only_center_score,
+    test_derived_fusion_arrays_reject_post_construction_tampering,
+    test_duplicate_block_center_and_invalid_projection_fail_closed,
+    test_empirical_midrank_exact_ties,
+    test_direct_diagnostics_use_all_assigned_rows_and_fixed_top_five_percent,
+    test_exact_group_curl_means_and_centered_four_coordinate_oracle,
+    test_nonsymmetric_three_dimensional_affine_oracle_activates_all_curl_components,
+    test_source_centered_payload_is_immutable,
+    test_every_group_must_have_exactly_6400_complete_assigned_rows,
+    test_saved_group_mean_and_feature_tampering_fail_exact_recomputation,
+    test_source_centered_input_contract_fails_closed,
+    test_parent_loader_opens_only_six_members_and_rejects_group_drift,
+    test_end_to_end_freeze_sidecar_completion_population_and_fresh_replay,
     test_narrow_parent_loader_authenticates_only_six_members_and_ignores_poison,
     test_parent_projection_rejects_dtype_shape_time_and_identity_drift,
     test_sampler_is_bitwise_equal_to_production_interpolator_and_uses_frame_zero,

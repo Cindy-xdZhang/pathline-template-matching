@@ -670,3 +670,35 @@ PNG目视、PDF/SVG文字、严格panel alignment和碰撞overlay检查：collis
 低于0.70的结论。完整指标、caption、哈希和QA证据见
 `docs/Other_ClassConditionalTemplateScoreVisualization_1.1.md`及
 `docs/evidence/Other_ClassConditionalTemplateScoreVisualization_1.1_local_summary.json`。
+
+## 31. `Verify_SourceCenteredPairedScaleTemplate_1.1` 的source-centered局部运动学与同中心双尺度融合
+
+本版本相对已认证Early父版本只检验两个预注册机制：把原始seed-time `||curl||`改为按
+`dataset×source×block×dx level`无标签估计的`||curl-mean(curl)||`，并在最终决策前融合
+同一40³ center的legacy/expanded两条尺度分数。完整合同见
+`config/Verify_SourceCenteredPairedScaleTemplate_1.1.yaml`和同名实验文档；冻结config SHA-256为
+`15ac5b0e82b30cbaf952475a7fbb6d19dc070c1121bc9aa8db980d75600260cc`。
+
+- 每个mean group必须使用全部6400 assigned rows，不能按pathline validity筛选；sidecar生产禁止
+  打开label、IVD、valid mask、FMT、Raw或metadata。均值来自assigned interior grid，不读取
+  whole-volume IVD mean。
+- fold选择完成前只允许对outer sidecar做文件stat、size与whole-file SHA-256身份认证；禁止解压或
+  读取outer NPZ的数组、metadata和group mean。final nonouter model/candidate认证后才能绑定这些成员。
+- 三种FMT子集只替换4D seed block；负模板逐尺度scaler、same-scale kNN、negative-tail
+  calibration和空间处理继承Early。whole-volume IVD p95不能推出内部中心或valid-row正类率恰为5%；
+  top fraction冻结为`0.025/0.04/0.05/0.06/0.075/0.10`并只能由inner families选择。融合权重
+  使用不偏向任一block的`0/0.25/0.5/0.75/1`对称网格；候选固定为
+  3种表示×4个k×5个sigma×5个融合权重×6个top fraction=1800。
+- 完整五个physical family继续执行nested outer/inner拆分与outer-label gate。预测单位是64,000
+  unique centers，但inner选择与成功门的分类指标均使用center prediction回填后的精确parent-valid rows，与Early
+  control同row比较；combined-valid unique-center另报，全部64,000 centers只作coverage分母。
+  Tangaroa/Smoke全部禁止。
+- 成功要求完整五折macro F1≥0.70、至少4/5 family≥0.65、任一family≥0.50、AP≥0.60、
+  balanced accuracy≥0.70、precision/recall≥0.60、combined coverage≥0.90，且相对Early的
+  paired source bootstrap F1差值95%下界>0。
+- 新方法用outer flow自身无标签速度估计均值，因此完整classifier是transductive；任何增益必须
+  归因于直接局部运动学与多尺度融合，不能冒充独立FMT几何学习成功。
+- 同时固定min-`dx`与逐`dx` midrank双尺度平均两个direct top-5%诊断；它们不使用label或模板库，
+  只界定表示排序上限，不能满足模板方法成功条件。
+
+本配置在首次读取本版本任何真实source-centered feature、prediction或metric前冻结；尚无性能结论。

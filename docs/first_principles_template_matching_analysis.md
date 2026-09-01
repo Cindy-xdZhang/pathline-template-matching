@@ -40,6 +40,17 @@ family达到0.65、任何family不低于0.50；当前三种方法都没有达到
 因此 Task1 证明的是“在已见物理族内，FMT feature 可被二分聚类”，不是“一个跨物理
 族的绝对特征空间已经存在”。模板匹配需要后者，困难明显更大。
 
+代码级复核还得到三个容易被“encoder无训练参数”掩盖的事实：
+
+- Task1的canonical pipeline仍会拟合目标dataset自己的StandardScaler、可选PCA和KMeans；
+  目标family标签选择feature/PCA，另外两个目标时间片的标签决定cluster 0/1语义。
+- half-cylinder正式配置使用`fmt_all+kin4/PCA8`，Boeing使用`kin2/PCA2`；`kin4`
+  在每个cache record内部显式计算`vorticity-vorticity.mean(dim=0)`，不是独立模板描述子。
+- 历史Task1固定`dx=0.5 hmin`、`RK4 dt=0.25 source_dt`及48步积分时间，再抽取32个
+  同步时间序列点。当前2000-scale primitive固定空间弧长并让七条线分别做等弧长重采样，
+  因而不是同一个输入任务。Task1配置曾写`neighbor_weight=0.5`，但canonical cache和结果
+  实际使用1.0；只读重算Re640与归档逐指标一致。
+
 ## 3. 已经被证据排除的解释
 
 1. **不是正模板抽样太少这一项。** 平衡正负 exact-1NN 的 family-held-out F1 很低；
@@ -84,20 +95,51 @@ domain shift，负类距离就会很大；反过来，涡的几何也可能靠�
 全部2000尺度并融合。增加尺度并不会自动产生多尺度投票；它主要扩大训练与查询分布。
 若 descriptor 不先无量纲化，更多尺度反而扩大跨family分布差。
 
-## 5. 冻结的下一轮检验顺序
+### 4.5 七条等弧长线的相同sample index不是共同物理时间
 
-1. `Verify_EarlyOppositePairKinematics_1.1`：从同步 seed-time 七点速度直接估计
-   curl/strain/divergence/Q，检验“缺少目标相关局部导数”这一原因。
-2. `Verify_RawPCANegativeMetric_1.1`：每个 nested fit 独立用无标签 Raw672 拟合 PCA161，
-   检验“现有 FMT 压缩丢失判别信息”这一原因。
-3. 若两者仍失败，建立 `Verify_DimensionlessDeformationFMT_1.1`：中心轨迹除以实际目标
-   弧长，六条邻线相对中心的形变除以实际 physical dx，再进行独立 FMT；检验单位与
-   尺度 nuisance。该版本必须在读取 Early/Raw-PCA outer 结果前冻结。
-4. 若无量纲化仍失败，使用 query-unlabeled 自适应：在每个新 flow 内拟合二分结构，
-   只用训练库决定两个 cluster 的物理语义。这样保留 Task1 的 flow-adaptation 优点，
-   但 outer label 仍不能参与拟合、选择或 cluster orientation。
-5. 最后才考虑有监督的 physics-anchored metric learning；必须保持完整family留出，
-   不能退回随机拆 seed 来制造高分。
+当前每条pathline分别积分到自身目标空间弧长，再分别等弧长重采样。邻线和中心线的第`j`
+个点一般对应不同物理时间，但FMT仍逐index相减；cache又只保存中心线的32个时间，无法从现有
+Raw672恢复七线同步的flow-map deformation。这个问题对长弧尤其明显。Seed-time七点velocity
+sidecar在`t=0`同步，因此Early的`+0.101055`增益同时支持“同步局部导数很重要”；它不能证明
+异步的完整pathline-history表示正确。
+
+### 4.6 最新class-conditional分支改变了问题，却没有形成有效类别分数
+
+该分支计算每个family/class内部的kNN upper-tail conformity，再取
+`0.5*(1+q_positive-q_negative)`；它既不是最近正负模板类别，也不是后验概率。对两类都典型或
+都异常的query都可能接近0.5。认证half-cylinder首折F1=`0.404462`后已按规则停止；Boeing仅作
+停止后诊断，F1=`0.241293`。它不是当前最佳方法，不能用来代表整个模板思路。当前完成五折的
+最佳结果仍是EarlyOppositePair的F1=`0.639163`。
+
+### 4.7 IVD p95不等于query中心或valid rows固定5%正类
+
+之前把whole-volume体素上定义的IVD p95直接解释成“每个64,000中心query组应预测top 5%”。
+这是错误的：内部40³中心网格、至少一个block有效的中心以及center prediction回填后的valid rows
+是三个不同population，任何一个都不保证正类比例恰为5%。固定预测数会在排序正确时仍人为限制
+precision或recall。当前结论改为：在outer label不可见的前提下，预冻结
+`0.025/0.04/0.05/0.06/0.075/0.10`并只由inner physical families选择；成功指标与候选选择
+都使用精确parent-valid rows，unique-center指标只作secondary。原top-5%结果仍是历史父版本的
+有效定义，但不能再作为p95必然推出的先验。
+
+## 5. 当前冻结的下一轮检验
+
+Early、Raw-PCA和初版Dimensionless已经运行：Early五折F1=`0.639163`；Raw-PCA首折
+F1=`0.469416`后停止；Dimensionless在任何metric前发现absolute-float32输入几何与冻结合同
+不兼容，57,446个失败后来全部被量化误差解释。因此当前优先级已更新为：
+
+1. `Verify_SourceCenteredPairedScaleTemplate_1.1`：对全部assigned seed rows按
+   `source×block×dx`无标签估计mean curl，把Early的raw `||curl||`替换成
+   `||curl-mean(curl)||`；然后在同一个40³中心上融合legacy/expanded两条尺度分数。融合
+   使用`0/0.25/0.5/0.75/1`完整对称权重，决策率使用上述6值网格，两者都只能由inner
+   families选择，不能预设legacy更可靠或读取outer prevalence。
+2. 同一版本冻结min-`dx`和逐`dx` midrank双尺度平均两个direct top-5%诊断。若direct高而
+   模板分数低，表示已经足够、瓶颈在高维FMT距离或negative-only anomaly语义；若direct也低，
+   才说明seed-time局部导数的分辨率不足。
+3. 若source-centered仍失败，下一项应重新积分一个小型、七线共同物理时间的deformation
+   cache，并做`邻居固定方向/排序池化 × seed/full-history梯度`的2×2分解；不能从现有Raw672
+   冒充同步kinematic history。
+4. 之后才比较class-balanced正负距离margin、目标flow无标签KMeans或有监督physics-anchored
+   metric learning；全部必须保持完整family留出，不能退回随机拆seed制造高分。
 
 直接从 velocity 重新计算完整 IVD 并取 p95 可以作为采样/插值的诊断上界，但它与标签
 定义近乎同义，不能冒充模板匹配改进或用于宣称本项目达到目标。

@@ -1,0 +1,390 @@
+experiment: Verify_SourceCenteredPairedScaleTemplate_1.1
+category: component_verification
+status: frozen_before_reading_any_source_centered_real_result
+frozen_date: 2026-09-01
+
+scientific_question: >-
+  Does the missing source-level mean-vorticity subtraction, followed by
+  center-wise fusion of the legacy and expanded scale blocks, explain the
+  remaining gap between the authenticated EarlyOppositePair template method
+  and a five-family macro F1 of 0.70?
+
+direct_parent:
+  experiment: Verify_EarlyOppositePairKinematics_1.1
+  config_path: config/Verify_EarlyOppositePairKinematics_1.1.yaml
+  config_sha256: e6bac4568025f42cf0a9effd78620e5ab4ba5653429a7023bd91816f29512767
+  producer_commit: fd0412dc134da9dba88d71d665fc2ad160e78e06
+  numerical_commit: 2c3774dca0d81db8edd5645e63576526b9e276f7
+  complete_five_jobs: [51070299, 51070386, 51070392]
+  authenticated_five_family_macro_f1: 0.6391632765825263
+  inherited_parent_prediction_is_control_only: true
+  outer_run_directories:
+    half_cylinder: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/runs/slurm_51070299_0_2c3774dca0d8_outer_half_cylinder
+    delta_wing: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/runs/slurm_51070386_1_2c3774dca0d8_outer_delta_wing
+    f22_raptor: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/runs/slurm_51070386_2_2c3774dca0d8_outer_f22_raptor
+    channel: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/runs/slurm_51070386_3_2c3774dca0d8_outer_channel
+    boeing_747: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/runs/slurm_51070386_4_2c3774dca0d8_outer_boeing_747
+
+input_population:
+  parent_train_cache_manifest:
+    path: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/verification/Verify_LongArcHorizon_1.1/train_coverage/slurm_50998592_260a07ad380d/train_cache_input_manifest.json
+    file_sha256: e57d6b527acffb61da32a993f0c30a0e6435021679c7a3f1541dab8ba877b393
+    exact_rows: 32
+  early_input_manifest:
+    path: /ibex/user/zhanx0o/pathline-template-matching/Verify_EarlyOppositePairKinematics_1.1/preparation/slurm_51068863_fd0412dc134d/kinematic_input_manifest.json
+    file_sha256: 1b9df53a9010c6c3c46345639cfbf1d5ab2fe3a43187c79c7dfa0f7d840b102f
+  train_portable_population:
+    path: /ibex/user/zhanx0o/pathline-template-matching/mainExp_TemplateMatching_3.1_development/portable_windows/train_population_COMPLETE.json
+    file_sha256: 489d303b4430be7eded4fe39ab87107c778e1f7db2579cb9e3bb1fdfce209341
+    exact_windows: 32
+  allowed_datasets:
+    - cylinder3d
+    - halfcylinderRe640
+    - halfcylinderRe6400
+    - deltaWing_resampled
+    - deltaWing_LBM
+    - f22raptor
+    - channel
+    - boeing747
+  forbidden_datasets: [tangaroa, smokeBuoyancy]
+  source_ordinals: [0, 1, 2, 3]
+  assigned_rows_per_dataset_source: 128000
+  unique_centers_per_dataset_source: 64000
+  assignments_per_center: 2
+  complete_future_horizon_frames: 48
+
+assigned_row_source_centering:
+  primitive_order: [center, x_plus, x_minus, y_plus, y_minus, z_plus, z_minus]
+  sampling_time: portable_velocity_frame_zero
+  velocity_interpolation: exact_production_quadrilinear_interpolator
+  gradient_compute_dtype: float64
+  velocity_storage_dtype: float32
+  feature_storage_dtype: float32
+  gradient_layout: velocity_component_rows_spatial_derivative_columns
+  spatial_derivatives:
+    x: (velocity_x_plus_minus_velocity_x_minus)/(2*physical_dx)
+    y: (velocity_y_plus_minus_velocity_y_minus)/(2*physical_dx)
+    z: (velocity_z_plus_minus_velocity_z_minus)/(2*physical_dx)
+  curl_order:
+    - G_2_1_minus_G_1_2
+    - G_0_2_minus_G_2_0
+    - G_1_0_minus_G_0_1
+  mean_group_fields: [dataset, source_ordinal, scale_block, dx_level]
+  scale_blocks:
+    legacy_2_1: [0, 999]
+    expanded_3_1: [1000, 1999]
+  dx_levels_per_block: 10
+  ds_levels_per_dx: 10
+  arc_levels_per_dx_ds: 10
+  assigned_centers_per_exact_scale: 64
+  required_rows_per_mean_group: 6400
+  mean_population: all_assigned_rows_including_pathline_invalid_rows
+  mean_formula: arithmetic_mean_of_three_component_curl
+  validity_or_reference_filter_for_mean: forbidden
+  centered_feature_order:
+    - l2_norm_of_curl_minus_group_mean_curl
+    - frobenius_norm_of_strain
+    - signed_divergence
+    - signed_Q_using_centered_curl
+  signed_Q_formula: 0.25*centered_curl_norm_squared-0.5*strain_norm_squared
+  exact_forbidden_parent_members_during_sidecar_build:
+    - valid_labels
+    - reference_labels_all
+    - ivd_values_all
+    - ivd_volume
+    - valid_mask
+    - metadata_json
+    - fmt_features
+    - raw_features
+  allowed_parent_members_during_sidecar_build:
+    - seeds_xyz
+    - scale_assignment
+    - valid_assigned_row_index
+    - valid_center_seed_index
+    - valid_scale_block_index
+    - valid_scale_id
+  whole_volume_vorticity_or_ivd_mean_access: forbidden
+  interpretation: >-
+    The mean is an unlabeled estimate from the assigned interior center grid,
+    not the whole-volume mean used to construct the IVD reference.  The full
+    classifier is therefore target-unlabeled and transductive even though the
+    FMT coordinates remain independently encoded per primitive.
+
+sidecar_contract:
+  population: exact_32_parent_train_shards
+  assigned_payload_members:
+    assigned_row_index: {dtype: int64, shape: [128000]}
+    center_seed_index: {dtype: int64, shape: [128000]}
+    scale_block_index: {dtype: int8, shape: [128000]}
+    scale_id: {dtype: int32, shape: [128000]}
+    seed_velocity_xyz: {dtype: float32, shape: [128000, 7, 3]}
+    source_centered_seed4: {dtype: float32, shape: [128000, 4]}
+    group_mean_curl_xyz: {dtype: float64, shape: [20, 3]}
+    physical_dx_by_scale: {dtype: float64, shape: [2000]}
+  valid_projection_members:
+    - valid_assigned_row_index
+    - valid_center_seed_index
+    - valid_scale_block_index
+    - valid_scale_id
+    - source_centered_seed4
+  identity_join: exact_order_preserving_assigned_row_then_parent_valid_projection
+  atomic_publish: true
+  overwrite: forbidden
+  population_manifest_written_last: true
+  every_array_canonical_sha256_required: true
+  fresh_replay_required: true
+  global_label_free_population_may_be_built_before_folds: true
+  preselection_outer_file_identity_access: file_stat_size_and_full_file_sha256_only
+  fold_runner_outer_open_rule: >-
+    No outer sidecar NPZ array or metadata member, including its group means,
+    may be opened or copied into a fold-local binding artifact until final
+    nonouter fit artifacts and the selected candidate are closed and
+    authenticated.  Byte-level file stat, size, and whole-file SHA-256 checks
+    are allowed before selection only to authenticate the sealed population.
+
+representations:
+  order:
+    - fmt161_plus_source_centered_seed4
+    - real_neighbor36_plus_source_centered_seed4
+    - chirality_all35_plus_source_centered_seed4
+  fmt161_plus_source_centered_seed4:
+    parent_width: 161
+    centered_width: 4
+    width: 165
+  real_neighbor36_plus_source_centered_seed4:
+    parent_indices: six_neighbor_lines_times_local_indices_0_3_6_9_12_15
+    parent_width: 36
+    centered_width: 4
+    width: 40
+  chirality_all35_plus_source_centered_seed4:
+    parent_indices: seven_lines_times_local_indices_18_through_22
+    parent_width: 35
+    centered_width: 4
+    width: 39
+  concatenation_order: parent_FMT_coordinates_then_source_centered_seed4
+  raw_block_weighting: none
+  original_uncentered_seed4_simultaneously_present: forbidden
+  kinematics_only_candidate: forbidden
+  full_volume_ivd_feature: forbidden
+  logarithm: forbidden
+  principal_component_analysis: forbidden
+  learned_metric: forbidden
+  class_conditional_positive_template_score: forbidden
+
+families:
+  half_cylinder: [cylinder3d, halfcylinderRe640, halfcylinderRe6400]
+  delta_wing: [deltaWing_resampled, deltaWing_LBM]
+  f22_raptor: [f22raptor]
+  channel: [channel]
+  boeing_747: [boeing747]
+
+nested_split:
+  outer_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  inner_order: [half_cylinder, delta_wing, f22_raptor, channel, boeing_747]
+  outer_unit: complete_physical_family
+  inner_unit: complete_physical_family
+  source_window_unit: complete_source_plus_48_future_frame_horizon
+  random_spatial_seed_split: forbidden
+  outer_labels_available_to_selection: false
+  selection_aggregation:
+    stage_1: equal_dataset_source_parent_valid_row_groups_within_inner_family
+    stage_2: equal_inner_family_macro
+  selection_metric_population: all_parent_valid_rows_after_exact_center_projection
+  unique_center_metrics_are_secondary_only: true
+
+negative_template_score:
+  library_class: natural_negative_only
+  library_population: every_valid_fit_family_negative_row
+  balancing: none
+  subsampling: none
+  scaler: fit_negative_exact_per_scale_mean_and_shrunk_within_scale_population_std
+  scaler_dtype: float64
+  distance_dtype: float32
+  local_variance_ddof: 0
+  shrinkage_lambda: 64
+  std_floor_exclusive: 1.0e-12
+  no_local_row_policy: unsupported
+  retrieval_distance: exact_euclidean_after_fit_negative_exact_scale_diagonal_standardization
+  retrieval_conditioning: exact_numeric_scale_id
+  k_values: [1, 5, 15, 31]
+  query_chunk_size: 1024
+  library_chunk_size: 8192
+  score_before_calibration: kth_nearest_negative_distance
+  calibration: fit_negative_exact_scale_leave_one_out_upper_tail_anomaly
+  calibration_shrinkage_lambda: 64
+  cross_scale_retrieval: forbidden
+  spatial_transform:
+    grid_shape_zyx: [40, 40, 40]
+    input: fit_negative_tail_anomaly
+    gaussian_sigmas_grid_indices: [0.0, 0.5, 1.0, 1.5, 2.0]
+    gaussian_truncate: 3.0
+    missing_support: mask_normalized_imputation
+    cross_dataset_or_source_smoothing: forbidden
+
+paired_center_fusion:
+  join_fields: [dataset, source_ordinal, center_seed_index]
+  required_block_identities: [legacy_2_1, expanded_3_1]
+  reference_access_during_join: forbidden
+  both_eligible_formula: weight*legacy_score+(1-weight)*expanded_score
+  legacy_only_formula: legacy_score
+  expanded_only_formula: expanded_score
+  neither_eligible_formula: 0.0
+  eligible_if: (calibration_supported_or_spatially_imputed)_and_strictly_positive_score
+  weights: [0.00, 0.25, 0.50, 0.75, 1.00]
+  note_for_weight_one: expanded_only_centers_still_use_expanded_score
+  prediction_unit: unique_center
+  prediction_population_per_dataset_source: all_64000_centers
+  decision_rule: fixed_top_fraction
+  top_fraction_values: [0.025, 0.04, 0.05, 0.06, 0.075, 0.10]
+  top_fraction_selection: inner_physical_families_only
+  target_positive_count: ceil_selected_fraction_times_64000_capped_by_eligible_centers
+  tie_break: descending_score_then_ascending_center_seed_index
+  row_projection: copy_one_center_prediction_to_each_corresponding_valid_block_row
+  primary_metric_population: all_parent_valid_rows_after_exact_center_projection
+  unique_center_metric_population: centers_with_at_least_one_valid_block
+  neither_valid_centers_in_primary_classification_metrics: false
+
+candidates:
+  representations: 3
+  k_values: 4
+  spatial_sigmas: 5
+  paired_weights: 5
+  decision_values: 6
+  exact_count: 1800
+  selection_primary: highest_equal_inner_family_macro_f1
+  tie_break_order:
+    - highest_equal_inner_family_macro_average_precision
+    - highest_equal_inner_family_macro_balanced_accuracy
+    - highest_equal_inner_family_macro_precision
+    - highest_equal_inner_family_macro_recall
+    - lexicographically_smallest_candidate_id
+  outer_result_selection: forbidden
+
+reported_arms:
+  parent_current_replay:
+    definition: authenticated_Verify_EarlyOppositePairKinematics_1.1_predictions
+    status: control_only
+  source_centered_separate_blocks:
+    definition: selected_representation_k_sigma_applied_to_each_block_before_pairing
+    decision_population: all_64000_centers_per_dataset_source_block_with_invalid_or_unsupported_rows_negative
+    top_fraction: selected_inner_family_top_fraction
+    status: mechanism_diagnostic
+  source_centered_paired_centers:
+    definition: selected_1800_candidate_after_center_pairing
+    status: primary
+  direct_source_centered_min_dx_top5:
+    definition: >-
+      For each unique center choose the assigned-row centered-curl norm with
+      the smaller physical dx, then select the highest fixed five percent.
+    uses_negative_template_library: false
+    uses_reference_or_label: false
+    status: direct_kinematic_diagnostic_not_template_matching_success
+  direct_source_centered_dx_rank_mean_top5:
+    definition: >-
+      Convert centered-curl norm to an empirical midrank independently within
+      each source block and dx-level group of 6400 assigned rows, average the
+      legacy and expanded ranks for each center, then select the highest fixed
+      five percent.
+    uses_negative_template_library: false
+    uses_reference_or_label: false
+    status: scale_robust_direct_kinematic_diagnostic_not_template_matching_success
+
+outer_label_gate:
+  pre_outer_required_artifacts:
+    - final_per_scale_negative_scaler
+    - final_negative_library
+    - final_tail_calibrator
+    - selected_candidate
+  artifacts_are_atomic_hash_bound_and_freshly_replayed: true
+  outer_unlabeled_access_after_final_fit: allowed
+  outer_source_mean_written_and_authenticated_before_prediction: true
+  outer_prediction_written_and_freshly_replayed_before_reference_access: true
+  reference_members_after_prediction_only:
+    - valid_labels
+    - reference_labels_all
+  label_or_ivd_access_in_source_mean_or_prediction_code_path: forbidden
+  any_outer_metric_visible_freezes_version: true
+
+metrics:
+  classification:
+    - accuracy
+    - average_precision
+    - f1
+    - balanced_accuracy
+    - auroc
+    - precision
+    - recall
+    - true_positive
+    - false_positive
+    - true_negative
+    - false_negative
+  availability:
+    - unique_center_combined_coverage
+    - both_valid_count
+    - legacy_only_count
+    - expanded_only_count
+    - neither_valid_count
+    - retrieval_support_fraction
+    - calibration_support_fraction
+    - spatial_imputed_fraction
+  reporting_levels:
+    - dataset_source_unique_center
+    - dataset_source_valid_row
+    - dataset
+    - physical_family
+    - five_family_equal_macro
+    - legacy_block
+    - expanded_block
+  uncertainty:
+    method: paired_dataset_source_bootstrap
+    replicates: 5000
+    seed: 17068
+    target: >-
+      primary_valid_row_projection_f1_minus_parent_current_f1_on_the_exact_same
+      valid_row_identities
+
+success_rule:
+  classification_metric_population: all_parent_valid_rows_after_exact_center_projection
+  complete_unique_outer_families_required: 5
+  five_family_macro_f1_minimum: 0.70
+  stretch_five_family_macro_f1: 0.75
+  families_at_or_above_f1_0_65_minimum: 4
+  minimum_single_family_f1: 0.50
+  five_family_macro_average_precision_minimum: 0.60
+  five_family_macro_balanced_accuracy_minimum: 0.70
+  five_family_macro_precision_minimum: 0.60
+  five_family_macro_recall_minimum: 0.60
+  unique_center_combined_coverage_minimum: 0.90
+  paired_bootstrap_f1_difference_lower_95_percent_bound_strictly_above: 0.0
+  any_single_fold_success_claim: forbidden
+  changes_after_outer_results: forbidden
+
+authenticated_stop_rule:
+  - any_completed_outer_family_f1_strictly_below_0_50
+  - two_completed_outer_family_f1_values_strictly_below_0_65
+  - optimistic_remaining_families_cannot_satisfy_any_complete_five_threshold
+
+interpretation_rules:
+  - A gain from source-centered curl must be reported as a direct local kinematic contribution, not as evidence that independent FMT geometry learned vortex structure.
+  - The source mean uses target-flow unlabeled velocities, so the complete classifier is transductive.
+  - This version remains a negative-template anomaly matcher; the decision fraction is selected only on inner physical families from the frozen grid and never from outer prevalence or labels.
+  - Legacy and expanded coverage and metrics must both be reported; neither block may be deleted after results.
+  - Either direct source-centered diagnostic may identify representation headroom, but neither can satisfy the template-method success rule.
+  - Failure, partial, timeout, cancelled, superseded, and negative outputs must be retained.
+
+ibex:
+  host: glogin.ibex.kaust.edu.sa
+  account: pi-hadwigm
+  partition: batch
+  constraint: rome
+  gpu: none
+  sidecar_array_concurrency: 2
+  execution_from_clean_pushed_commit_only: true
+
+output:
+  root: /ibex/user/zhanx0o/pathline-template-matching/Verify_SourceCenteredPairedScaleTemplate_1.1
+  overwrite: forbidden
+  input_freeze_directory_pattern: preparation/slurm_JOBID_COMMIT12
+  sidecar_root: source_centered_cache/train
+  fold_directory_pattern: runs/slurm_JOBID_ARRAYTASK_COMMIT12_outer_FAMILY
+  aggregate_directory_pattern: aggregate/slurm_JOBID_COMMIT12
