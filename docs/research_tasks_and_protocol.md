@@ -563,11 +563,13 @@ billing account `deepvortex` 不属于当前用户关联而被拒绝，未分配
 数据；当前唯一关联为 `pi-hadwigm||normal`，所以在真实读取前仅修正五个 wrapper 与 runtime account
 认证，artifact 将记录实际 `pi-hadwigm`，Conda 环境仍为 `deepvortex`。config SHA-256 继续是
 `814f95d2…`。最终 core/runner/aggregator/resource-smoke SHA-256 依次为 `9c009376…`、`e5063887…`、
-`49c80993…`、`131dac5a…`；账户覆盖后的 42/42 项定向测试、原 81/81 项本版本定向测试、
-427/427 项统一测试和六个 Bash wrapper 语法检查通过。实现现在明确排除没有 negative scaler
+`49c80993…`、`97f02e58…`。首次实际启动job `51143571` 在427/427作业内测试后、任何数据读取前，
+暴露了真实`scontrol -o`末尾空格和逻辑`cpu`请求实际解析为`batch`；当前只规范化终端空白、继续拒绝
+嵌入换行，并从权威记录精确认证`batch/pi-hadwigm/rome`及环境变量一致性。调度覆盖后的42/42项
+定向测试、原81/81项本版本定向测试、427/427项统一测试通过。实现现在明确排除没有 negative scaler
 支持的两类 rows、允许自然缺类 family 由 joint-support 门处理、严格重构 artifacts 与发布 CSV/
 certificate/report/manifest/completion，并只从 `scontrol Features=rome` 认证节点约束。Resource
 smoke 的三-family/12-shard population 不是完整 final fit 的资源上界，这一证据边界必须保留。
-本段仍不构成真实性能证据；`cfa369dd…` 的科学 config/core/runner/aggregator identity 保持有效，只有
-execution/deployment revision 因 pre-job account rejection 被基础设施修复提交
-`0e9fe3d4fcfcda9b9e438ad5ba3a4f7ad0c9b2d9` 取代。首次真实读取只能使用该 detached checkout。
+本段仍不构成真实性能证据；`cfa369dd…` 的科学 config/core/runner/aggregator identity 保持有效，
+`0e9fe3d4…` execution revision 因pre-data真实调度格式差异被下一基础设施提交替代。首次真实读取只能
+使用随后纯文档提交精确登记的新 detached checkout。

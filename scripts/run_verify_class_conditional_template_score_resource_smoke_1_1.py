@@ -88,6 +88,8 @@ RESOURCE_SMOKE_TIME_LIMIT = "04:00:00"
 SLURM_MEMORY_PER_NODE_MIB = 128 * 1024
 FROZEN_CONFIG_SLURM_ACCOUNT = "deepvortex"
 RUNTIME_SLURM_ACCOUNT = "pi-hadwigm"
+FROZEN_CONFIG_SLURM_PARTITION = "cpu"
+RUNTIME_SLURM_PARTITION = "batch"
 
 PARENT_ARCHIVE_MEMBERS = (
     "fmt_features",
@@ -449,7 +451,7 @@ def _validate_resource_smoke_contract(plan: runner.Plan) -> None:
         "resource smoke numerical path drifted",
     )
     _require(
-        slurm.get("partition") == "cpu"
+        slurm.get("partition") == FROZEN_CONFIG_SLURM_PARTITION
         and slurm.get("constraint") == "rome"
         and slurm.get("account") == FROZEN_CONFIG_SLURM_ACCOUNT
         and int(slurm.get("nodes", -1)) == 1
@@ -1468,16 +1470,16 @@ def _validated_scontrol_allocation(
     """Parse authoritative ``scontrol show job -o`` allocation fields."""
 
     _require(
-        isinstance(record, str)
-        and bool(record)
-        and record == record.strip()
-        and "\n" not in record
-        and "\r" not in record,
-        "scontrol job record must be one nonempty canonical line",
+        isinstance(record, str) and "\n" not in record and "\r" not in record,
+        "scontrol job record must be one line",
     )
+    record = record.strip()
+    _require(bool(record), "scontrol job record must be nonempty after trimming")
     values: dict[str, str] = {}
     for name in (
         "JobId",
+        "Partition",
+        "Account",
         "NumNodes",
         "TimeLimit",
         "Features",
@@ -1494,6 +1496,8 @@ def _validated_scontrol_allocation(
         set(
             (
                 "JobId",
+                "Partition",
+                "Account",
                 "NumNodes",
                 "TimeLimit",
                 "Features",
@@ -1507,6 +1511,14 @@ def _validated_scontrol_allocation(
     _require(
         values["JobId"] == expected_job_id,
         "scontrol JobId differs from SLURM_JOB_ID",
+    )
+    _require(
+        values["Partition"] == RUNTIME_SLURM_PARTITION,
+        f"authoritative scontrol Partition must be exactly {RUNTIME_SLURM_PARTITION}",
+    )
+    _require(
+        values["Account"] == RUNTIME_SLURM_ACCOUNT,
+        f"authoritative scontrol Account must be exactly {RUNTIME_SLURM_ACCOUNT}",
     )
     _require(
         values["NumNodes"] == "1", "Slurm allocation must contain exactly one node"
@@ -1534,6 +1546,8 @@ def _validated_scontrol_allocation(
     return {
         "source": "scontrol_show_job_one_line",
         "job_id": values["JobId"],
+        "partition": values["Partition"],
+        "account": values["Account"],
         "num_nodes": 1,
         "time_limit": values["TimeLimit"],
         "features": values["Features"],
@@ -1577,6 +1591,14 @@ def _runtime_environment_audit() -> dict[str, Any]:
             value is None or value == str(allocation["num_nodes"]),
             f"{name} differs from the authoritative scontrol node count",
         )
+    _require(
+        os.environ.get("SLURM_JOB_PARTITION", "") == allocation["partition"],
+        "SLURM_JOB_PARTITION differs from authoritative scontrol Partition",
+    )
+    _require(
+        os.environ.get("SLURM_JOB_ACCOUNT", "") == allocation["account"],
+        "SLURM_JOB_ACCOUNT differs from authoritative scontrol Account",
+    )
     for name in ("SLURM_JOB_GPUS", "SLURM_GPUS", "SLURM_GPUS_ON_NODE"):
         value = os.environ.get(name)
         _require(
@@ -1596,8 +1618,8 @@ def _runtime_environment_audit() -> dict[str, Any]:
         "python": sys.version.split()[0],
         "slurm_job_id": job_id,
         "slurm_cpus_per_task": int(cpus),
-        "slurm_job_partition": os.environ.get("SLURM_JOB_PARTITION", ""),
-        "slurm_job_account": os.environ.get("SLURM_JOB_ACCOUNT", ""),
+        "slurm_job_partition": allocation["partition"],
+        "slurm_job_account": allocation["account"],
         "slurm_scontrol_features": allocation["features"],
         "slurm_memory_per_node": os.environ.get("SLURM_MEM_PER_NODE", ""),
         "slurm_num_nodes": allocation["num_nodes"],
@@ -1655,7 +1677,7 @@ def _validate_frozen_slurm_runtime_payload(runtime: Mapping[str, Any]) -> None:
         and runtime["slurm_job_id"].isdigit()
         and _is_nonbool_int(runtime.get("slurm_cpus_per_task"))
         and runtime.get("slurm_cpus_per_task") == 32
-        and runtime.get("slurm_job_partition") == "cpu"
+        and runtime.get("slurm_job_partition") == RUNTIME_SLURM_PARTITION
         and runtime.get("slurm_job_account") == RUNTIME_SLURM_ACCOUNT
         and constraint_value == "rome"
         and isinstance(memory_value, str)

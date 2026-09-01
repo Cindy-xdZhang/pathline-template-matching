@@ -346,7 +346,7 @@ def _valid_release_payloads() -> tuple[dict[str, object], dict[str, object], str
             "requested_device": "cpu",
             "gpu_requested": False,
             "slurm_cpus_per_task": 32,
-            "slurm_job_partition": "cpu",
+            "slurm_job_partition": "batch",
             "slurm_job_account": "pi-hadwigm",
             "slurm_scontrol_features": "rome",
             "slurm_memory_per_node": str(smoke.SLURM_MEMORY_PER_NODE_MIB),
@@ -649,6 +649,8 @@ def test_frozen_resource_smoke_contract_matches_exact_config() -> None:
     assert slurm["gpu"] == "none"
     assert slurm["account"] == smoke.FROZEN_CONFIG_SLURM_ACCOUNT == "deepvortex"
     assert smoke.RUNTIME_SLURM_ACCOUNT == "pi-hadwigm"
+    assert slurm["partition"] == smoke.FROZEN_CONFIG_SLURM_PARTITION == "cpu"
+    assert smoke.RUNTIME_SLURM_PARTITION == "batch"
     wrapper = smoke.SMOKE_WRAPPER_PATH.read_text(encoding="utf-8")
     assert "#SBATCH --constraint=rome\n" in wrapper
     assert "#SBATCH --partition=cpu\n" in wrapper
@@ -981,7 +983,7 @@ def test_runtime_payload_rejects_partition_account_constraint_and_memory_drift()
         "python": "3.11.0",
         "slurm_job_id": "123456",
         "slurm_cpus_per_task": 32,
-        "slurm_job_partition": "cpu",
+        "slurm_job_partition": "batch",
         "slurm_job_account": "pi-hadwigm",
         "slurm_scontrol_features": "rome",
         "slurm_memory_per_node": str(smoke.SLURM_MEMORY_PER_NODE_MIB),
@@ -1023,6 +1025,8 @@ def test_runtime_uses_scontrol_features_without_optional_constraint_environment(
     allocation = {
         "source": "scontrol_show_job_one_line",
         "job_id": "123456",
+        "partition": "batch",
+        "account": "pi-hadwigm",
         "num_nodes": 1,
         "time_limit": smoke.RESOURCE_SMOKE_TIME_LIMIT,
         "features": "rome",
@@ -1037,7 +1041,7 @@ def test_runtime_uses_scontrol_features_without_optional_constraint_environment(
     environment = {
         "SLURM_JOB_ID": "123456",
         "SLURM_CPUS_PER_TASK": "32",
-        "SLURM_JOB_PARTITION": "cpu",
+        "SLURM_JOB_PARTITION": "batch",
         "SLURM_JOB_ACCOUNT": "pi-hadwigm",
         "SLURM_MEM_PER_NODE": str(smoke.SLURM_MEMORY_PER_NODE_MIB),
     }
@@ -1062,13 +1066,13 @@ def test_runtime_uses_scontrol_features_without_optional_constraint_environment(
     assert captured == result
 
 
-def test_scontrol_parser_rejects_cli_node_gpu_and_time_overrides() -> None:
+def test_scontrol_parser_accepts_terminal_whitespace_and_rejects_resource_overrides() -> None:
     base = (
-        "JobId=123456 JobName=PTMClassSmoke Partition=cpu Account=pi-hadwigm "
+        "JobId=123456 JobName=PTMClassSmoke Partition=batch Account=pi-hadwigm "
         "NumNodes=1 NumCPUs=32 CPUs/Task=32 TimeLimit=04:00:00 Features=rome "
         "ReqTRES=cpu=32,mem=128G,node=1,billing=32 "
         "AllocTRES=cpu=32,mem=128G,node=1,billing=32 "
-        "TresPerNode=(null) Gres=(null) JobState=RUNNING"
+        "TresPerNode=(null) Gres=(null) JobState=RUNNING "
     )
     allocation = smoke._validated_scontrol_allocation(
         base,
@@ -1076,10 +1080,17 @@ def test_scontrol_parser_rejects_cli_node_gpu_and_time_overrides() -> None:
         expected_time_limit=smoke.RESOURCE_SMOKE_TIME_LIMIT,
     )
     assert allocation["num_nodes"] == 1
+    assert allocation["partition"] == "batch"
+    assert allocation["account"] == "pi-hadwigm"
     assert allocation["time_limit"] == "04:00:00"
     assert allocation["features"] == "rome"
     assert allocation["gpu_allocation"] == "none"
+    assert allocation["record_sha256"] == hashlib.sha256(
+        base.strip().encode("utf-8")
+    ).hexdigest()
     mutations = (
+        base.replace("Partition=batch", "Partition=cpu"),
+        base.replace("Account=pi-hadwigm", "Account=other"),
         base.replace("NumNodes=1", "NumNodes=2"),
         base.replace("TimeLimit=04:00:00", "TimeLimit=05:00:00"),
         base.replace("Features=rome ", ""),
@@ -1089,6 +1100,7 @@ def test_scontrol_parser_rejects_cli_node_gpu_and_time_overrides() -> None:
             "AllocTRES=cpu=32,mem=128G,node=1,billing=32",
             "AllocTRES=cpu=32,mem=128G,node=1,gres/gpu=1,billing=32",
         ),
+        base.rstrip() + "\nInjected=1",
     )
     for record in mutations:
         try:

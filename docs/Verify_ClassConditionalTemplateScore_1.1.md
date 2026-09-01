@@ -270,22 +270,30 @@ process 必须立即登记，且只能从已 push 的 clean Git commit 在 Ibex 
 `pi-hadwigm`；config 中的旧 account 只保留为冻结时请求记录。这是调度基础设施覆盖，未改变任何
 数值公式、数据成员、表示、尺度、超参数或指标门。
 
+首次实际启动的 resource smoke `51143571` 在 Rome node 上完成 427/427 作业内测试后，于任何
+`load_plan`、output-directory 创建或 sidecar 打开之前关闭失败。权威 `scontrol -o` 记录显示 Ibex 把
+冻结请求中的逻辑 `Partition=cpu` 解析为实际 `Partition=batch`，并在记录末尾输出一个空格；旧 parser
+错误要求 raw record 已经 `strip()`，所以拒绝了真实格式。当前修复只对单行记录做终端空白规范化，仍
+拒绝嵌入换行，并从规范化后的权威记录精确认证 `Partition=batch`、`Account=pi-hadwigm`、
+`Features=rome`；对应 Slurm 环境变量还必须与权威记录一致。冻结 config 的 `cpu/deepvortex` 字节不变。
+
 | 组件 | 路径 | SHA-256 |
 |---|---|---|
 | class-conditional 数值核心 | `src/pathline_template_matching/class_conditional_template_score.py` | `9c009376f7cea1481f6f47a49362d54d0e78530717f480fda3e8a109f841ef99` |
 | fold runner | `scripts/run_verify_class_conditional_template_score_1_1.py` | `e5063887475029320e66da1f1eb221d7988598e8918d37fbe47ee213e5ff1b48` |
 | fresh-replay aggregator | `scripts/aggregate_verify_class_conditional_template_score_1_1.py` | `49c80993c9704a46f7aa8aa4dd4a0ed7d08599b02edc50d12f3354e036f924cc` |
-| mandatory resource smoke | `scripts/run_verify_class_conditional_template_score_resource_smoke_1_1.py` | `131dac5a7b352c839b86cf70bb16d8fa6b2d8f2c736ab9e7bfcfb0e0211426d9` |
+| mandatory resource smoke | `scripts/run_verify_class_conditional_template_score_resource_smoke_1_1.py` | `97f02e58cf571e81466fc1d14bbc605d89c48e7d79fe0d6af86f0fdb0e780371` |
 
-账户覆盖后的 execution hashes：common/resource/first/auth/remaining/aggregate wrappers 依次为
-`56af842c…d19f`、`64c77ae2…c667`、`d5988c3d…9841`、`22a91d47…24d5`、
+调度覆盖后的 execution hashes：common/resource/first/auth/remaining/aggregate wrappers 依次为
+`18efd685…dc13`、`64c77ae2…c667`、`d5988c3d…9841`、`22a91d47…24d5`、
 `ac7ca7e7…bb61`、`98d524cb…305`；resource-smoke test、Ibex test、统一注册表依次为
-`eca5a960…8d36`、`4fa07ed1…d531`、`1561c78c…9519`。完整值必须由 deployment checkout 重新计算，
+`31b0de79…08c7`、`f4f67ed0…fba3`、`314c8f06…b5e4`。完整值必须由 deployment checkout 重新计算，
 不得只依赖本文缩写。
 
-账户修复后的最终快照通过 42/42 项 resource/Ibex 定向测试；原 81/81 项 ClassConditional 定向测试
-全部包含在随后通过的 427/427 项项目统一测试中。全部相关 Python
-文件编译、六个 Bash wrapper 的 `bash -n` 和 `git diff --check`。其中 aggregator 的 12 项测试包含
+调度修复后的最终快照通过 42/42 项 resource/Ibex 定向测试；原 81/81 项 ClassConditional 定向测试
+全部包含在随后 `259.508 s` 内通过的 427/427 项项目统一测试中。全部相关 Python 文件编译与
+`git diff --check` 通过；六个 Bash wrapper 的当前提交字节必须在 Ibex checkout 再做 `bash -n`。
+其中 aggregator 的 12 项测试包含
 fresh numerical replay、outer-label gate、严格 JSON 类型、canonical CSV、certificate/report/manifest/
 completion 全重构，以及自洽改写发布文件仍必须拒绝的回归。
 
@@ -301,6 +309,7 @@ completion 全重构，以及自洽改写发布文件仍必须拒绝的回归。
 | JSON 的普通相等允许 `true==1`、`31==31.0` | method binding、candidate、evidence、support、summary、release 全部递归比较精确 JSON 类型和字段集合 | 防止数值别名掩盖 schema 漂移 |
 | aggregate 临时文件可能落到共享 `/tmp`；新 clone 没有 Slurm 日志目录 | 每个 job 导出 job-local `TMPDIR/TMP/TEMP` 并验证 Python `tempfile`；Git 跟踪 `slurm_logs/.gitkeep` | 避免大 NPZ 暂存和 `#SBATCH -o/-e` 在脚本正文执行前失败 |
 | 可选的 `SLURM_JOB_CONSTRAINTS` 被当作 Rome 证据 | 只接受 `scontrol show job -o` 的 authoritative `Features=rome`，missing、非 Rome 和 `zen3|rome` 均拒绝 | 普通 batch 环境不保证提供该变量，且 OR 表达式不能证明实际冻结请求 |
+| 要求 raw `scontrol -o` 记录满足 `record==record.strip()`，且假定实际partition字面为`cpu` | 只规范化终端空白；嵌入换行继续拒绝；从权威记录精确认证实际`batch/pi-hadwigm/rome`并与环境变量交叉核对 | job `51143571` 证明Ibex真实记录含终端空格，且逻辑`cpu`请求被解析为实际`batch`；旧门在任何数据读取前误拒绝 |
 | remaining folds 只传递依赖第一折认证 | 每个 remaining task 还直接重新认证 resource-smoke PASS | 防止调度依赖被错误配置时绕过资源门 |
 
 Resource smoke 固定只打开 `f22_raptor/channel/boeing_747` 的 12 个 source shards；它覆盖最宽 165D
@@ -309,8 +318,8 @@ Resource smoke 固定只打开 `f22_raptor/channel/boeing_747` 的 12 个 source
 不能单独证明完整 fold 的峰值资源上界；真实 fold 仍按冻结的 128 GB/12 h 请求并保留实际 MaxRSS/elapsed。
 
 数值基线 commit `cfa369dd35ab1b3dd89232b74ead7f3b3c937b40` 的 config、核心公式、runner 与
-aggregator identity 保持有效；仅含无效 wrapper billing account 的 execution/deployment revision 被
-基础设施修复提交 `0e9fe3d4fcfcda9b9e438ad5ba3a4f7ad0c9b2d9` 取代。本次只改文档的后续
-提交不属于 execution checkout；首次真实读取只能在 Ibex detached checkout 该精确提交，并逐文件
-复核上述 SHA。任何 SHA、
+aggregator identity 保持有效；execution commit `0e9fe3d4fcfcda9b9e438ad5ba3a4f7ad0c9b2d9` 因
+真实 `scontrol` 终端空白与实际partition部署差异，在任何数据读取前由下一基础设施提交替代。该新
+execution commit 必须由后续纯文档提交精确登记；首次真实读取只能在 Ibex detached checkout 新提交
+并逐文件复核上述 SHA。任何 SHA、
 `slurm_logs/.gitkeep` tree identity 或 clean-worktree 门不通过都禁止提交 resource smoke。

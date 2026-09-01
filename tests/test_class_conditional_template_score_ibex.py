@@ -11,7 +11,7 @@ def _text(name: str) -> str:
     return (IBEX / name).read_text(encoding="utf-8")
 
 
-def test_class_conditional_ibex_runtime_resources_apply_the_documented_account_override() -> None:
+def test_class_conditional_ibex_runtime_resources_apply_documented_scheduler_overrides() -> None:
     config_text = (
         ROOT / "config" / "Verify_ClassConditionalTemplateScore_1.1.yaml"
     ).read_text(encoding="utf-8")
@@ -41,7 +41,9 @@ def test_class_conditional_ibex_runtime_resources_apply_the_documented_account_o
         assert "#SBATCH --time=12:00:00" in _text(name)
     common = _text("verify_class_conditional_template_score_1.1_common.sh")
     assert "readonly CLASS_RUNTIME_SLURM_ACCOUNT=pi-hadwigm" in common
+    assert "readonly CLASS_RUNTIME_SLURM_PARTITION=batch" in common
     assert '[[ "${SLURM_JOB_ACCOUNT:-}" == "$CLASS_RUNTIME_SLURM_ACCOUNT" ]]' in common
+    assert '[[ "${SLURM_JOB_PARTITION:-}" == "$CLASS_RUNTIME_SLURM_PARTITION" ]]' in common
     assert "conda activate deepvortex" in common
     assert "conda activate deepvortex" in smoke
     assert 'scontrol show job -o "$job_id"' in common
