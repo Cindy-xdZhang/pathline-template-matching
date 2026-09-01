@@ -318,14 +318,28 @@ def test_split_final_library_and_negative_control_freshly_reconstruct() -> None:
         ),
         "control_weight_float64": np.asarray(0.25, dtype=np.float64),
     }
+    primary_audits = [
+        {
+            "dataset": "synthetic_primary",
+            "parent_members_opened": ["identity", "labels"],
+            "nested": {"counts": [2, 3]},
+        }
+    ]
+    control_audits = [
+        {
+            "dataset": "synthetic_control",
+            "sidecar_members_opened": ["center_seed_index"],
+            "nested": {"counts": [5, 7]},
+        }
+    ]
     with tempfile.TemporaryDirectory() as temporary:
         destination = Path(temporary)
         paths = runner.write_final_artifacts(
             destination,
             model,
             control_arrays,
-            [],
-            [],
+            primary_audits,
+            control_audits,
             plan=plan,
             primary=primary,
             control=control,
@@ -358,6 +372,56 @@ def test_split_final_library_and_negative_control_freshly_reconstruct() -> None:
             runner.query_negative_control(verified, query),
             runner.query_negative_control_arrays(control_arrays, query),
         )
+
+        # Authentication deep-freezes JSON lists/dicts.  Fresh replay must
+        # compare their JSON values, not reject the immutable container types.
+        with (
+            patch.object(
+                runner,
+                "fit_rank_model",
+                return_value=(model, primary_audits),
+            ),
+            patch.object(
+                runner,
+                "fit_negative_control",
+                return_value=(control_arrays, control_audits),
+            ),
+        ):
+            runner._rebuild_and_compare_final_models(
+                plan,
+                [],
+                verified,
+                primary,
+                control,
+            )
+
+        tampered_primary_audits = [
+            {**primary_audits[0], "nested": {"counts": [2, 4]}}
+        ]
+        with (
+            patch.object(
+                runner,
+                "fit_rank_model",
+                return_value=(model, tampered_primary_audits),
+            ),
+            patch.object(
+                runner,
+                "fit_negative_control",
+                return_value=(control_arrays, control_audits),
+            ),
+        ):
+            try:
+                runner._rebuild_and_compare_final_models(
+                    plan,
+                    [],
+                    verified,
+                    primary,
+                    control,
+                )
+            except ValueError as error:
+                assert "fit-source audit fresh replay drifted" in str(error)
+            else:
+                raise AssertionError("tampered fresh audit was accepted")
 
         wrong_control = runner.ControlSpec(0.5, 0.0, 0.95)
         try:

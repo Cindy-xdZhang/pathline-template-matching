@@ -3361,11 +3361,13 @@ def _rebuild_and_compare_final_models(
             f"final negative control fresh replay drifted: {name}",
         )
     _require(
-        library.manifests["model"].get("fit_source_audits")
+        _json_safe(library.manifests["model"].get("fit_source_audits"))
         == _json_safe(primary_audits)
-        and library.manifests["calibration"].get("fit_source_audits")
+        and _json_safe(
+            library.manifests["calibration"].get("fit_source_audits")
+        )
         == _json_safe(primary_audits)
-        and library.manifests["control"].get("fit_source_audits")
+        and _json_safe(library.manifests["control"].get("fit_source_audits"))
         == _json_safe(control_audits),
         "final fit-source audit fresh replay drifted",
     )
