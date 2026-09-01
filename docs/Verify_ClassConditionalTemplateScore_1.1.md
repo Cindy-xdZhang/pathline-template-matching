@@ -340,3 +340,33 @@ Public authenticator 独立复核 PASS SHA-256
 duplicate、support、synthetic-query、forbidden-output与clean-Git门全部通过。该结果只允许释放固定
 half-cylinder首折，不含F1、prediction、selected candidate或任何方法性能结论，也不能上界28-shard
 full-fold资源。
+
+## 2026-09-01 首折认证结果与停止
+
+首次独立认证 job `51144996` 没有产生性能结论：认证器错把生产 runner 密封的
+18-field `selected_candidate.json` 要求为测试中的8-field缩减包。该 job 在打开 outer feature/label
+和创建认证输出目录之前失败；旧首折与失败日志保留，不重新签名。基础设施修复只把
+aggregator 的严格字段集更正为完整18字段，并增加真实writer→aggregator、缺字段、多字段回归测试；
+数值核心、配置、runner、候选、分数和阈值均未改变。修复后 exact execution commit 为
+`58b0bc0b0c7385f1b356eb343a150fcd50dad94f`，aggregator SHA-256 为
+`77a561930ca85e3c1e6193a12e27b0b61bf7cc99be96889070962b8bfaf04e9c`。
+
+该提交的 mandatory resource smoke `51146125` 与 half-cylinder 首折 `51146327` 分别以
+`COMPLETED 0:0` 结束；首折产生严格15文件事务，但在独立 fresh replay 之前仍不读性能。
+独立认证 job `51146768` 重建 shared scaler、family/class templates、leave-one-out calibration、
+support、prediction、outer-label gate 与全部 metric，以 `COMPLETED 0:0`、elapsed `00:02:09`结束。
+认证 completion SHA-256 为
+`f8515858efe531c24471a11f64f014692a5d4774146c8908f07ee4ca49476844`。
+
+| 认证对象 | Accuracy | Average precision | F1 | Balanced accuracy | AUROC | Precision | Recall |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `half_cylinder` complete-family outer fold | 0.935910 | 0.433486 | 0.404462 | 0.675117 | 0.902816 | 0.435297 | 0.380192 |
+
+该折 TP/FP/TN/FN 为 `28,980/36,500/1,198,169/45,717`，selected candidate 为
+`chirality_all35_plus_seed4`, `k=5`, Gaussian `sigma=2.0`, `fixed_top_fraction=0.05`。高 AUROC
+与低F1并不矛盾：AUROC衡量所有可能阈值下的排序，F1衡量冻结 nested-selection 决策的单个操作点。
+
+预注册规则要求任一已观察family F1不得低于`0.50`。因`0.404462 < 0.50`，认证 certificate
+给出`stop_version=true`，该 Verify 版本必须停止，剩余四折不得运行。这不是五折macro结论。
+为满足用户明确要求的Boeing空间图，只能新建`Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1`
+做post-stop exposed diagnostic；它不得被描述为恢复Verify、五折评估或formal confirmation。
