@@ -621,7 +621,7 @@ Boeing描述性诊断，不改变Verify停止结论，也不得与half-cylinder�
 
 ## 30. `Other_ClassConditionalTemplateScoreVisualization_1.1` 的双单折分类三联图
 
-状态：**`ATTEMPT_2_FAILED_AFTER_RENDER_BEFORE_WRAPPER_ACCEPTANCE_JSON_HASH_FIX_PENDING`**。本报告不是新的数值训练或五折实验；它只组合两个分别完成并认证的
+状态：**`ATTEMPT_2_FAILED_AFTER_RENDER_BEFORE_WRAPPER_ACCEPTANCE_JSON_HASH_FIX_IMPLEMENTED`**。本报告不是新的数值训练或五折实验；它只组合两个分别完成并认证的
 single-fold release：Verify停止分支的`half_cylinder` release与独立Other的`boeing_747` release。
 report-time禁止再次执行public fresh replay；reporter只认证冻结completion→manifest→15-file fold→13
 artifact→19-array prediction链，并在打开任何NPZ member前写入完整输入manifest。
@@ -653,3 +653,6 @@ artifact→19-array prediction链，并在打开任何NPZ member前写入完整�
 `visualization_manifest.json`的自哈希在`NaN`写盘规范化为`null`前计算，因而Slurm `FAILED 1:0`；该attempt即使
 存在图与完成标记也不可接受。下一revision只修JSON-safe自哈希顺序并增加真实持久化回归，不改科学config、数值
 输入、prediction、metric、candidate、threshold、support、block、source ordinal、parent scene或renderer。
+最小修复commit `0cf30b605e63e0b2b6866e40eb48bff114583a83`先构造实际落盘JSON-safe对象再计算
+self-hash；真实`NaN→null`持久化回归、CSV空字段回归、16项定向测试及456/456全套测试通过。只有新目录中的
+Ibex job完整通过wrapper和后续本地QA后，状态才能提升。

@@ -1,6 +1,6 @@
 # Other_ClassConditionalTemplateScoreVisualization_1.1：双认证单折分类三联图
 
-状态：**`ATTEMPT_2_FAILED_AFTER_RENDER_BEFORE_WRAPPER_ACCEPTANCE_JSON_HASH_FIX_PENDING`**。尚无通过完整
+状态：**`ATTEMPT_2_FAILED_AFTER_RENDER_BEFORE_WRAPPER_ACCEPTANCE_JSON_HASH_FIX_IMPLEMENTED`**。尚无通过完整
 wrapper认证的结果图或报告指标；第二次尝试虽写出`RUN_COMPLETE.json`，但Slurm终态失败。本实验只生成用户要求的Cylinder3D Re160、Re640、Re6400和Boeing 747当前
 class-conditional template-score分类效果；它不恢复已停止的Verify五折，也不把两个不同实验的单折证据
 伪装成完整五折。
@@ -31,6 +31,11 @@ prediction、候选、阈值、support、block、source ordinal和parent scenes�
 因此落盘内容与声明哈希不一致，Slurm终态为`FAILED 1:0`。即使图件和`RUN_COMPLETE.json`存在，这一attempt也不
 可发布，且未执行本地QA。下一revision只能在计算自哈希前应用同一JSON-safe规范化，并用真实`NaN→null`持久化
 回归锁定；不得改变config、source prediction、逐图metric、candidate、threshold、support、scene或renderer。
+
+该最小修复已在commit `0cf30b605e63e0b2b6866e40eb48bff114583a83`实现：先把完整visualization
+manifest递归转换成实际落盘的JSON-safe对象，再计算自哈希；新增回归同时验证`NaN→null`后磁盘自哈希重算相等，
+以及metric CSV仍写空字段。16项reporter定向测试、wrapper定向测试、Python编译和456/456全套测试均通过；
+production config SHA仍未改变。该测试结果只支持修复revision可以提交新output attempt，不认证任何旧图件。
 
 ## 冻结输入
 
