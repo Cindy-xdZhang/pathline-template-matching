@@ -53,6 +53,38 @@ from test_source_centered_visualization import (  # noqa: E402
 
 
 CONFIG = ROOT / "config" / "Other_SourceCenteredRankLikelihoodTemplateVisualization_1.1.yaml"
+HISTORICAL_SOURCE_FILE_SHA256 = {
+    "config/Verify_SourceCenteredPairedScaleTemplate_1.1.yaml": (
+        "15ac5b0e82b30cbaf952475a7fbb6d19dc070c1121bc9aa8db980d75600260cc"
+    ),
+    "scripts/prepare_verify_source_centered_paired_scale_template_1_1.py": (
+        "b7ac8fcc6810566d71351451114745627203303ae04ea8671eb6e9074c3170eb"
+    ),
+    "src/pathline_template_matching/arc_length_primitives.py": (
+        "ee8a75527d07c9b5059e1c489321fc3c53132ba7fcc280bada9416727a62ec0b"
+    ),
+    "src/pathline_template_matching/early_opposite_pair_kinematics.py": (
+        "a6c449b508319b96c6260d3bb2e8cb9b7098bb7ddf6218e574cc2dda152b0b5f"
+    ),
+    "src/pathline_template_matching/netcdf_io.py": (
+        "8387757fd21f1b79bc5ac1d8071c55f57790f2b3f1e7468afde2bfa267f10daa"
+    ),
+    "src/pathline_template_matching/portable_flow.py": (
+        "527ee3f09d7137580ec6b83db2b197fa5c2979925ccb6d3c40ca494a7fb683d9"
+    ),
+    "src/pathline_template_matching/seed_time_kinematic_sidecar.py": (
+        "829fe42fce915da833649121073f13a911836c97a904c73888122f24d7dfa628"
+    ),
+    "src/pathline_template_matching/source_centered_seed_time_kinematics.py": (
+        "246fecd06e733aacf51ccffe97d32df5c309415c4ccdfb504a6b8ba1085d31f0"
+    ),
+    "src/pathline_template_matching/source_centered_sidecar.py": (
+        "2a4a078ccdeeed7bd5b822e23a138ffe277faaad92d5a616d8c2fa146632e975"
+    ),
+    "src/pathline_template_matching/vector_field.py": (
+        "2934f17e645132e072722766848df4470ac30f37364885d3d57ab139977db27d"
+    ),
+}
 
 
 def _raises(function, *args, contains: str, **kwargs) -> None:
@@ -69,6 +101,51 @@ def _write_self_hashed(path: Path, payload: dict) -> str:
     value["content_sha256"] = canonical_json_sha256(value)
     path.write_text(json.dumps(value, indent=2, sort_keys=True, allow_nan=False), encoding="utf-8")
     return sha256_file(path)
+
+
+def _historical_source_evidence(plan: runner.Plan) -> dict:
+    return {
+        "producer_experiment": runner.SOURCE_EXPERIMENT,
+        "producer_git_commit": runner.SOURCE_NUMERICAL_COMMIT,
+        "producer_config_sha256": runner.SOURCE_CONFIG_SHA256,
+        "input_manifest": {
+            "path": str(plan.source_input_manifest_path),
+            "file_sha256": runner.SOURCE_INPUT_MANIFEST_SHA256,
+            "content_sha256": reporter.SOURCE_INPUT_MANIFEST_CONTENT_SHA256,
+        },
+        "sidecar_population": {
+            "root": str(plan.source_sidecar_root),
+            "manifest_path": str(plan.source_population_manifest_path),
+            "manifest_file_sha256": runner.SOURCE_POPULATION_MANIFEST_SHA256,
+            "manifest_content_sha256": (
+                reporter.SOURCE_POPULATION_MANIFEST_CONTENT_SHA256
+            ),
+            "row_count": reporter.SOURCE_SIDECAR_COUNT,
+            "rows_content_sha256": reporter.SOURCE_POPULATION_ROWS_CONTENT_SHA256,
+            "assigned_row_count_total": (
+                reporter.SOURCE_SIDECAR_COUNT * runner.ASSIGNED_ROW_COUNT
+            ),
+            "valid_projection_row_count_total": (
+                reporter.SOURCE_VALID_PROJECTION_ROW_COUNT
+            ),
+        },
+        "historical_source_file_sha256": dict(HISTORICAL_SOURCE_FILE_SHA256),
+        "historical_source_file_sha256_content_sha256": (
+            reporter.SOURCE_FILE_SHA256_CONTENT_SHA256
+        ),
+        "sidecar_npz_members_opened": [],
+        "labels_or_references_opened": [],
+        "authentication_mode": "historical_git_blob_and_complete_file_hash_replay",
+    }
+
+
+def _release_source_evidence(plan: runner.Plan) -> dict:
+    return {
+        "config_sha256": runner.EXPECTED_CONFIG_SHA256,
+        "parent_binding_file_sha256": "a" * 64,
+        "binding_completion_file_sha256": "b" * 64,
+        "historical_source_centered_evidence": _historical_source_evidence(plan),
+    }
 
 
 def _rank_unique() -> dict[str, np.ndarray]:
@@ -317,12 +394,7 @@ def _synthetic_fold(root: Path, family: str, commit: str, plan: runner.Plan) -> 
         }:
             continue
         (root / name).write_bytes(f"opaque:{family}:{name}".encode("utf-8"))
-    release_evidence = {
-        "config_sha256": runner.EXPECTED_CONFIG_SHA256,
-        "parent_binding_file_sha256": "a" * 64,
-        "binding_completion_file_sha256": "b" * 64,
-        "historical_source_centered_evidence": runner._json_safe(plan.source_evidence),
-    }
+    release_evidence = _release_source_evidence(plan)
     fit_families = [item for item in runner.FAMILY_ORDER if item != family]
     fold_source = {
         "parent_binding": {"path": "/opaque/binding.json", "file_sha256": "a" * 64, "content_sha256": "d" * 64},
@@ -372,12 +444,7 @@ def _synthetic_fold(root: Path, family: str, commit: str, plan: runner.Plan) -> 
 def _synthetic_release(root: Path, folds: dict[str, tuple[Path, str, str]], commit: str, plan: runner.Plan) -> None:
     root.mkdir()
     (root / "outer_family_summary.csv").write_text("outer_family\n" + "\n".join(runner.FAMILY_ORDER) + "\n", encoding="utf-8")
-    evidence = {
-        "config_sha256": runner.EXPECTED_CONFIG_SHA256,
-        "parent_binding_file_sha256": "a" * 64,
-        "binding_completion_file_sha256": "b" * 64,
-        "historical_source_centered_evidence": runner._json_safe(plan.source_evidence),
-    }
+    evidence = _release_source_evidence(plan)
     rows = [
         {
             "outer_family": family,
@@ -430,6 +497,46 @@ def _synthetic_release(root: Path, folds: dict[str, tuple[Path, str, str]], comm
         "report_file_sha256": report_sha,
     }
     _write_self_hashed(root / "AGGREGATE_COMPLETE.json", completion)
+
+
+def test_historical_source_envelope_is_strict_without_sidecar_or_npz_access() -> None:
+    plan = runner.load_plan(
+        ROOT / "config" / "Verify_SourceCenteredRankLikelihoodTemplate_1.1.yaml"
+    )
+    evidence = _release_source_evidence(plan)
+    assert isinstance(evidence["historical_source_centered_evidence"], dict)
+    assert len(evidence["historical_source_centered_evidence"]) == 10
+    forbidden = AssertionError("sidecar or NPZ access is forbidden")
+    with (
+        patch("numpy.load", side_effect=forbidden),
+        patch.object(reporter, "sha256_file", side_effect=forbidden),
+        patch.object(
+            runner,
+            "authenticate_historical_sidecar_population",
+            side_effect=forbidden,
+        ),
+    ):
+        reporter._authenticate_release_source_evidence(evidence, plan=plan)
+
+    tampered = json.loads(json.dumps(evidence))
+    tampered["historical_source_centered_evidence"]["sidecar_population"][
+        "valid_projection_row_count_total"
+    ] -= 1
+    with (
+        patch("numpy.load", side_effect=forbidden),
+        patch.object(reporter, "sha256_file", side_effect=forbidden),
+        patch.object(
+            runner,
+            "authenticate_historical_sidecar_population",
+            side_effect=forbidden,
+        ),
+    ):
+        _raises(
+            reporter._authenticate_release_source_evidence,
+            tampered,
+            plan=plan,
+            contains="population identity",
+        )
 
 
 def test_complete_five_and_two_required_folds_authenticate_opaque_all_18_files() -> None:
@@ -489,6 +596,7 @@ def test_reporter_orders_opaque_input_manifest_before_any_npz_or_metric_read() -
     assert manifest < prediction < metrics < parent
     assert '"fold_sidecar_or_label_member_access": False' in source
     assert '"all_18_files_authenticated_per_required_fold": True' in source
+    assert "authenticate_historical_sidecar_population" not in source
 
 
 def test_panel_b_and_machine_qa_never_mislabel_primary_as_fmt() -> None:
@@ -530,7 +638,7 @@ def _run_standalone() -> None:
         and callable(value)
         and not inspect.signature(value).parameters
     ]
-    assert len(tests) == 9
+    assert len(tests) == 10
     for function in tests:
         function()
 

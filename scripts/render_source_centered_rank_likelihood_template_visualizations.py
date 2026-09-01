@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import csv
 from dataclasses import dataclass
+import hashlib
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -158,6 +159,32 @@ METHOD_INTERPRETATION_RELATIVE_PATHS = (
     "src/pathline_template_matching/source_centered_sidecar.py",
     "src/pathline_template_matching/source_centered_rank_likelihood.py",
 )
+HISTORICAL_SOURCE_RELATIVE_PATHS = (
+    "config/Verify_SourceCenteredPairedScaleTemplate_1.1.yaml",
+    "scripts/prepare_verify_source_centered_paired_scale_template_1_1.py",
+    "src/pathline_template_matching/arc_length_primitives.py",
+    "src/pathline_template_matching/early_opposite_pair_kinematics.py",
+    "src/pathline_template_matching/netcdf_io.py",
+    "src/pathline_template_matching/portable_flow.py",
+    "src/pathline_template_matching/seed_time_kinematic_sidecar.py",
+    "src/pathline_template_matching/source_centered_seed_time_kinematics.py",
+    "src/pathline_template_matching/source_centered_sidecar.py",
+    "src/pathline_template_matching/vector_field.py",
+)
+SOURCE_INPUT_MANIFEST_CONTENT_SHA256 = (
+    "6b8d5ad4eecdd8febe73d4518e9433907ae828b3e5c42a71077ebf32fa8a5532"
+)
+SOURCE_POPULATION_MANIFEST_CONTENT_SHA256 = (
+    "cc0f1b36dbb067629423ea9c0194e032f4e7c474312a5d34f668cf8444d56880"
+)
+SOURCE_POPULATION_ROWS_CONTENT_SHA256 = (
+    "d0c4ed0726fc66262104edaa2d0d26430e8530e3653ae7e56019fef340368231"
+)
+SOURCE_FILE_SHA256_CONTENT_SHA256 = (
+    "fc030232c0596931bee09427d03c86f34cf01618416b146de5f6d5416b59ce33"
+)
+SOURCE_SIDECAR_COUNT = 32
+SOURCE_VALID_PROJECTION_ROW_COUNT = 2_967_612
 
 INPUT_SCHEMA = (
     "pathline_template_matching.source_centered_rank_likelihood_visualization_input.v1"
@@ -525,6 +552,131 @@ def _authenticate_slurm_runtime(
     }
 
 
+def _historical_git_blob_sha256(relative_path: str) -> str:
+    _require(
+        relative_path in HISTORICAL_SOURCE_RELATIVE_PATHS,
+        f"unexpected historical source path: {relative_path}",
+    )
+    result = subprocess.run(
+        ["git", "show", f"{runner.SOURCE_NUMERICAL_COMMIT}:{relative_path}"],
+        cwd=REPOSITORY_ROOT,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    _require(
+        result.returncode == 0,
+        f"historical producer Git blob is unavailable: {relative_path}",
+    )
+    return hashlib.sha256(result.stdout).hexdigest()
+
+
+def _authenticate_historical_source_evidence(
+    value: object,
+    *,
+    plan: runner.Plan,
+) -> Mapping[str, Any]:
+    """Authenticate the immutable evidence envelope without opening sidecars."""
+
+    _require(isinstance(value, Mapping), "historical source evidence is missing")
+    _require(
+        set(value)
+        == {
+            "producer_experiment",
+            "producer_git_commit",
+            "producer_config_sha256",
+            "input_manifest",
+            "sidecar_population",
+            "historical_source_file_sha256",
+            "historical_source_file_sha256_content_sha256",
+            "sidecar_npz_members_opened",
+            "labels_or_references_opened",
+            "authentication_mode",
+        },
+        "historical source evidence fields changed",
+    )
+    _require(
+        value.get("producer_experiment") == runner.SOURCE_EXPERIMENT
+        and value.get("producer_git_commit") == runner.SOURCE_NUMERICAL_COMMIT
+        and value.get("producer_config_sha256") == runner.SOURCE_CONFIG_SHA256
+        and value.get("sidecar_npz_members_opened") == []
+        and value.get("labels_or_references_opened") == []
+        and value.get("authentication_mode")
+        == "historical_git_blob_and_complete_file_hash_replay",
+        "historical source producer identity changed",
+    )
+
+    input_manifest = value.get("input_manifest")
+    _require(
+        isinstance(input_manifest, Mapping)
+        and set(input_manifest) == {"path", "file_sha256", "content_sha256"},
+        "historical source input-manifest fields changed",
+    )
+    _require(
+        input_manifest.get("path") == str(plan.source_input_manifest_path)
+        and input_manifest.get("file_sha256")
+        == runner.SOURCE_INPUT_MANIFEST_SHA256
+        and input_manifest.get("content_sha256")
+        == SOURCE_INPUT_MANIFEST_CONTENT_SHA256,
+        "historical source input-manifest identity changed",
+    )
+
+    population = value.get("sidecar_population")
+    _require(
+        isinstance(population, Mapping)
+        and set(population)
+        == {
+            "root",
+            "manifest_path",
+            "manifest_file_sha256",
+            "manifest_content_sha256",
+            "row_count",
+            "rows_content_sha256",
+            "assigned_row_count_total",
+            "valid_projection_row_count_total",
+        },
+        "historical source population fields changed",
+    )
+    _require(
+        population.get("root") == str(plan.source_sidecar_root)
+        and population.get("manifest_path")
+        == str(plan.source_population_manifest_path)
+        and population.get("manifest_file_sha256")
+        == runner.SOURCE_POPULATION_MANIFEST_SHA256
+        and population.get("manifest_content_sha256")
+        == SOURCE_POPULATION_MANIFEST_CONTENT_SHA256
+        and population.get("row_count") == SOURCE_SIDECAR_COUNT
+        and population.get("rows_content_sha256")
+        == SOURCE_POPULATION_ROWS_CONTENT_SHA256
+        and population.get("assigned_row_count_total")
+        == SOURCE_SIDECAR_COUNT * runner.ASSIGNED_ROW_COUNT
+        and population.get("valid_projection_row_count_total")
+        == SOURCE_VALID_PROJECTION_ROW_COUNT,
+        "historical source population identity changed",
+    )
+
+    source_hashes = value.get("historical_source_file_sha256")
+    _require(
+        isinstance(source_hashes, Mapping)
+        and set(source_hashes) == set(HISTORICAL_SOURCE_RELATIVE_PATHS),
+        "historical source Git-blob map fields changed",
+    )
+    expected_source_hashes = {
+        relative_path: _historical_git_blob_sha256(relative_path)
+        for relative_path in HISTORICAL_SOURCE_RELATIVE_PATHS
+    }
+    source_hash_map = dict(source_hashes)
+    _require(
+        source_hash_map == expected_source_hashes
+        and canonical_json_sha256(source_hash_map)
+        == SOURCE_FILE_SHA256_CONTENT_SHA256
+        and value.get("historical_source_file_sha256_content_sha256")
+        == SOURCE_FILE_SHA256_CONTENT_SHA256,
+        "historical source Git-blob map identity changed",
+    )
+    return value
+
+
 def _authenticate_release_source_evidence(
     value: object,
     *,
@@ -544,10 +696,12 @@ def _authenticate_release_source_evidence(
     _require(
         value.get("config_sha256") == runner.EXPECTED_CONFIG_SHA256
         and _is_lower_sha256(value.get("parent_binding_file_sha256"))
-        and _is_lower_sha256(value.get("binding_completion_file_sha256"))
-        and value.get("historical_source_centered_evidence")
-        == runner._json_safe(plan.source_evidence),
+        and _is_lower_sha256(value.get("binding_completion_file_sha256")),
         "aggregate source evidence identity changed",
+    )
+    _authenticate_historical_source_evidence(
+        value.get("historical_source_centered_evidence"),
+        plan=plan,
     )
     return value
 
