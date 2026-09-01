@@ -1,0 +1,327 @@
+experiment: Other_SourceCenteredPairedScaleTemplateVisualization_1.1
+category: Other
+status: frozen_before_reading_any_source_centered_prediction_metric_or_parent_scene
+frozen_date: 2026-09-01
+
+scientific_question: >-
+  At the preregistered source ordinal 2, where does the source-centered,
+  paired-scale negative-template classifier agree or disagree with the
+  whole-loaded-volume IVD-p95 reference in Cylinder3D Re160, Re640, Re6400,
+  and Boeing 747?
+
+evidence_scope:
+  level: family_held_out_exposed_development_fixed_source_visualization_only
+  formal_confirmation: false
+  aggregate_multisource_performance: false
+  method_identity: target_unlabeled_transductive_negative_template_classifier
+  forbidden_claims:
+    - sealed_confirmation
+    - unbiased_model_selection
+    - complete_five_family_success_from_these_figures
+    - independent_per_primitive_classifier
+    - clustering
+    - separate_legacy_and_expanded_classifiers
+
+method_parent:
+  experiment: Verify_SourceCenteredPairedScaleTemplate_1.1
+  config_path: config/Verify_SourceCenteredPairedScaleTemplate_1.1.yaml
+  config_sha256: 15ac5b0e82b30cbaf952475a7fbb6d19dc070c1121bc9aa8db980d75600260cc
+  fold_commit: runtime_input_must_be_one_exact_clean_40_hex_commit
+  required_outer_families: [half_cylinder, boeing_747]
+  fold_roots: runtime_inputs_authenticated_before_any_npz_member_open
+  release_roots: runtime_inputs_must_fresh_replay_authenticate_each_required_fold
+  release_modes_allowed:
+    - single_fold_authentication
+    - complete_five_fold_aggregate
+  cross_release_rule: >-
+    The two family folds may be covered by one complete-five release or by two
+    independently authenticated releases, but every release and fold must bind
+    the same Verify scientific config and exact fold commit. A stopped Verify
+    release does not authorize an unauthenticated Boeing fold.
+  prediction_schema: pathline_template_matching.source_centered_paired_scale_outer_prediction.v1
+  prediction_manifest_schema: pathline_template_matching.source_centered_paired_scale_outer_prediction_manifest.v1
+  result_schema: pathline_template_matching.source_centered_paired_scale_result.v1
+  completion_schema: pathline_template_matching.source_centered_paired_scale_complete.v1
+  aggregate_manifest_schema: pathline_template_matching.source_centered_paired_scale_aggregate_manifest.v1
+  aggregate_completion_schema: pathline_template_matching.source_centered_paired_scale_aggregate_complete.v1
+  single_fold_report_schema: pathline_template_matching.source_centered_paired_scale_single_fold_report.v1
+  complete_five_report_schema: pathline_template_matching.source_centered_paired_scale_aggregate_summary.v1
+  prediction_arrays:
+    unique:
+      - unique_dataset
+      - unique_source_ordinal
+      - unique_source_index
+      - unique_center_seed_index
+      - legacy_score
+      - expanded_score
+      - paired_score
+      - legacy_valid
+      - expanded_valid
+      - legacy_eligible
+      - expanded_eligible
+      - combined_eligible
+      - paired_prediction
+      - legacy_prediction
+      - expanded_prediction
+      - direct_min_dx_score
+      - direct_min_dx_prediction
+      - direct_dx_rank_mean_score
+      - direct_dx_rank_mean_prediction
+    valid_projection:
+      - valid_dataset
+      - valid_source_ordinal
+      - valid_source_index
+      - valid_scale_id
+      - valid_center_seed_index
+      - valid_scale_block_index
+      - valid_assigned_row_index
+      - valid_raw_negative_distance
+      - valid_tail_probability
+      - valid_tail_anomaly
+      - valid_spatial_score
+      - valid_spatial_denominator
+      - valid_retrieval_supported
+      - valid_calibration_supported
+      - valid_spatial_imputed
+      - valid_spatial_unimputable
+      - valid_calibration_mode
+      - valid_scaler_mode
+      - valid_paired_score
+      - valid_paired_prediction
+      - valid_parent_score
+      - valid_parent_prediction
+  plotted_prediction_array: paired_prediction
+  reported_primary_projection_arrays: [valid_paired_score, valid_paired_prediction]
+  separate_block_predictions_are_not_plotted: true
+  direct_diagnostic_predictions_are_not_plotted: true
+
+parent_scenes:
+  experiment: Other_MainExp31FamilyHeldOutVisualization_1.1
+  numerical_git_commit: 86be29698eb689c0e269fe987a5b6d5f125a67be
+  config_sha256: 6fec35d2f64a3b593a74e8b35674137b1665ce169491e3546384142514b46670
+  run_root: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1/runs/slurm_51029080_86be29698eb6
+  result_manifest_sha256: 57f03ba16ad8cfa0e1e0a9efd93f2dde7ae5866f173fad20055efb6939d4188e
+  exact_scene_count: 8
+  reuse_rule: >-
+    Authenticate both block scenes before reading either scene NPZ. Bounds,
+    IVD mesh, source identity, center coordinates, reference labels, pathline
+    arrays, camera, and file hashes are immutable. The combined report derives
+    one new scene per dataset without altering either parent artifact.
+
+query:
+  source_ordinal: 2
+  source_selection: fixed_before_source_centered_results
+  unique_center_population_per_dataset_source: 64000
+  datasets:
+    - id: cylinder3d
+      display_title: Cylinder3D Re160
+      outer_family: half_cylinder
+    - id: halfcylinderRe640
+      display_title: Cylinder3D Re640
+      outer_family: half_cylinder
+    - id: halfcylinderRe6400
+      display_title: Cylinder3D Re6400
+      outer_family: half_cylinder
+    - id: boeing747
+      display_title: Boeing 747
+      outer_family: boeing_747
+  scale_blocks:
+    - id: legacy_2_1
+      index: 0
+      scale_id_start: 0
+      scale_id_stop_exclusive: 1000
+    - id: expanded_3_1
+      index: 1
+      scale_id_start: 1000
+      scale_id_stop_exclusive: 2000
+
+exact_join_contract:
+  unique_prediction_identity:
+    - dataset
+    - source_ordinal
+    - source_index
+    - center_seed_index
+  parent_block_identity:
+    - dataset
+    - source_ordinal
+    - source_index
+    - scale_block_index
+    - center_seed_index
+    - assigned_row_index
+    - scale_id
+  valid_projection_identity:
+    - dataset
+    - source_ordinal
+    - source_index
+    - scale_block_index
+    - center_seed_index
+    - assigned_row_index
+    - scale_id
+  duplicate: fail
+  missing: fail
+  extra: fail
+  reordered_unique_centers: fail
+  cross_family_or_cross_source_rows: fail
+  overlap_seed_coordinates_and_reference_must_be_bitwise_equal: true
+  valid_masks_must_equal_parent_scene_center_membership: true
+  valid_projection_report_order: legacy_parent_scene_order_then_expanded_parent_scene_order
+
+figure_contract:
+  core_conclusion: >-
+    At fixed source ordinal 2, the single paired-center template prediction
+    has flow-specific spatial agreement and error structure relative to IVD p95.
+  results_level_question: >-
+    Where does one authenticated paired-scale center prediction agree or
+    disagree with IVD p95 in each requested flow?
+  archetype: image_plate_plus_quantification
+  backend: python_matplotlib
+  figure_unit: one_dataset_with_both_scale_blocks_as_context
+  expected_figure_count: 4
+  final_size_inches: [21.0, 5.0]
+  panel_titles:
+    - IVD p95 + legacy/expanded center pathlines
+    - FMT source-centered paired-scale classification
+    - TP / FP / FN / TN against IVD p95
+  panel_map:
+    a: >-
+      Unchanged parent IVD-p95 mesh plus the first 120 parent-scene center
+      pathlines from legacy_2_1 followed by the first 120 from expanded_3_1.
+    b: >-
+      The one paired_prediction for every combined-valid unique center; this
+      is not two block-specific classifiers.
+    c: >-
+      Exact TP/FP/FN/TN partition of the same combined-valid centers in the
+      same ascending center_seed_index order.
+  background_pathlines:
+    legacy_parent_scene_prefix_count: 120
+    expanded_parent_scene_prefix_count: 120
+    total_count: 240
+    selection: fixed_array_prefix_without_prediction_or_metric_access
+    block_encoding:
+      legacy_2_1: {color: '#2468b4', linestyle: solid}
+      expanded_3_1: {color: '#8e5ea2', linestyle: dashed}
+    interpretation: block_context_only_not_classification_population_or_natural_prevalence
+  plotted_population: combined_valid_unique_centers
+  plotted_order: ascending_center_seed_index
+  identical_center_order_camera_bounds_and_ivd_across_panels: true
+  uncertainty: none_single_preregistered_source
+  png_dpi: 360
+  editable_svg_and_pdf_text: true
+  rasterized_3d_marks: true
+  rendered_text_minimum_points: 5.0
+  panel_alignment_tolerance_points: 1.5
+  required_exports:
+    - combined_scene_npz
+    - combined_scene_manifest_json
+    - png_360dpi
+    - svg_with_editable_text_and_rasterized_3d_marks
+    - pdf_with_editable_text_and_rasterized_3d_marks
+    - panel_alignment_json
+    - render_metadata_json
+    - pdf_text_audit_json
+    - collision_audit_json
+    - collision_overlay_pdf
+  reviewer_risks:
+    - all_four_flows_are_exposed_development
+    - source_centering_uses_target_flow_unlabeled_velocity_and_is_transductive
+    - one_fixed_source_has_no_confidence_interval
+    - combined_valid_center_coverage_varies_by_flow
+    - panel_a_pathlines_are_fixed_block_context_not_the_panel_b_population
+    - valid_projection_metrics_count_a_both_valid_center_twice_and_are_reported_not_plotted
+    - figures_do_not_replace_complete_five_family_statistics
+
+metrics:
+  plotted_center_population: combined_valid_unique_centers
+  primary_reported_population: all_parent_valid_rows_after_exact_center_projection
+  producer_metric_comparison:
+    required: exact_within_numeric_tolerance
+    absolute_tolerance: 1.0e-12
+    center_arm: source_centered_paired_centers
+    center_population: combined_valid_unique_centers
+    valid_projection_arm: source_centered_paired_centers
+    valid_projection_population: all_parent_valid_rows
+  required_classification_metrics:
+    - accuracy
+    - average_precision
+    - f1
+    - balanced_accuracy
+    - auroc
+    - precision
+    - recall
+    - true_positive
+    - false_positive
+    - true_negative
+    - false_negative
+  required_availability_metrics:
+    - combined_valid_center_count
+    - unique_center_combined_coverage
+    - both_valid_count
+    - legacy_only_count
+    - expanded_only_count
+    - neither_valid_count
+    - legacy_valid_row_count
+    - expanded_valid_row_count
+    - valid_projection_row_count
+
+scene_schema:
+  name: pathline_template_matching.source_centered_paired_scale_combined_scene.v1
+  ordered_arrays:
+    - bounds
+    - seeds
+    - reference
+    - prediction
+    - center_seed_index
+    - paired_score
+    - legacy_valid
+    - expanded_valid
+    - display_pathlines
+    - display_pathline_block_index
+    - ivd_mesh_vertices
+    - ivd_mesh_faces
+    - ivd_mesh_normals
+    - ivd_mesh_values
+    - ivd_mesh_level
+    - metadata_json
+
+qa_contract:
+  machine_render_stage: complete_pending_local_rendered_qa
+  local_rendered_qa_required: true
+  source_preflight: required
+  panel_alignment:
+    required: true
+    strict: true
+    tolerance_points: 1.5
+  pdf_text:
+    required: true
+    minimum_points: 5.0
+  rendered_collision:
+    required: true
+    hard_fail_count: 0
+    warnings_require_final_size_review: true
+  visual_review:
+    every_png_at_final_physical_size: required
+    checks:
+      - no_empty_or_clipped_panel
+      - camera_and_bounds_identical_across_panels
+      - both_pathline_block_encodings_visible
+      - no_legend_or_title_collision
+      - panel_b_and_panel_c_use_identical_center_population_and_order
+  delivery_status_before_local_qa: not_deliverable
+
+execution:
+  platform: ibex_first_machine_render_then_local_rendered_qa
+  device: cpu
+  existing_output_directory_action: fail
+  npz_array_access_before_input_manifest_write: forbidden
+  authenticated_release_required_before_fold_or_prediction_open: true
+  completion_marker: RUN_COMPLETE.json
+
+required_global_outputs:
+  - frozen_config.yaml
+  - input_manifest.json
+  - figure_contract.json
+  - per_figure_metrics.csv
+  - visualization_manifest.json
+  - result_manifest.json
+  - RUN_COMPLETE.json
+  - delivery_qa_summary.json

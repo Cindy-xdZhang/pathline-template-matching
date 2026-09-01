@@ -702,3 +702,41 @@ PNG目视、PDF/SVG文字、严格panel alignment和碰撞overlay检查：collis
   只界定表示排序上限，不能满足模板方法成功条件。
 
 本配置在首次读取本版本任何真实source-centered feature、prediction或metric前冻结；尚无性能结论。
+
+## 32. `Other_SourceCenteredPairedScaleTemplateVisualization_1.1` 的单一双尺度中心分类三联图
+
+本版本是 Verify SourceCentered 方法的固定下游空间报告。在读取该 Verify 的任何新 feature、
+prediction、metric 或父 scene 数组前，已冻结报告配置 SHA-256
+`c9c9a14b02fc3f47a4ee934ccd1091a7c7accefdbd28f569100605bf8230ca4e`。固定 query 为
+Re160、Re640、Re6400、Boeing，source ordinal 为2，共4张图而不是8张 block 图。
+
+- 三个panel都必须实际绘制同一父IVD网格，并保持相机和物理边界不变。Panel A同时使用父
+  `legacy_2_1` 前120条和 `expanded_3_1` 前120条路径线；两种线型只表示尺度背景，图例固定在
+  axes外的figure-level顶部安全区。
+- Panel B 只允许 combined-valid unique centers 上唯一的 `paired_prediction`；禁止将 legacy/
+  expanded block-specific prediction 绘成两个方法、投票或按结果选块。Panel C 必须对同一升序中心
+  做 TP/FP/FN/TN 分解。
+- 图中 center 指标和表中主要 valid-row projection 指标必须分开。主要指标按 legacy 父 scene
+  顺序再按 expanded 父 scene 顺序 exact join `valid_paired_prediction`，只报告、不绘图；两套指标
+  均须在 `1e-12` 内复现 producer 行。每个valid row的prediction/score必须逐位等于相同unique
+  center的paired prediction/score，producer行的family/source/arm/population/candidate身份也必须完整一致。
+- aggregate/fold/parent 的完整文件身份和报告依赖 SHA 必须先写入 `input_manifest.json`，之后才可
+  打开任何 NPZ member。duplicate、missing、extra、center reorder、valid-mask drift、跨 source/family
+  或两个 block 重叠中心的坐标/reference差异全部失败。
+- aggregate completion/manifest/report必须绑定相同aggregator commit、fold commit和完整
+  source-centered evidence；数值aggregator固定为
+  `a85c007ef961ce53bb40946ca3f38f033bf7a646`。生产只允许clean exact reporting commit上的
+  Rome CPU Slurm wrapper与一个complete-five release，不允许本地生产渲染或未授权fold。
+- 机器阶段固定输出 PNG/PDF/SVG、combined scene、render metadata 和 panel 位置证据，并停在
+  `complete_pending_local_rendered_qa`。本地必须在同一clean reporting commit上认证auditor SHA，
+  逐条处置固定的3个源码warning，并完成1.5 pt严格位置检查、SVG可编辑`<text>`、PDF最小5 pt
+  文字检查、collision hard FAIL=0及4/4最终物理尺寸人工复核后，才可另写
+  `delivery_qa_summary.json: delivery_status=PASS`；原机器 completion 不改写。
+- 现有 producer 的 single-fold public release 只允许首折 half-cylinder，因此四流场报告在当前接口
+  下需要 complete-five release 才能合法取得 Boeing。若 Verify 首折停止，必须另建冻结的 Boeing
+  诊断实验和公开认证，禁止本报告器私自读取未授权 fold。
+
+完整合同、运行接口和结论边界见
+`docs/Other_SourceCenteredPairedScaleTemplateVisualization_1.1.md`。实现阶段只用 synthetic/opaque
+fixture 完成15项核心定向测试与8项wrapper合同测试，其中完整synthetic三联图实际通过正式
+collision auditor（hard fail=0）；本地标准库测试486/486通过，没有产生实际流场图或性能结论。
