@@ -608,6 +608,41 @@ half-cylinder fold覆盖；只允许另建本 `Other` 版本补一个 Boeing out
   保持为两个不同实验身份，只比较不变的scientific projection。
 
 本版本配置 SHA-256 为
-`6112e7588efecf29cf2690b270385053d8ccd94f8e11037a6e247815afcc5856`。截至当前只完成实现与
-synthetic tests，尚未提交 Slurm job或读取本版本真实Boeing结果；完整合同见
-`docs/Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1.md`。
+`6112e7588efecf29cf2690b270385053d8ccd94f8e11037a6e247815afcc5856`。Boeing fold job
+`51154451`与独立认证 job `51154654`均在exact commit
+`6322d16cebe5995c8bcec2b8743e9ce0de9d8304`完成；后者重新认证父resource/停止release、底层
+15-file fold、fresh fit/query/support/threshold/outer-label gate和四文件public release。
+`DIAGNOSTIC_COMPLETE.json` SHA-256为
+`a9bb930c540c366dd9fd9fd040bdca306cbb7a0a2fcd829fe5f307a8e85ad12c`。Boeing认证
+Accuracy/AP/F1/BA/AUROC/precision/recall为
+`0.933401/0.195483/0.241293/0.630077/0.862723/0.206197/0.301415`；这只支持暴露后的
+Boeing描述性诊断，不改变Verify停止结论，也不得与half-cylinder结果平均。完整合同与失败尝试保留规则见
+`docs/Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1.md`及`docs/ibex_run_registry.md`。
+
+## 30. `Other_ClassConditionalTemplateScoreVisualization_1.1` 的双单折分类三联图
+
+状态：**`frozen_pre_run_not_run`**。本报告不是新的数值训练或五折实验；它只组合两个分别完成并认证的
+single-fold release：Verify停止分支的`half_cylinder` release与独立Other的`boeing_747` release。
+report-time禁止再次执行public fresh replay；reporter只认证冻结completion→manifest→15-file fold→13
+artifact→19-array prediction链，并在打开任何NPZ member前写入完整输入manifest。
+
+- 固定数据集按序为`cylinder3d`、`halfcylinderRe640`、`halfcylinderRe6400`、`boeing747`；前三项只来自
+  Verify half-cylinder release，后一项只来自Boeing Other release。每个数据集固定source ordinal `2`。
+- 每个数据集固定两个scale block：`legacy_2_1`（scale 0–999）与`expanded_3_1`（1000–1999），共
+  `4×2=8`张图，不按当前prediction或metric选择场景。
+- 每张图固定三联：`IVD p95 + center pathlines`、`FMT class-conditional template-score classification`、
+  `TP / FP / FN / TN against IVD p95`。parent scene几何、相机、pathline与reference保持不变，只替换
+  prediction及分析metadata；metrics必须从认证prediction与scene reference重新计算，并与父fold逐字段比较。
+- 每图固定导出scene NPZ、scene manifest、PNG、PDF、SVG、alignment audit、render metadata共7文件；另有
+  7个全局文件，因此原始不可变发布集合为`8×7+7=63`文件。禁止覆盖已存在输出目录。
+- 主运行必须Ibex-first，来自push后的clean exact reporting commit；wrapper固定CPU、32 cores、128 GiB、
+  Rome、12小时、无GPU，并认证Slurm allocation。production report config必须在提交前以完整绝对路径、完整
+  commit和SHA-256单独冻结；不得出现占位值。
+- Slurm完成只表示63文件transaction和机器检查通过。本地必须另做8/8 PNG目视检查、PDF/SVG可编辑文字、
+  panel alignment、裁切/碰撞与说明文字检查；在这些QA完成前不得称为最终图件。两release不构成完整五折，
+  不评估five-family success，不是formal confirmation。
+
+完整已知输入身份、输出合同和提交门见
+`docs/Other_ClassConditionalTemplateScoreVisualization_1.1.md`。冻结production config为
+`config/Other_ClassConditionalTemplateScoreVisualization_1.1.yaml`，SHA-256为
+`c69d4a59b4906a32f6e14e100c2fe553cc110c6c08fdb34842f20e198a504a60`。

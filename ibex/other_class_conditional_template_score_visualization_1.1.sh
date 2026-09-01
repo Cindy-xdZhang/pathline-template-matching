@@ -250,6 +250,8 @@ for payload in (visualization, result, completion):
 assert completion["status"] == "complete_pending_local_pdf_collision_and_visual_QA"
 assert result["status"] == "completed_pending_local_pdf_collision_and_visual_QA"
 assert completion["figure_count"] == result["figure_count"] == visualization["figure_count"] == 8
+assert result["artifact_count"] == 61
+assert isinstance(result["artifacts"], list) and len(result["artifacts"]) == 61
 assert sha256_file(root / "result_manifest.json") == completion["result_manifest_file_sha256"]
 assert result["manifest_content_sha256"] == completion["result_manifest_content_sha256"]
 assert sha256_file(root / "visualization_manifest.json") == result["visualization_manifest_file_sha256"]
@@ -266,6 +268,13 @@ expected_kinds = {
     "alignment",
     "render_metadata",
 }
+expected_artifact_paths = {
+    "frozen_config.yaml",
+    "input_manifest.json",
+    "figure_contract.json",
+    "per_figure_metrics.csv",
+    "visualization_manifest.json",
+}
 for row in entries:
     assert row["evidence_source"] in {
         "stopped_verify_half_cylinder_single_fold_release",
@@ -275,15 +284,31 @@ for row in entries:
     assert len(exports) == 7
     assert {item["export_kind"] for item in exports} == expected_kinds
     for item in exports:
+        assert item["relative_path"] not in expected_artifact_paths
+        expected_artifact_paths.add(item["relative_path"])
         path = root / item["relative_path"]
         assert path.is_file()
         assert path.stat().st_size == item["size_bytes"]
         assert sha256_file(path) == item["sha256"]
+assert len(expected_artifact_paths) == 61
+result_artifact_paths = {item["relative_path"] for item in result["artifacts"]}
+assert len(result_artifact_paths) == 61
+assert result_artifact_paths == expected_artifact_paths
 for item in result["artifacts"]:
     path = root / item["relative_path"]
     assert path.is_file()
     assert path.stat().st_size == item["size_bytes"]
     assert sha256_file(path) == item["sha256"]
+final_paths = {
+    path.relative_to(root).as_posix()
+    for path in root.rglob("*")
+    if path.is_file()
+}
+assert len(final_paths) == 63
+assert final_paths == expected_artifact_paths | {
+    "result_manifest.json",
+    "RUN_COMPLETE.json",
+}
 print(f"evaluation_status={completion['status']}")
 print(f"figure_count={completion['figure_count']}")
 print(f"result_manifest_file_sha256={completion['result_manifest_file_sha256']}")

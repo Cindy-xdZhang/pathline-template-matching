@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import hashlib
 from pathlib import Path
 
 
@@ -68,11 +69,15 @@ def test_class_score_visualization_wrapper_requires_four_external_identities() -
     assert '[[ "$REPORT_CONFIG_VALUE" == /* ]]' in text
     assert '[[ "$OUTPUT_ROOT_VALUE" == /* ]]' in text
     assert "config/Other_ClassConditionalTemplateScoreVisualization_1.1.yaml" not in text
-    assert not (
+    config = (
         ROOT
         / "config"
         / "Other_ClassConditionalTemplateScoreVisualization_1.1.yaml"
-    ).exists()
+    )
+    assert config.is_file()
+    assert hashlib.sha256(config.read_bytes()).hexdigest() == (
+        "c69d4a59b4906a32f6e14e100c2fe553cc110c6c08fdb34842f20e198a504a60"
+    )
 
 
 def test_class_score_visualization_wrapper_authenticates_clean_exact_sources() -> None:
@@ -135,6 +140,10 @@ def test_class_score_visualization_wrapper_invokes_frozen_reporter_contract() ->
         "visualization_result.v2"
     ) in text
     assert 'completion["figure_count"] == result["figure_count"] == visualization["figure_count"] == 8' in text
+    assert 'result["artifact_count"] == 61' in text
+    assert 'len(result["artifacts"]) == 61' in text
+    assert 'len(final_paths) == 63' in text
+    assert "result_artifact_paths == expected_artifact_paths" in text
     assert 'len({(row["dataset"], row["scale_block"]) for row in entries}) == 8' in text
     assert 'payload["source_release_count"] == 2' in text
     assert 'payload["complete_five_fold"] is False' in text

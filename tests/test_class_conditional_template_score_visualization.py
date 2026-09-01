@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import sys
 import tempfile
 from unittest.mock import patch
@@ -49,10 +49,12 @@ def _plan(root: Path) -> report.ReportPlan:
     )
 
 
-def test_contract_is_two_single_fold_releases_without_production_config() -> None:
+def test_contract_is_two_single_fold_releases_with_frozen_production_config() -> None:
     source = (ROOT / "scripts" / "render_class_conditional_template_score_visualizations.py").read_text(encoding="utf-8")
     assert report.REPORT_CONFIG_SCHEMA.endswith("visualization_config.v2")
     assert report.SOURCE_RELEASE_MODE == "two_authenticated_single_fold_releases"
+    assert report.EXPECTED_RESULT_ARTIFACT_COUNT == 61
+    assert report.EXPECTED_FINAL_FILE_COUNT == 63
     assert "authenticate_aggregate_chain" not in source
     assert "authenticate_single_fold_release" not in source
     assert "authenticate_diagnostic_release" not in source
@@ -62,7 +64,55 @@ def test_contract_is_two_single_fold_releases_without_production_config() -> Non
     metric_open = source.index("parent_metrics = read_outer_group_metrics(plan, releases)")
     assert manifest_write < prediction_open < metric_open
     assert '"report_time_fresh_replay": False' in source
-    assert not (ROOT / "config" / "Other_ClassConditionalTemplateScoreVisualization_1.1.yaml").exists()
+    assert "actual_artifact_paths == expected_artifact_paths" in source
+    assert "final output file set differs from the exact 63-file contract" in source
+    config = ROOT / "config" / "Other_ClassConditionalTemplateScoreVisualization_1.1.yaml"
+    expected_sha256 = "c69d4a59b4906a32f6e14e100c2fe553cc110c6c08fdb34842f20e198a504a60"
+    assert config.is_file() and sha256_file(config) == expected_sha256
+    plan = report.load_report_plan(config, expected_sha256)
+    assert plan.path == config.resolve()
+    assert plan.sha256 == expected_sha256
+    assert [item.outer_family for item in plan.source_releases] == [
+        "half_cylinder",
+        "boeing_747",
+    ]
+    assert str(plan.source_releases[0].config_path) == (
+        "/home/zhanx0o/pathline-template-matching-class-conditional-score/"
+        "config/Verify_ClassConditionalTemplateScore_1.1.yaml"
+    )
+    assert str(plan.parent_root).startswith("/ibex/user/zhanx0o/")
+    assert len(plan.datasets) * len(plan.blocks) == 8
+
+
+def test_frozen_path_parser_is_strict_and_native_gate_is_fail_closed() -> None:
+    for value in (
+        "",
+        "relative/path",
+        "C:relative",
+        "//server/share",
+        "/ibex/../escape",
+        "/ibex\\mixed",
+    ):
+        _raises(
+            report._frozen_absolute_path,
+            value,
+            role="synthetic",
+            contains="synthetic",
+        )
+    _raises(
+        report._native_absolute_path,
+        PurePosixPath("/ibex/frozen"),
+        role="synthetic",
+        contains="production POSIX inputs require a POSIX host",
+    )
+
+
+def test_fold_manifest_path_uses_the_same_frozen_path_parser() -> None:
+    source = (
+        ROOT / "scripts" / "render_class_conditional_template_score_visualizations.py"
+    ).read_text(encoding="utf-8")
+    assert "_frozen_absolute_path(root_value" in source
+    assert "expected_root = _native_absolute_path(" in source
 
 
 def test_non_confirmatory_claims_and_per_release_evidence(tmp_path: Path) -> None:
@@ -347,7 +397,7 @@ def test_real_fold_chain_prediction_members_metrics_and_join(tmp_path: Path) -> 
 
 def _run_standalone() -> None:
     tests = [v for n, v in sorted(globals().items()) if n.startswith("test_") and callable(v)]
-    assert len(tests) == 13
+    assert len(tests) == 15
     for function in tests:
         if inspect.signature(function).parameters:
             with tempfile.TemporaryDirectory() as directory:

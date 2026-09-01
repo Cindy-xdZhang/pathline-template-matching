@@ -17,7 +17,7 @@ from dataclasses import dataclass
 import json
 import math
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import platform
 import shutil
 import socket
@@ -67,6 +67,8 @@ BOEING_DIAGNOSTIC_EXPERIMENT = (
     "Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1"
 )
 SOURCE_RELEASE_MODE = "two_authenticated_single_fold_releases"
+EXPECTED_RESULT_ARTIFACT_COUNT = 61
+EXPECTED_FINAL_FILE_COUNT = 63
 PREDICTION_SCHEMA = (
     "pathline_template_matching.class_conditional_template_score_outer_prediction.v1"
 )
@@ -326,12 +328,12 @@ class SourceReleaseSpec:
     evidence_source: str
     experiment: str
     numerical_commit: str
-    config_path: Path
+    config_path: Path | PurePosixPath
     config_sha256: str
-    release_root: Path
+    release_root: Path | PurePosixPath
     completion_file: str
     completion_sha256: str
-    fold_root: Path
+    fold_root: Path | PurePosixPath
 
 
 @dataclass(frozen=True, slots=True)
@@ -340,7 +342,7 @@ class ReportPlan:
     sha256: str
     raw: Mapping[str, Any]
     source_releases: tuple[SourceReleaseSpec, SourceReleaseSpec]
-    parent_root: Path
+    parent_root: Path | PurePosixPath
     parent_experiment: str
     parent_commit: str
     parent_config_sha256: str
@@ -477,6 +479,54 @@ def _require_no_placeholders(value: object, *, path: str = "config") -> None:
         )
 
 
+def _frozen_absolute_path(
+    value: object, *, role: str
+) -> Path | PurePosixPath:
+    """Parse a frozen path while preserving a POSIX identity on Windows."""
+
+    _require(isinstance(value, str) and value, f"{role} must be a path string")
+    _require(
+        not value.startswith(("//", "\\\\")),
+        f"{role} must not be a UNC or double-slash path",
+    )
+    if value.startswith("/"):
+        pure = PurePosixPath(value)
+        _require(
+            pure.is_absolute()
+            and "\\" not in value
+            and "." not in pure.parts
+            and ".." not in pure.parts
+            and str(pure) == value,
+            f"{role} must be a strict absolute POSIX path",
+        )
+        native = Path(value)
+        if native.is_absolute():
+            return native.resolve()
+        _require(
+            os.name == "nt",
+            f"{role} is not native on this host",
+        )
+        return pure
+
+    native = Path(value)
+    _require(
+        native.is_absolute(), f"{role} must be an absolute native path"
+    )
+    return native.resolve()
+
+
+def _native_absolute_path(
+    value: Path | PurePosixPath, *, role: str
+) -> Path:
+    """Reject POSIX-only frozen identities before any local file access."""
+
+    _require(
+        isinstance(value, Path) and value.is_absolute(),
+        f"{role}: production POSIX inputs require a POSIX host",
+    )
+    return value
+
+
 def _environment_record(device: str) -> dict[str, Any]:
     return {
         "hostname": socket.gethostname(),
@@ -492,8 +542,8 @@ def _environment_record(device: str) -> dict[str, Any]:
 def load_report_plan(config_path: str | Path, expected_sha256: str) -> ReportPlan:
     """Load a separately frozen production report config.
 
-    Tests may create an ephemeral synthetic config, but the repository must not
-    contain a production-looking config with placeholder job IDs or hashes.
+    Tests may create an ephemeral synthetic config.  A committed production
+    config is valid only after every external identity has been frozen exactly.
     """
 
     path = Path(config_path).resolve()
@@ -562,22 +612,23 @@ def load_report_plan(config_path: str | Path, expected_sha256: str) -> ReportPla
         _require(_is_lower_hex(row.get("config_sha256"), 64), f"source config SHA is invalid: {family}")
         _require(_is_lower_hex(row.get("completion_sha256"), 64), f"source completion SHA is invalid: {family}")
         paths = {
-            name: Path(str(row.get(name)))
+            name: _frozen_absolute_path(
+                row.get(name), role=f"source release {family} {name}"
+            )
             for name in ("config_path", "release_root", "fold_root")
         }
-        _require(all(path_value.is_absolute() for path_value in paths.values()), f"source release paths must be absolute: {family}")
         releases.append(
             SourceReleaseSpec(
                 outer_family=family,
                 evidence_source=evidence_source,
                 experiment=experiment,
                 numerical_commit=str(row["numerical_git_commit"]),
-                config_path=paths["config_path"].resolve(),
+                config_path=paths["config_path"],
                 config_sha256=str(row["config_sha256"]),
-                release_root=paths["release_root"].resolve(),
+                release_root=paths["release_root"],
                 completion_file=completion_file,
                 completion_sha256=str(row["completion_sha256"]),
-                fold_root=paths["fold_root"].resolve(),
+                fold_root=paths["fold_root"],
             )
         )
 
@@ -590,9 +641,9 @@ def load_report_plan(config_path: str | Path, expected_sha256: str) -> ReportPla
     _require(isinstance(parent.get("experiment"), str) and parent["experiment"], "parent experiment is invalid")
     for name, length in (("numerical_git_commit", 40), ("config_sha256", 64), ("result_manifest_sha256", 64), ("run_complete_sha256", 64)):
         _require(_is_lower_hex(parent.get(name), length), f"parent scene {name} is invalid")
-    parent_root_value = Path(str(parent.get("root")))
-    _require(parent_root_value.is_absolute(), "parent scene root must be absolute")
-    parent_root = parent_root_value.resolve()
+    parent_root = _frozen_absolute_path(
+        parent.get("root"), role="parent scene root"
+    )
 
     query = _mapping(value.get("query"), "query")
     _require(
@@ -738,12 +789,18 @@ def _authenticate_fold_chain(
     _require(set(source) == SOURCE_FOLD_FIELDS, "release source-fold fields drifted")
     family = source.get("outer_family")
     _require(family == spec.outer_family, "release source fold is wrong")
+    expected_root = _native_absolute_path(
+        spec.fold_root, role=f"{family}: frozen fold root"
+    )
     root_value = source.get("run_directory")
-    _require(isinstance(root_value, str) and root_value, f"{family}: fold root is invalid")
-    root_path = Path(root_value)
-    _require(root_path.is_absolute(), f"{family}: fold root must be absolute")
-    root = root_path.resolve()
-    _require(root == spec.fold_root and root.is_dir(), f"{family}: fold root is missing or changed")
+    root = _native_absolute_path(
+        _frozen_absolute_path(root_value, role=f"{family}: release fold root"),
+        role=f"{family}: release fold root",
+    )
+    _require(
+        root == expected_root and root.is_dir(),
+        f"{family}: fold root is missing or changed",
+    )
     _require(
         {path.name for path in root.iterdir()} == set(FOLD_FILE_NAMES)
         and all((root / name).is_file() for name in FOLD_FILE_NAMES),
@@ -1175,6 +1232,16 @@ def _authenticate_boeing_release_opaque(
 def authenticate_source_release_chains(plan: ReportPlan) -> SourceReleasesEvidence:
     """Hash two release/config/fold chains opaquely before NPZ member access."""
 
+    for spec in plan.source_releases:
+        _native_absolute_path(
+            spec.config_path, role=f"{spec.outer_family}: source config"
+        )
+        _native_absolute_path(
+            spec.release_root, role=f"{spec.outer_family}: release root"
+        )
+        _native_absolute_path(
+            spec.fold_root, role=f"{spec.outer_family}: fold root"
+        )
     projection, files = _authenticate_scientific_method_projection(plan)
     half_spec, boeing_spec = plan.source_releases
     half_fold, half_release, half_files = _authenticate_verify_release_opaque(half_spec)
@@ -1208,7 +1275,7 @@ def authenticate_parent_scene_chain(
 ) -> tuple[dict[tuple[str, str], dict[str, Path]], tuple[Mapping[str, Any], ...]]:
     """Authenticate the canonical source-2 parent scenes without opening NPZ members."""
 
-    root = plan.parent_root
+    root = _native_absolute_path(plan.parent_root, role="parent scene root")
     result_path = root / "result_manifest.json"
     complete_path = root / "RUN_COMPLETE.json"
     _require(result_path.is_file() and complete_path.is_file(), "parent scene result chain is missing")
@@ -2075,16 +2142,44 @@ def render_bundle(
     )
 
     _reauthenticate_input_rows(input_rows)
-    artifacts: list[dict[str, Any]] = []
-    for path in sorted(output_root.rglob("*")):
-        if path.is_file() and path.name not in {"result_manifest.json", "RUN_COMPLETE.json"}:
-            artifacts.append(
-                {
-                    "relative_path": path.relative_to(output_root).as_posix(),
-                    "size_bytes": int(path.stat().st_size),
-                    "sha256": sha256_file(path),
-                }
-            )
+    export_paths = [
+        item["relative_path"]
+        for row in figure_rows
+        for item in row["exports"]
+    ]
+    _require(
+        len(export_paths) == 56 and len(set(export_paths)) == 56,
+        "eight figures must publish 56 unique exports",
+    )
+    expected_artifact_paths = {
+        "frozen_config.yaml",
+        "input_manifest.json",
+        "figure_contract.json",
+        "per_figure_metrics.csv",
+        "visualization_manifest.json",
+        *export_paths,
+    }
+    _require(
+        len(expected_artifact_paths) == EXPECTED_RESULT_ARTIFACT_COUNT,
+        "result artifact contract must contain exactly 61 paths",
+    )
+    actual_artifact_paths = {
+        path.relative_to(output_root).as_posix()
+        for path in output_root.rglob("*")
+        if path.is_file()
+    }
+    _require(
+        actual_artifact_paths == expected_artifact_paths,
+        "pre-result output file set differs from the exact 61-artifact contract",
+    )
+    artifacts = [
+        {
+            "relative_path": relative_path,
+            "size_bytes": int((output_root / relative_path).stat().st_size),
+            "sha256": sha256_file(output_root / relative_path),
+        }
+        for relative_path in sorted(expected_artifact_paths)
+    ]
     result = {
         "schema": "pathline_template_matching.class_conditional_template_score_visualization_result.v2",
         "experiment": REPORT_EXPERIMENT,
@@ -2099,12 +2194,21 @@ def render_bundle(
         "input_manifest_file_sha256": sha256_file(output_root / "input_manifest.json"),
         "visualization_manifest_file_sha256": sha256_file(output_root / "visualization_manifest.json"),
         "per_figure_metrics_file_sha256": sha256_file(output_root / "per_figure_metrics.csv"),
-        "artifact_count": len(artifacts),
+        "artifact_count": EXPECTED_RESULT_ARTIFACT_COUNT,
         "artifacts": artifacts,
         "artifacts_content_sha256": canonical_json_sha256(artifacts),
     }
     result["manifest_content_sha256"] = canonical_json_sha256(result)
     _atomic_json(output_root / "result_manifest.json", result)
+    _require(
+        {
+            path.relative_to(output_root).as_posix()
+            for path in output_root.rglob("*")
+            if path.is_file()
+        }
+        == expected_artifact_paths | {"result_manifest.json"},
+        "pre-completion output file set differs from the exact 62-file contract",
+    )
     complete = {
         "schema": "pathline_template_matching.class_conditional_template_score_visualization_run_complete.v2",
         "experiment": REPORT_EXPERIMENT,
@@ -2120,6 +2224,17 @@ def render_bundle(
     }
     complete["marker_content_sha256"] = canonical_json_sha256(complete)
     _atomic_json(output_root / "RUN_COMPLETE.json", complete)
+    final_paths = {
+        path.relative_to(output_root).as_posix()
+        for path in output_root.rglob("*")
+        if path.is_file()
+    }
+    _require(
+        len(final_paths) == EXPECTED_FINAL_FILE_COUNT
+        and final_paths
+        == expected_artifact_paths | {"result_manifest.json", "RUN_COMPLETE.json"},
+        "final output file set differs from the exact 63-file contract",
+    )
     return result
 
 

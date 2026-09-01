@@ -1,0 +1,91 @@
+schema: pathline_template_matching.class_conditional_template_score_visualization_config.v2
+experiment: Other_ClassConditionalTemplateScoreVisualization_1.1
+status: frozen_pre_run_not_run
+
+source_releases:
+  mode: two_authenticated_single_fold_releases
+  source_release_count: 2
+  complete_five_fold: false
+  releases:
+    - outer_family: half_cylinder
+      evidence_source: stopped_verify_half_cylinder_single_fold_release
+      experiment: Verify_ClassConditionalTemplateScore_1.1
+      numerical_git_commit: 58b0bc0b0c7385f1b356eb343a150fcd50dad94f
+      config_path: /home/zhanx0o/pathline-template-matching-class-conditional-score/config/Verify_ClassConditionalTemplateScore_1.1.yaml
+      config_sha256: 814f95d2ec58f751a91082d588f790b3592a891963810013ad92ab704febbdea
+      release_root: /ibex/user/zhanx0o/pathline-template-matching/Verify_ClassConditionalTemplateScore_1.1/aggregate/slurm_51146768_58b0bc0b0c73
+      completion_file: AGGREGATE_COMPLETE.json
+      completion_sha256: f8515858efe531c24471a11f64f014692a5d4774146c8908f07ee4ca49476844
+      fold_root: /ibex/user/zhanx0o/pathline-template-matching/Verify_ClassConditionalTemplateScore_1.1/runs/slurm_51146327_0_58b0bc0b0c73_outer_half_cylinder
+    - outer_family: boeing_747
+      evidence_source: post_stop_other_boeing_diagnostic_single_fold_release
+      experiment: Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1
+      numerical_git_commit: 6322d16cebe5995c8bcec2b8743e9ce0de9d8304
+      config_path: /home/zhanx0o/pathline-template-matching-class-conditional-boeing/config/Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1.yaml
+      config_sha256: 6112e7588efecf29cf2690b270385053d8ccd94f8e11037a6e247815afcc5856
+      release_root: /ibex/user/zhanx0o/pathline-template-matching/Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1/authentication/slurm_51154654_6322d16cebe5
+      completion_file: DIAGNOSTIC_COMPLETE.json
+      completion_sha256: a9bb930c540c366dd9fd9fd040bdca306cbb7a0a2fcd829fe5f307a8e85ad12c
+      fold_root: /ibex/user/zhanx0o/pathline-template-matching/Other_ClassConditionalTemplateScoreBoeingDiagnostic_1.1/runs/slurm_51154451_0_6322d16cebe5_outer_boeing_747
+
+parent_scenes:
+  experiment: Other_MainExp31FamilyHeldOutVisualization_1.1
+  numerical_git_commit: 86be29698eb689c0e269fe987a5b6d5f125a67be
+  config_sha256: 6fec35d2f64a3b593a74e8b35674137b1665ce169491e3546384142514b46670
+  root: /ibex/user/zhanx0o/pathline-template-matching/Other_MainExp31FamilyHeldOutVisualization_1.1/runs/slurm_51029080_86be29698eb6
+  result_manifest_sha256: 57f03ba16ad8cfa0e1e0a9efd93f2dde7ae5866f173fad20055efb6939d4188e
+  run_complete_sha256: 63325cf51bd9a4322ef5ba6385d00aa063b30096134679d153aa6733ac28314b
+
+query:
+  source_ordinal: 2
+  assigned_per_block: 64000
+  datasets:
+    - id: cylinder3d
+      display_name: Cylinder3D Re160
+      outer_family: half_cylinder
+    - id: halfcylinderRe640
+      display_name: Cylinder3D Re640
+      outer_family: half_cylinder
+    - id: halfcylinderRe6400
+      display_name: Cylinder3D Re6400
+      outer_family: half_cylinder
+    - id: boeing747
+      display_name: Boeing 747
+      outer_family: boeing_747
+  scale_blocks:
+    - id: legacy_2_1
+      index: 0
+      scale_start: 0
+      scale_stop: 999
+    - id: expanded_3_1
+      index: 1
+      scale_start: 1000
+      scale_stop: 1999
+
+figure_contract:
+  expected_figure_count: 8
+  backend: Python/matplotlib
+  dpi: 360
+  panel_titles:
+    - IVD p95 + center pathlines
+    - FMT class-conditional template-score classification
+    - TP / FP / FN / TN against IVD p95
+
+output_contract:
+  overwrite: false
+  required_global_files:
+    - frozen_config.yaml
+    - input_manifest.json
+    - figure_contract.json
+    - per_figure_metrics.csv
+    - visualization_manifest.json
+    - result_manifest.json
+    - RUN_COMPLETE.json
+  required_exports_per_figure:
+    - scene_npz
+    - scene_manifest
+    - png
+    - pdf
+    - svg
+    - alignment
+    - render_metadata
